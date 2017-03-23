@@ -1,7 +1,7 @@
 public class Resource {
     public String name = "";
     public String description = "";
-    public String[] tags = [];
+    public String[] tags = new String[0];
     public String uri = "";
     public String channel = "";
     public String owner = "";
@@ -15,5 +15,15 @@ public class Resource {
         this.channel = channel;
         this.owner = owner;
         this.ezServer = ezServer;
+    }
+
+    public String toJson() {
+        // TODO
+        return "";
+    }
+
+    public static Resource fromJson(String json) {
+        // TODO
+        return null;
     }
 }
