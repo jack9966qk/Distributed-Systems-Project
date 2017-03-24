@@ -1,25 +1,26 @@
 package com.allstars.project1;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.security.SecureRandom;
+import java.util.*;
 
 import org.apache.commons.cli.*;
 
 public class Server {
     public static ResourceStorage resourceStorage = new ResourceStorage();
-    public static List<EzServer> serverList = Collections.synchronizedList(new ArrayList<>());
+    public static Set<EzServer> serverList = Collections.synchronizedSet(new HashSet<>());
 
-    public static void startServer(int exchangeInterval, String host, int port) {
+    public static void startServer(int connectionIntervalLimit, int exchangeInterval, String secret, String host, int port) {
         try {
             // for sending exchange request to other servers
-            ExchangeThread exchangeThread = new ExchangeThread(exchangeInterval, serverList);
-            exchangeThread.start();
+            // TODO finish this and enable
+//            ExchangeThread exchangeThread = new ExchangeThread(exchangeInterval, serverList);
+//            exchangeThread.start();
 
             ServerSocket listenSocket = new ServerSocket(port);
             int i = 0;
@@ -31,11 +32,14 @@ public class Server {
                 System.out.println("Received connection " + i );
                 // start a new thread handling the client
                 // TODO limitation on total number of threads
-                ServiceThread c = new ServiceThread(clientSocket, resourceStorage, serverList);
+                ServiceThread c = new ServiceThread(clientSocket, secret, resourceStorage, serverList);
                 c.start();
+                Thread.sleep(connectionIntervalLimit);
             }
         } catch(IOException e) {
             System.out.println("Listen socket:"+e.getMessage());
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 
@@ -43,11 +47,11 @@ public class Server {
         Options options = new Options();
 
         options.addOption(Option.builder("advertisedhostname").desc("advertised hostname")
-                .required().hasArg().type(String.class).build());
+                .hasArg().type(String.class).build());
         options.addOption(Option.builder("connectionintervallimit").desc("connection interval limit in seconds")
-                .required().hasArg().type(Integer.class).build());
+                .hasArg().type(Integer.class).build());
         options.addOption(Option.builder("exchangeinterval").desc("exchange interval in seconds")
-                .required().hasArg().type(Integer.class).build());
+                .hasArg().type(Integer.class).build());
         options.addOption(Option.builder("port").desc("server port, an integer")
                 .required().hasArg().type(Integer.class).build());
         options.addOption(Option.builder("secret").desc("secret")
@@ -71,28 +75,41 @@ public class Server {
         // set debug
         Debug.setEnablePrint(cmd.hasOption("debug"));
 
-        // detemine secret
+        // determine secret
         String secret = null;
         if (!cmd.hasOption("secret")) {
             // TODO generate random secret
+            // from http://stackoverflow.com/questions/41107/how-to-generate-a-random-alpha-numeric-string
+            SecureRandom random = new SecureRandom();
+            secret = new BigInteger(130, random).toString(32);
         } else {
             secret = cmd.getOptionValue("secret");
         }
 
-        // determine host and port
-        InetAddress address = null;
         try {
-            address = InetAddress.getLocalHost();
+            // determine host and port
+            InetAddress address = InetAddress.getLocalHost();
+            String host = cmd.getOptionValue("advertisedhostname", address.getHostName());
+            int port = Integer.parseInt(cmd.getOptionValue("port"));
+
+            // set intervals
+            int connectionIntervalLimit;
+            if (cmd.hasOption("connectionintervallimit")) {
+                connectionIntervalLimit = Integer.parseInt(cmd.getOptionValue("connectionintervallimit"));
+            } else {
+                connectionIntervalLimit = 1000;
+            }
+            int exchangeInterval;
+            if (cmd.hasOption("exchangeinterval")) {
+                exchangeInterval = Integer.parseInt(cmd.getOptionValue("exchangeinterval"));
+            } else {
+                exchangeInterval = 1000;
+            }
+
+            // start the server
+            startServer(connectionIntervalLimit, exchangeInterval, secret, host, port);
         } catch (UnknownHostException e) {
             e.printStackTrace();
         }
-        String host = cmd.getOptionValue("advertisedhostname", address.getHostName());
-        int port = Integer.parseInt(cmd.getOptionValue("port"));
-
-        int connectionIntervalLimit = Integer.parseInt(cmd.getOptionValue("connectionintervallimit"));
-        int exchangeInterval = Integer.parseInt(cmd.getOptionValue("exchangeinterval"));
-
-        // start the server
-        startServer(exchangeInterval, host, port);
     }
 }

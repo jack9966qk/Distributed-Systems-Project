@@ -1,72 +1,109 @@
 package com.allstars.project1;
 
+import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.sun.org.apache.xerces.internal.util.URI;
 
 import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by Jack on 24/3/2017.
  */
 public class ServiceThread extends Thread {
-    Socket clientSocket;
-    List<EzServer> serverList;
+    private DataInputStream inputStream;
+    private DataOutputStream outputStream;
+    private String secret;
+    private ResourceStorage resourceStorage;
+    private Set<EzServer> serverList;
 
-    public ServiceThread(Socket clientSocket, ResourceStorage resourceStorage, List<EzServer> serverList) {
-        this.clientSocket = clientSocket;
+    public ServiceThread(Socket clientSocket, String secret, ResourceStorage resourceStorage, Set<EzServer> serverList)
+        throws IOException {
+        this.inputStream = new DataInputStream(clientSocket.getInputStream());
+        this.outputStream = new DataOutputStream(clientSocket.getOutputStream());
+        this.secret = secret;
+        this.resourceStorage = resourceStorage;
         this.serverList = serverList;
     }
 
-    private static void publish(Resource r) {
-
+    private void respondSuccess() throws IOException {
+        JsonObject json = new JsonObject();
+        json.addProperty("response", "success");
+        outputStream.writeUTF(json.toString());
     }
 
-    private static void remove(Resource r) {
-
+    private void respondResource(Resource resource) throws IOException {
+        outputStream.writeUTF(resource.toJson());
     }
 
-    private static void share(String secret, Resource r) {
-
+    private void respondResultSize(int size) throws IOException {
+        JsonObject json = new JsonObject();
+        json.addProperty("resultSize", 2);
+        outputStream.writeUTF(json.toString());
     }
 
-    private static ArrayList<Resource> query(Resource template, boolean relay) {
-        return new ArrayList<>();
+    private void publish(Resource resource) throws ServerException, IOException {
+        resourceStorage.add(resource);
+        respondSuccess();
     }
 
-    private static void fetch(Resource template) {
-
+    private void remove(Resource resource) throws ServerException, IOException {
+        resourceStorage.remove(resource);
+        respondSuccess();
     }
 
-    private static void exchange() {
-
+    private void share(String secret, Resource resource) throws ServerException, IOException {
+        if (!secret.equals(this.secret)) {
+            throw new ServerException("incorrect secret");
+        } else if (!URI.isWellFormedAddress(resource.getUri())) {
+            throw new ServerException("invalid resource");
+        } else {
+            resourceStorage.add(resource);
+        }
+        respondSuccess();
     }
 
-    private static void sendErrorResponse(String description) {
+    private void query(Resource template, boolean relay) throws ServerException, IOException {
+        // TODO relay
+        Set<Resource> results = resourceStorage.searchWithTemplate(template);
 
+        for (Resource r : results) {
+            Debug.println(r.toJson());
+        }
+
+        respondSuccess();
+        for (Resource resource : results) {
+            respondResource(resource);
+        }
+        respondResultSize(results.size());
     }
 
+    private void fetch(Resource template) throws ServerException {
+        // TODO
+        // http://stackoverflow.com/questions/9520911/java-sending-and-receiving-file-byte-over-sockets
+    }
+
+    private void exchange(EzServer[] servers) throws ServerException, IOException {
+        this.serverList.addAll(Arrays.asList(servers));
+        respondSuccess();
+    }
 
 
     @Override
     public void run() {
         try {
-            DataInputStream inputStream =
-                    new DataInputStream(clientSocket.getInputStream());
-
-            // TODO read json from socket
+            // read json from socket
             String reqJson = inputStream.readUTF();
             JsonParser parser = new JsonParser();
             JsonObject obj = parser.parse(reqJson).getAsJsonObject();
 
-
-            // TODO determine command type
+            // determine command type
             if (!obj.has("command")) {
-                sendErrorResponse("invalid command");
-                return;
+                throw new ServerException("invalid command");
             }
 
             String command = obj.get("command").getAsString();
@@ -85,18 +122,18 @@ public class ServiceThread extends Thread {
             } else if (command.equals("FETCH")) {
                 fetch(Resource.fromJson(obj.get("resourceTemplate").getAsString()));
             } else if (command.equals("EXCHANGE")) {
-
+                exchange(new Gson().fromJson(obj.get("serverList"), EzServer[].class));
             } else {
-                sendErrorResponse("invalid command");
-                return;
+                throw new ServerException("invalid command");
             }
-
-            // TODO call methods respectively
-
-            // TODO send response to client
-
-
         } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ServerException e) {
+            try {
+                outputStream.writeUTF(e.toJson());
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
             e.printStackTrace();
         }
     }

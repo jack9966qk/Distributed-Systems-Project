@@ -7,6 +7,7 @@ import java.net.Socket;
 import java.util.*;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.apache.commons.cli.*;
@@ -36,6 +37,14 @@ public class Client {
         reqMap.put("secret", secret);
         reqMap.put("resource", resource.toJson());
         return gson.toJson(reqMap);
+    }
+
+    private static String makeJsonFrom(String command, boolean relay, Resource resource) {
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.addProperty("command", command);
+        jsonObject.addProperty("relay", relay);
+        jsonObject.add("resource", new Gson().toJsonTree(resource));
+        return jsonObject.toString();
     }
 
     private static String makeJsonFrom(String command, EzServer[] serverList) {
@@ -81,16 +90,35 @@ public class Client {
         handleResponse(response);
     }
 
-    public static ArrayList<Resource> query(Socket socket, Resource template) {
-        return new ArrayList<>();
+    public static ArrayList<Resource> query(Socket socket, boolean relay, Resource template) throws IOException {
+        DataInputStream in = new DataInputStream(socket.getInputStream());
+        DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+
+        // send request
+        out.writeUTF(makeJsonFrom("QUERY", relay, template));
+
+        // wait for response
+        String response = in.readUTF();
+        handleResponse(response);
+
+        return null;
     }
 
     public static void fetch(Socket socket, Resource template) {
-
+        // TODO
+        // http://stackoverflow.com/questions/9520911/java-sending-and-receiving-file-byte-over-sockets
     }
 
-    public static void exchange(Socket socket, EzServer[] servers) {
+    public static void exchange(Socket socket, EzServer[] servers) throws IOException {
+        DataInputStream in = new DataInputStream(socket.getInputStream());
+        DataOutputStream out = new DataOutputStream(socket.getOutputStream());
 
+        // send request
+        out.writeUTF(makeJsonFrom("EXCHANGE", servers));
+
+        // wait for response
+        String response = in.readUTF();
+        handleResponse(response);
     }
 
     public static CommandLine getOptions(String[] args) {
@@ -182,7 +210,8 @@ public class Client {
                 String secret = cmd.getOptionValue("secret");
                 share(socket, secret, resource);
             } else if (cmd.hasOption("query")) {
-                query(socket, resource);
+                query(socket, true, new Resource(null, null, null, null, null, null, null));
+//                query(socket, resource);
             } else if (cmd.hasOption("fetch")) {
                 fetch(socket, resource);
             } else if (cmd.hasOption("exchange")) {
