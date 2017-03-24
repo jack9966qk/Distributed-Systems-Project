@@ -1,24 +1,28 @@
 package com.allstars.project1;
-
-
-import java.util.ArrayList;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by Jack on 23/3/2017.
  */
 public class ResourceStorage {
-    ArrayList<Resource> resources = new ArrayList<Resource>();
+    Set<Resource> resources = Collections.synchronizedSet(new HashSet<>());
 
-    public ArrayList<Resource> searchWithTemplate(Resource template) {
-        // TODO
-        return null;
+    public synchronized Set<Resource> searchWithTemplate(Resource template) {
+        return new HashSet<Resource>(resources.stream().filter(
+                (Resource r) -> r.matchesTemplate(template)
+        ).collect(Collectors.toSet()));
     }
 
-    public void add(Resource resource) {
+    public synchronized void add(Resource resource) {
         resources.add(resource);
+        Debug.println("Added new resource");
+        Debug.println(resources.toString());
     }
 
-    public void remove(Resource resource) {
+    public synchronized void remove(Resource resource) {
         resources.remove(resource);
+        Debug.println("Removed resource");
+        Debug.println(resources.toString());
     }
 }

@@ -1,13 +1,15 @@
 package com.allstars.project1;
 
+import com.google.gson.Gson;
+
 public class Resource {
-    public String name = "";
-    public String description = "";
-    public String[] tags = new String[0];
-    public String uri = "";
-    public String channel = "";
-    public String owner = "";
-    public String ezServer = "";
+    private String name = "";
+    private String description = "";
+    private String[] tags = new String[0];
+    private String uri = "";
+    private String channel = "";
+    private String owner = "";
+    private String ezServer = null;
 
     public Resource(String name, String description, String[] tags, String uri, String channel, String owner, String ezServer) {
         this.name = name;
@@ -19,13 +21,16 @@ public class Resource {
         this.ezServer = ezServer;
     }
 
-    public String toJson() {
+    public boolean matchesTemplate(Resource template) {
         // TODO
-        return "";
+        return true;
+    }
+
+    public String toJson() {
+        return new Gson().toJson(this);
     }
 
     public static Resource fromJson(String json) {
-        // TODO
-        return null;
+        return new Gson().fromJson(json, Resource.class);
     }
 }

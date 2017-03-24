@@ -10,7 +10,7 @@ public class Debug {
         Debug.enablePrint = enablePrint;
     }
 
-    public void println(String str) {
+    public static void println(String str) {
         System.out.println(str);
     }
 }
