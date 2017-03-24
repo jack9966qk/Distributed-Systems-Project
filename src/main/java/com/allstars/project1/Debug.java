@@ -1,3 +1,5 @@
+package com.allstars.project1;
+
 /**
  * Created by Jack on 23/3/2017.
  */

@@ -1,36 +1,13 @@
+package com.allstars.project1;
+
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
 import org.apache.commons.cli.*;
 
 public class Server {
-    public static void publish(Resource r) {
-
-    }
-
-    public static void remove(Resource r) {
-
-    }
-
-    public static void share(Resource r) {
-
-    }
-
-    public static ArrayList<Resource> query(Resource template) {
-        return new ArrayList<>();
-    }
-
-    public static void fetch(Resource template) {
-
-    }
-
-    public static void exchange(Resource template) {
-
-    }
-
     public static void startServer(String host, int port) {
         try {
             ServerSocket listenSocket = new ServerSocket(port);
@@ -40,8 +17,10 @@ public class Server {
                 Socket clientSocket = listenSocket.accept();
                 i++;
                 System.out.println("Received connection " + i );
-                // TODO receive client request, call methods accordingly
-                // Connection c = new Connection(clientSocket);
+                // start a new thread handling the client
+                // TODO limitation on total number of threads
+                ServiceThread c = new ServiceThread(clientSocket);
+                c.start();
             }
         } catch(IOException e) {
             System.out.println("Listen socket:"+e.getMessage());

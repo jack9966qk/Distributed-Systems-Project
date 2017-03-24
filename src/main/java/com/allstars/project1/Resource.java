@@ -1,3 +1,5 @@
+package com.allstars.project1;
+
 public class Resource {
     public String name = "";
     public String description = "";
