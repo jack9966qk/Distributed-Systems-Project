@@ -147,27 +147,30 @@ public class Client {
         // wait for response
         String response = in.readUTF();
         boolean success = handleResponse(response);
+        System.out.println("read resource");
         Resource resource = Resource.fromJson(in.readUTF());
         System.out.println(resource.getName());
         System.out.println("read file");
         long totalSize = resource.getResourceSize();
+        System.out.println(totalSize);
         long sizeRead = 0;
         if (success) {
-            URI uri = new URI(template.getUri());
-            String path = uri.getPath();
-
+            String path = resource.getUri();
             String filename = path.substring(path.lastIndexOf('/') + 1);
-            FileOutputStream fileOutputStream = new FileOutputStream(new File("./" + filename));
+            java.net.URI uri = new java.net.URI("./" + filename);
+            FileOutputStream fileOutputStream = new FileOutputStream(new File(uri.getPath()));
 
             byte[] bytes = new byte[16*1024];
 
             int toRead = (int) Math.min(totalSize - sizeRead, 16 * 1024);
 
             int count;
-            while ((count = in.read(bytes, 0, toRead)) > 0) {
+            while (toRead > 0 && (count = in.read(bytes, 0, toRead)) > 0) {
                 sizeRead += count;
                 fileOutputStream.write(bytes, 0, count);
+                toRead = (int) Math.min(totalSize - sizeRead, 16 * 1024);
             }
+            System.out.println("read file complete");
             fileOutputStream.close();
         }
         String sizeResponse = in.readUTF();

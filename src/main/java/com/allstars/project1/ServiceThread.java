@@ -108,7 +108,9 @@ public class ServiceThread extends Thread {
         Resource resource = new ArrayList<>(Server.resourceStorage.searchWithTemplate(template)).get(0);
 
         try {
-            File file = new File(resource.getUri());
+            java.net.URI uri = new java.net.URI(template.getUri());
+            String path = uri.getPath();
+            File file = new File(path);
             FileInputStream fileInputStream = new FileInputStream(file);
             System.out.println("send success");
             respondSuccess();
@@ -123,7 +125,10 @@ public class ServiceThread extends Thread {
             respondResultSize(1);
 
         } catch (FileNotFoundException e) {
+            e.printStackTrace();
             // TODO throw exception
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
         }
     }
 
