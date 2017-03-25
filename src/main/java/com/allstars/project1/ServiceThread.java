@@ -1,6 +1,7 @@
 package com.allstars.project1;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.sun.org.apache.xerces.internal.util.URI;
@@ -117,10 +118,15 @@ public class ServiceThread extends Thread {
                         Resource.fromJson(obj.get("resource").getAsString());
                 share(secret, resource);
             } else if (command.equals("QUERY")) {
+                System.out.println(reqJson);
                 boolean relay = obj.get("relay").getAsBoolean();
-                query(Resource.fromJson(obj.get("resourceTemplate").getAsString()), relay);
+                JsonElement resourceTemplate = obj.get("resourceTemplate");
+                Resource r = new Gson().fromJson(resourceTemplate, Resource.class);
+                query(r, relay);
             } else if (command.equals("FETCH")) {
-                fetch(Resource.fromJson(obj.get("resourceTemplate").getAsString()));
+                JsonElement resourceTemplate = obj.get("resourceTemplate");
+                Resource r = new Gson().fromJson(resourceTemplate, Resource.class);
+                fetch(r);
             } else if (command.equals("EXCHANGE")) {
                 exchange(new Gson().fromJson(obj.get("serverList"), EzServer[].class));
             } else {

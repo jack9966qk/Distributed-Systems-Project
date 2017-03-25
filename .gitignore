@@ -105,3 +105,15 @@ fabric.properties
 .idea/vcs.xml
 
 *.iml
+
+
+target/
+
+
+*.class
+
+*.class
+
+target/classes/com/allstars/project1/Server.class
+
+*.jar

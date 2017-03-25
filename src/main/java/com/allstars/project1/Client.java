@@ -43,7 +43,7 @@ public class Client {
         JsonObject jsonObject = new JsonObject();
         jsonObject.addProperty("command", command);
         jsonObject.addProperty("relay", relay);
-        jsonObject.add("resource", new Gson().toJsonTree(resource));
+        jsonObject.add("resourceTemplate", new Gson().toJsonTree(resource));
         return jsonObject.toString();
     }
 
