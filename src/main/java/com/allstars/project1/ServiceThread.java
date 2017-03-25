@@ -48,6 +48,14 @@ public class ServiceThread extends Thread {
     }
 
     private void publish(Resource resource) throws ServerException, IOException {
+
+        if (resource.getOwner().length()==1&&resource.getOwner().toCharArray()[0]=='*') {
+            throw new ServerException("invalid resource");
+        }else if (resource.getUri().isEmpty()) {
+            throw new ServerException("missing resource");
+        }else if (!resource.getUri().matches("(.*):(.*)")){
+            throw new ServerException("invalid resourse");
+        }
         resourceStorage.add(resource);
         respondSuccess();
     }
