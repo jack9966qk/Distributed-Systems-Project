@@ -6,10 +6,10 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.sun.org.apache.xerces.internal.util.URI;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.*;
 
 /**
@@ -41,9 +41,13 @@ public class ServiceThread extends Thread {
         outputStream.writeUTF(resource.toJson());
     }
 
+    private void respondResource(Resource resource, long size) throws IOException {
+        outputStream.writeUTF(resource.toJsonWithSize(size));
+    }
+
     private void respondResultSize(int size) throws IOException {
         JsonObject json = new JsonObject();
-        json.addProperty("resultSize", 2);
+        json.addProperty("resultSize", size);
         outputStream.writeUTF(json.toString());
     }
 
@@ -60,17 +64,32 @@ public class ServiceThread extends Thread {
     private void share(String secret, Resource resource) throws ServerException, IOException {
         if (!secret.equals(this.secret)) {
             throw new ServerException("incorrect secret");
-        } else if (!URI.isWellFormedAddress(resource.getUri())) {
-            throw new ServerException("invalid resource");
         } else {
-            resourceStorage.add(resource);
+            File f = null;
+            try {
+                f = new File(new URL(resource.getUri()).toURI());
+            } catch (URISyntaxException e) {
+                e.printStackTrace();
+            }
+            if (!f.exists()) {
+                throw new ServerException("invalid resource");
+            } else {
+                System.out.println("add to resource");
+                resourceStorage.add(resource);
+                respondSuccess();
+            }
         }
-        respondSuccess();
     }
 
     private void query(Resource template, boolean relay) throws ServerException, IOException {
-        // TODO relay
         Set<Resource> results = resourceStorage.searchWithTemplate(template);
+
+        if (relay) {
+            for (EzServer server : serverList) {
+                Socket socket = Client.connectToServer(server.hostname, server.port);
+                results.addAll(Client.query(socket, false, template));
+            }
+        }
 
         for (Resource r : results) {
             Debug.println(r.toJson());
@@ -83,13 +102,34 @@ public class ServiceThread extends Thread {
         respondResultSize(results.size());
     }
 
-    private void fetch(Resource template) throws ServerException {
-        // TODO
-        // http://stackoverflow.com/questions/9520911/java-sending-and-receiving-file-byte-over-sockets
+    private void fetch(Resource template) throws ServerException, IOException {
+        // TODO check valid...
+
+        Resource resource = new ArrayList<>(Server.resourceStorage.searchWithTemplate(template)).get(0);
+
+        try {
+            File file = new File(resource.getUri());
+            FileInputStream fileInputStream = new FileInputStream(file);
+            System.out.println("send success");
+            respondSuccess();
+            System.out.println("send resource");
+            respondResource(resource, file.length());
+            System.out.println("send file");
+            byte[] bytes = new byte[16 * 1024];
+            int count;
+            while ((count = fileInputStream.read(bytes)) > 0) {
+                outputStream.write(bytes, 0, count);
+            }
+            respondResultSize(1);
+
+        } catch (FileNotFoundException e) {
+            // TODO throw exception
+        }
     }
 
     private void exchange(EzServer[] servers) throws ServerException, IOException {
         this.serverList.addAll(Arrays.asList(servers));
+        System.out.println(this.serverList);
         respondSuccess();
     }
 
@@ -109,25 +149,27 @@ public class ServiceThread extends Thread {
 
             String command = obj.get("command").getAsString();
             if (command.equals("PUBLISH")) {
-                publish(Resource.fromJson(obj.get("resource").getAsString()));
+                Resource resource = Resource.fromJsonElem(obj.get("resource"));
+                publish(resource);
             } else if (command.equals("REMOVE")) {
-                remove(Resource.fromJson(obj.get("resource").getAsString()));
+                Resource resource = Resource.fromJsonElem(obj.get("resource"));
+                remove(resource);
             } else if (command.equals("SHARE")) {
                 String secret = obj.get("secret").getAsString();
-                Resource resource =
-                        Resource.fromJson(obj.get("resource").getAsString());
+                System.out.println(obj);
+                Resource resource = Resource.fromJsonElem(obj.get("resource"));
                 share(secret, resource);
             } else if (command.equals("QUERY")) {
                 System.out.println(reqJson);
                 boolean relay = obj.get("relay").getAsBoolean();
-                JsonElement resourceTemplate = obj.get("resourceTemplate");
-                Resource r = new Gson().fromJson(resourceTemplate, Resource.class);
-                query(r, relay);
+                Resource resourceTemplate = Resource.fromJsonElem(obj.get("resourceTemplate"));
+                query(resourceTemplate, relay);
             } else if (command.equals("FETCH")) {
-                JsonElement resourceTemplate = obj.get("resourceTemplate");
-                Resource r = new Gson().fromJson(resourceTemplate, Resource.class);
-                fetch(r);
+                System.out.println(obj.get("resourceTemplate"));
+                Resource resourceTemplate = Resource.fromJsonElem(obj.get("resourceTemplate"));
+                fetch(resourceTemplate);
             } else if (command.equals("EXCHANGE")) {
+                System.out.println(obj);
                 exchange(new Gson().fromJson(obj.get("serverList"), EzServer[].class));
             } else {
                 throw new ServerException("invalid command");
@@ -140,7 +182,6 @@ public class ServiceThread extends Thread {
             } catch (IOException e1) {
                 e1.printStackTrace();
             }
-            e.printStackTrace();
         }
     }
 }

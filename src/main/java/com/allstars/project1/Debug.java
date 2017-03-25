@@ -10,7 +10,9 @@ public class Debug {
         Debug.enablePrint = enablePrint;
     }
 
-    public static void println(String str) {
-        System.out.println(str);
+    public static void println(Object obj) {
+        if (enablePrint) {
+            System.out.println(obj);
+        }
     }
 }

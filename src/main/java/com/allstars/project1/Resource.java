@@ -1,6 +1,7 @@
 package com.allstars.project1;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 
 import java.util.Arrays;
 
@@ -8,8 +9,6 @@ public class Resource {
     public String getName() {
         return name;
     }
-
-
 
     public String getDescription() {
         return description;
@@ -35,6 +34,10 @@ public class Resource {
         return ezServer;
     }
 
+    public Long getResourceSize() {
+        return resourceSize;
+    }
+
     private String name = "";
     private String description = "";
     private String[] tags = new String[0];
@@ -42,8 +45,21 @@ public class Resource {
     private String channel = "";
     private String owner = "";
     private String ezServer = null;
+    private Long resourceSize = null;
+
+    public Resource(String name, String description, String[] tags, String uri, String channel, String owner, String ezServer, Long resourceSize) {
+        this.name = name;
+        this.description = description;
+        this.tags = tags;
+        this.uri = uri;
+        this.channel = channel;
+        this.owner = owner;
+        this.ezServer = ezServer;
+        this.resourceSize = resourceSize;
+    }
 
     public Resource(String name, String description, String[] tags, String uri, String channel, String owner, String ezServer) {
+        // TODO normalise strings
         this.name = name;
         this.description = description;
         this.tags = tags;
@@ -54,22 +70,19 @@ public class Resource {
     }
 
     public boolean matchesTemplate(Resource template) {
-        if (template.name != null && !this.name.equals(template.name)) {
+        if (!this.channel.equals(template.channel)) {
             return false;
-        } else if (template.channel != null && !this.channel.equals(template.channel)) {
+        } else if (!template.getOwner().equals("") && !this.owner.equals(template.owner)) {
             return false;
-        } else if (template.description != null && !this.description.equals(template.description)) {
+        } else if (template.getTags() != null && !Arrays.asList(this.tags).containsAll(Arrays.asList(template.tags))) { // TODO case insensitive
             return false;
-        } else if (template.tags != null && !Arrays.asList(this.tags).containsAll(Arrays.asList(template.tags))) {
-            return false;
-        } else if (template.uri != null && !this.uri.equals(template.uri)) {
-            return false;
-        } else if (template.owner != null && !this.owner.equals(template.owner)) {
-            return false;
-        } else if (template.ezServer != null && !this.ezServer.equals(template.ezServer)) {
+        } else if (template.getUri() != null && !template.getUri().equals("") && !this.uri.equals(template.getUri())) {
             return false;
         } else {
-            return true;
+            return true; // TODO if candidate name contains the template name as a substring (for non "" template name), OR
+//            The candidate description contains the template description as a substring (for non "" template descriptions)
+//            OR
+//            The template description and name are both ""))
         }
     }
 
@@ -77,8 +90,16 @@ public class Resource {
         return new Gson().toJson(this);
     }
 
+    public String toJsonWithSize(long size) {
+        return new Resource(this.name, this.description, this.tags, this.uri, this.channel, this.owner, this.ezServer, size).toJson();
+    }
+
     public static Resource fromJson(String json) {
         return new Gson().fromJson(json, Resource.class);
+    }
+
+    public static Resource fromJsonElem(JsonElement elem) {
+        return new Gson().fromJson(elem, Resource.class);
     }
 
 
@@ -87,6 +108,9 @@ public class Resource {
 
     @Override
     public boolean equals(Object o) {
+
+        // TODO match only primary keys
+
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 

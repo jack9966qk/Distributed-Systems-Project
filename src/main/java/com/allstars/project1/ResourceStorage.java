@@ -18,14 +18,14 @@ public class ResourceStorage {
 
     public synchronized void add(Resource resource) {
         resources.add(resource);
-        Debug.println("Added new resource");
-        Debug.println(this.toJson());
+        System.out.println("Added new resource");
+        System.out.println(this.toJson());
     }
 
     public synchronized void remove(Resource resource) {
         resources.remove(resource);
-        Debug.println("Removed resource");
-        Debug.println(this.toJson());
+        System.out.println("Removed resource");
+        System.out.println(this.toJson());
     }
 
     // for debug usage
