@@ -1,4 +1,4 @@
-package com.allstars.unit_test;
+package com.allstars.project1.unitTest;
 
 import com.allstars.project1.Client;
 import org.junit.jupiter.api.AfterEach;
