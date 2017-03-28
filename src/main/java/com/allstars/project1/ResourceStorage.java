@@ -16,6 +16,10 @@ public class ResourceStorage {
         ).collect(Collectors.toSet()));
     }
 
+    public synchronized Set<String> getUriSet() {
+        return new HashSet<String>(resources.stream().map(Resource::getUri).collect(Collectors.toSet()));
+    }
+
     public synchronized void add(Resource resource) {
         resources.add(resource);
         Debug.println("Added new resource");
