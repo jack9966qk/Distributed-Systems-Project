@@ -49,26 +49,6 @@ public class ServiceThread extends Thread {
         }
     }
 
-    private  void checkRemove(Resource resource) throws  ServerException {
-
-
-        Resource r = new Resource(null,null,null,resource.getUri(),
-                resource.getChannel(),resource.getOwner(),null);
-
-        if (resource.getOwner().length()==1&&resource.getOwner().toCharArray()[0]=='*') {// * owner
-            throw new ServerException("invalid resource");
-        }else if (resource.getUri().isEmpty()) {//uri is empty
-            throw new ServerException("missing resource");
-        }else if (!resource.getUri().matches("(.*):(.*)")) { //not an absolute uri
-            throw new ServerException("missing resource");
-        }else if (resourceStorage.searchWithTemplate(r).isEmpty()){ //did not exist
-            throw new ServerException("cannot remove resource");
-        }
-    }
-
-    private void checkShare(Resource resource)  throws ServerException {
-
-    }
 
     private void respondSuccess() throws IOException {
         JsonObject json = new JsonObject();
@@ -87,18 +67,18 @@ public class ServiceThread extends Thread {
     }
 
     private void publish(Resource resource) throws ServerException, IOException {
-        Resource r = new Resource(null,null,null,resource.getUri(),
-                resource.getChannel(),resource.getOwner(),null);
-        if (!resourceStorage.searchWithTemplate(r).isEmpty()){ //did not exist
+        if (resourceStorage.containsKey(resource)){
             resourceStorage.remove(resource);
+            resourceStorage.add(resource);
+        }else{
+            checkCommand(resource);
+            resourceStorage.add(resource);
         }
-        checkCommand(resource);
-        resourceStorage.add(resource);
         respondSuccess();
     }
 
     private void remove(Resource resource) throws ServerException, IOException {
-        checkRemove(resource);
+        checkCommand(resource);
         resourceStorage.remove(resource);
         respondSuccess();
     }

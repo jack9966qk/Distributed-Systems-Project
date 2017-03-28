@@ -20,7 +20,12 @@ public class ResourceStorage {
         return new HashSet<String>(resources.stream().map(Resource::getUri).collect(Collectors.toSet()));
     }
 
+    public synchronized boolean containsKey(Resource r) {
+        return resources.containsKey(Integer.toString(r.hashCode()));
+    }
+
     public synchronized void add(Resource resource) {
+<<<<<<< Updated upstream
         resources.add(resource);
         Debug.println("Added new resource");
         Debug.println(this.toJson());
@@ -30,10 +35,21 @@ public class ResourceStorage {
         resources.remove(resource);
         Debug.println("Removed resource");
         Debug.println(this.toJson());
+=======
+        resources.put(Integer.toString(resource.hashCode()),resource);
+        System.out.println("Added new resource");
+ //       System.out.println(this.toJson());
     }
 
+    public synchronized void remove(Resource resource) {
+        resources.remove(Integer.toString(resource.hashCode()));
+        System.out.println("Removed resource");
+//        System.out.println(this.toJson());
+>>>>>>> Stashed changes
+    }
+/*
     // for debug usage
     public synchronized String toJson() {
         return new Gson().toJson(resources.toArray(new Resource[this.resources.size()]));
-    }
+    }*/
 }
