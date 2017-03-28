@@ -31,6 +31,45 @@ public class ServiceThread extends Thread {
         this.serverList = serverList;
     }
 
+
+
+    private void checkCommand(Resource resource) throws ServerException {
+        // created a resource only with the primary keys
+        Resource r = new Resource(null,null,null,resource.getUri(),
+                resource.getChannel(),resource.getOwner(),null);
+
+        if (resource.getOwner().length()==1&&resource.getOwner().toCharArray()[0]=='*') {// * owner
+            throw new ServerException("invalid resource");
+        }else if (resource.getUri().isEmpty()) {//uri is empty
+            throw new ServerException("missing resource");
+        }else if (!resource.getUri().matches("(.*):(.*)")) { //not an absolute uri
+            throw new ServerException("missing resource");
+        }else if (resourceStorage.getUriSet().contains(resource.getUri())) { // duplicate uri
+            throw new ServerException("invalid resource");
+        }
+    }
+
+    private  void checkRemove(Resource resource) throws  ServerException {
+
+
+        Resource r = new Resource(null,null,null,resource.getUri(),
+                resource.getChannel(),resource.getOwner(),null);
+
+        if (resource.getOwner().length()==1&&resource.getOwner().toCharArray()[0]=='*') {// * owner
+            throw new ServerException("invalid resource");
+        }else if (resource.getUri().isEmpty()) {//uri is empty
+            throw new ServerException("missing resource");
+        }else if (!resource.getUri().matches("(.*):(.*)")) { //not an absolute uri
+            throw new ServerException("missing resource");
+        }else if (resourceStorage.searchWithTemplate(r).isEmpty()){ //did not exist
+            throw new ServerException("cannot remove resource");
+        }
+    }
+
+    private void checkShare(Resource resource)  throws ServerException {
+
+    }
+
     private void respondSuccess() throws IOException {
         JsonObject json = new JsonObject();
         json.addProperty("response", "success");
@@ -48,11 +87,18 @@ public class ServiceThread extends Thread {
     }
 
     private void publish(Resource resource) throws ServerException, IOException {
+        Resource r = new Resource(null,null,null,resource.getUri(),
+                resource.getChannel(),resource.getOwner(),null);
+        if (!resourceStorage.searchWithTemplate(r).isEmpty()){ //did not exist
+            resourceStorage.remove(resource);
+        }
+        checkCommand(resource);
         resourceStorage.add(resource);
         respondSuccess();
     }
 
     private void remove(Resource resource) throws ServerException, IOException {
+        checkRemove(resource);
         resourceStorage.remove(resource);
         respondSuccess();
     }
