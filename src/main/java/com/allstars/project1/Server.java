@@ -19,7 +19,7 @@ public class Server {
         try {
             // for sending exchange request to other servers
             // TODO finish this and enable
-//            ExchangeThread exchangeThread = new ExchangeThread(exchangeInterval, serverList);
+            ExchangeThread exchangeThread = new ExchangeThread(exchangeInterval, serverList, host, port);
 //            exchangeThread.start();
 
             ServerSocket listenSocket = new ServerSocket(port);
@@ -85,6 +85,7 @@ public class Server {
         } else {
             secret = cmd.getOptionValue("secret");
         }
+
 
         try {
             // determine host and port

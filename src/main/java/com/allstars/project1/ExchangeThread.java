@@ -1,17 +1,22 @@
 package com.allstars.project1;
 
-import java.util.List;
+import java.io.IOException;
+import java.net.Socket;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Created by Jack on 23/3/2017.
  */
 public class ExchangeThread extends Thread {
     private int interval;
-    private List<EzServer> serverList;
+    private Set<EzServer> serverList;
+    private EzServer self;
 
-    public ExchangeThread(int interval, List<EzServer> serverList) {
+    public ExchangeThread(int interval, Set<EzServer> serverList, String host, int port) {
         this.interval = interval;
         this.serverList = serverList;
+        self = new EzServer(host, port);
     }
 
     public boolean isRunning() {
@@ -24,10 +29,15 @@ public class ExchangeThread extends Thread {
 
     private boolean running = false;
 
-    public static void exchange() {
-        // TODO
+    private void exchange() throws IOException {
+        Set<EzServer> allServers = new HashSet<>();
+        allServers.addAll(serverList);
+        allServers.add(self);
+        for (EzServer server: serverList) {
+            Socket socket = Client.connectToServer(server.hostname, server.port);
+            Client.exchange(socket, allServers.toArray(new EzServer[serverList.size()]));
+        }
     }
-
 
     @Override
     public void run() {
@@ -40,7 +50,11 @@ public class ExchangeThread extends Thread {
                 e.printStackTrace();
             }
 
-            exchange();
+            try {
+                exchange();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
     }
