@@ -10,34 +10,32 @@ import java.util.stream.Collectors;
  */
 public class ResourceStorage {
 
-    Map<String,Resource> resources = Collections.synchronizedMap(new HashMap<>());
-/*
-    public synchronized String searchWithTemplate(Resource template) {
-        return new HashSet<Resource>(resources.keySet().stream().filter(
+    Map<ResourceKey,Resource> resources = Collections.synchronizedMap(new HashMap<>());
+
+    public synchronized HashSet<Resource> searchWithTemplate(Resource template) {
+        return new HashSet<>(resources.values().stream().filter(
                 (Resource r) -> r.matchesTemplate(template)
         ).collect(Collectors.toSet()));
-
-    }*/
+    }
 
     public synchronized Set<String> getUriSet() {
-        return new HashSet<String>(resources.values().stream().map(Resource::getUri).collect(Collectors.toSet()));
+        return new HashSet<>(resources.values().stream().map(Resource::getUri).collect(Collectors.toSet()));
     }
 
     public synchronized void add(Resource resource) {
-        resources.put(Integer.toString(resource.hashCode()),resource);
+        resources.put(resource.getKey(), resource);
         System.out.println("Added new resource");
         System.out.println(this.toJson());
     }
 
     public synchronized void remove(Resource resource) {
-        resources.remove(Integer.toString(resource.hashCode()));
+        resources.remove(resource.getKey());
         System.out.println("Removed resource");
         System.out.println(this.toJson());
     }
 
     // for debug usage
     public synchronized String toJson() {
-        // please fix this
-        return new Gson().toJson(resources.toArray(new Resource[this.resources.size()]));
+        return new Gson().toJson(resources.values().toArray(new Resource[this.resources.size()]));
     }
 }
