@@ -4,10 +4,7 @@ import com.allstars.project1.Client;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import org.apache.commons.cli.CommandLine;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 
 import java.io.DataInputStream;
@@ -24,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class ClientTest {
 
-    ServerSocket serviceSocket = null;
+    static ServerSocket serviceSocket = null;
 
     class ServiceThread extends Thread {
         private DataInputStream inputStream;
@@ -45,11 +42,8 @@ class ClientTest {
             try {
                 String inText = inputStream.readUTF();
 
-                if (inText.equals("quit()")) {
-                    System.out.println("Server quit.");
-                }
-
                 outputStream.writeUTF("Receive from client:" + inText);
+                outputStream.flush();
 
             } catch (IOException e) {
                 e.printStackTrace();
@@ -73,11 +67,11 @@ class ClientTest {
         ServiceThread service = new ServiceThread(clientSocket);
     }
 
-    @BeforeEach
-    void setUp() {
+    @BeforeAll
+    static void setUp() {
         // set up the dummy server and create a Client instance
         try {
-            serviceSocket = new ServerSocket(2333);
+            serviceSocket = new ServerSocket(2334);
             System.out.println("Server listening to connections.");
         } catch (IOException e) {
             e.printStackTrace();
@@ -92,17 +86,17 @@ class ClientTest {
     void connectToServer() {
         String connectionTest = "connectToServer succeed";
         String host = "localhost";
-        int port = 2333;
+        int port = 2334;
 
-        Socket clientSocket = new Client().connectToServer(host, port);
+        Socket clientSocket = Client.connectToServer(host, port);
 
         serverAccept();
     }
 
     @Test
     void getOptions() {
-        String[] testCmd = new String[] {"-publish"};
-        CommandLine cmd = new Client().getOptions(testCmd);
+        String[] testCmd = new String[] {"-host","localhost", "-port", "2334","-publish"};
+        CommandLine cmd = Client.getOptions(testCmd);
         System.out.println(cmd.toString());
     }
 
