@@ -1,13 +1,18 @@
 package com.allstars.project1.unitTest;
 
 import com.allstars.project1.Client;
+import static org.junit.jupiter.api.Assertions.fail;
+
+import com.sun.tools.doclets.formats.html.SourceToHTMLConverter;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -17,6 +22,8 @@ import static org.junit.jupiter.api.Assertions.*;
  * Created by Zheping on 2017/3/26.
  */
 class ClientTest {
+
+    ServerSocket serviceSocket = null;
 
     class ServiceThread extends Thread {
         private DataInputStream inputStream;
@@ -52,19 +59,25 @@ class ClientTest {
 
     }
 
+    void serverAccept() {
+
+        Socket clientSocket = null;
+        try {
+            clientSocket = serviceSocket.accept();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        System.out.println("Received connection: " + 1);
+
+        ServiceThread service = new ServiceThread(clientSocket);
+    }
+
     @BeforeEach
     void setUp() {
         // set up the dummy server and create a Client instance
         try {
-            ServerSocket socket = new ServerSocket(2333);
-            System.out.println("Server listen to connections.");
-
-            int i=0;
-            Socket clientSocket = socket.accept();
-            System.out.println("Received connection: " + ++i);
-
-            ServiceThread service = new ServiceThread(clientSocket);
-
+            serviceSocket = new ServerSocket(2333);
+            System.out.println("Server listening to connections.");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -74,43 +87,56 @@ class ClientTest {
     void tearDown() {
     }
 
+    @Disabled
     @Test
     void share() {
         String[] share;
     }
 
+    @Disabled
     @Test
     void query() {
         String[] query;
+        fail("Not fully implemented yet.");
     }
 
+    @Disabled
     @Test
     void fetch() {
         String[] fetch;
+        fail("Not fully implemented yet.");
     }
 
+    @Disabled
     @Test
     void exchange() {
         String[] exchange;
+        fail("Not fully implemented yet.");
     }
 
+    @Disabled
     @Test
     void getOptions() {
         String[] testCmd = new String[] {};
+        fail("Not fully implemented yet.");
     }
 
+    @Disabled
     @Test
     void makeResourceFromCmd() {
+        fail("Not fully implemented yet.");
     }
 
     @Test
     void connectToServer() {
-        String[] connection = new String[] {"-host", "localhost", "-port", "2333"};
-        new Client().main(connection);
-    }
+        String connectionTest = "connectToServer succeed";
+        String host = "localhost";
+        int port = 2333;
 
-//    @Test
-//    void main() {
-//    }
+        Socket clientSocket = new Client().connectToServer(host, port);
+
+        serverAccept();
+
+    }
 
 }
