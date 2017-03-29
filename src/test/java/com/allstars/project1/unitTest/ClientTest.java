@@ -4,10 +4,12 @@ import com.allstars.project1.Client;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import com.sun.tools.doclets.formats.html.SourceToHTMLConverter;
+import org.apache.commons.cli.CommandLine;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -87,6 +89,24 @@ class ClientTest {
     void tearDown() {
     }
 
+    @Test
+    void connectToServer() {
+        String connectionTest = "connectToServer succeed";
+        String host = "localhost";
+        int port = 2333;
+
+        Socket clientSocket = new Client().connectToServer(host, port);
+
+        serverAccept();
+    }
+
+    @Test
+    void getOptions() {
+        String[] testCmd = new String[] {"-publish"};
+        CommandLine cmd = new Client().getOptions(testCmd);
+        System.out.println(cmd.toString());
+    }
+
     @Disabled
     @Test
     void share() {
@@ -114,29 +134,11 @@ class ClientTest {
         fail("Not fully implemented yet.");
     }
 
-    @Disabled
-    @Test
-    void getOptions() {
-        String[] testCmd = new String[] {};
-        fail("Not fully implemented yet.");
-    }
 
     @Disabled
     @Test
     void makeResourceFromCmd() {
         fail("Not fully implemented yet.");
-    }
-
-    @Test
-    void connectToServer() {
-        String connectionTest = "connectToServer succeed";
-        String host = "localhost";
-        int port = 2333;
-
-        Socket clientSocket = new Client().connectToServer(host, port);
-
-        serverAccept();
-
     }
 
 }
