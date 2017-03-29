@@ -64,9 +64,9 @@ public class Server {
             cmd = parser.parse(options, args);
         } catch (ParseException e) {
             System.out.println("parse exception");
-        } finally {
-            return cmd;
         }
+
+        return cmd;
     }
 
     public static void main(String[] args) {
@@ -74,6 +74,7 @@ public class Server {
 
         // set debug
         Debug.setEnablePrint(cmd.hasOption("debug"));
+        Debug.infoPrintln("hello");
 
         // determine secret
         String secret = null;
