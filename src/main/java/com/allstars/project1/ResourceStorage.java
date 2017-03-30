@@ -1,5 +1,6 @@
 package com.allstars.project1;
 import com.google.gson.Gson;
+import com.sun.org.apache.regexp.internal.RE;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -8,32 +9,33 @@ import java.util.stream.Collectors;
  * Created by Jack on 23/3/2017.
  */
 public class ResourceStorage {
-    Set<Resource> resources = Collections.synchronizedSet(new HashSet<>());
 
-    public synchronized Set<Resource> searchWithTemplate(Resource template) {
-        return new HashSet<Resource>(resources.stream().filter(
+    Map<ResourceKey,Resource> resources = Collections.synchronizedMap(new HashMap<>());
+
+    public synchronized HashSet<Resource> searchWithTemplate(Resource template) {
+        return new HashSet<>(resources.values().stream().filter(
                 (Resource r) -> r.matchesTemplate(template)
         ).collect(Collectors.toSet()));
     }
 
     public synchronized Set<String> getUriSet() {
-        return new HashSet<String>(resources.stream().map(Resource::getUri).collect(Collectors.toSet()));
+        return new HashSet<>(resources.values().stream().map(Resource::getUri).collect(Collectors.toSet()));
     }
 
     public synchronized void add(Resource resource) {
-        resources.add(resource);
+        resources.put(resource.getKey(), resource);
         System.out.println("Added new resource");
         System.out.println(this.toJson());
     }
 
     public synchronized void remove(Resource resource) {
-        resources.remove(resource);
+        resources.remove(resource.getKey());
         System.out.println("Removed resource");
         System.out.println(this.toJson());
     }
 
     // for debug usage
     public synchronized String toJson() {
-        return new Gson().toJson(resources.toArray(new Resource[this.resources.size()]));
+        return new Gson().toJson(resources.values().toArray(new Resource[this.resources.size()]));
     }
 }

@@ -86,6 +86,10 @@ public class Resource {
         }
     }
 
+    public ResourceKey getKey() {
+        return new ResourceKey(owner, channel, uri);
+    }
+
     public String toJson() {
         return new Gson().toJson(this);
     }
@@ -140,6 +144,7 @@ public class Resource {
         result = 31 * result + (channel != null ? channel.hashCode() : 0);
         result = 31 * result + (owner != null ? owner.hashCode() : 0);
         result = 31 * result + (ezServer != null ? ezServer.hashCode() : 0);
+        result = 31 * result + (resourceSize != null ? resourceSize.hashCode() : 0);
         return result;
     }
 }
