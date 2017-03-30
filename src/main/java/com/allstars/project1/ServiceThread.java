@@ -10,6 +10,7 @@ import java.io.*;
 import java.net.Socket;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -42,32 +43,12 @@ public class ServiceThread extends Thread {
             throw new ServerException("invalid resource");
         }else if (resource.getUri().isEmpty()) {//uri is empty
             throw new ServerException("missing resource");
-        }else if (!resource.getUri().matches("(.*):(.*)")) { //not an absolute uri
+        }
+        else if (!Paths.get(resource.getUri()).toUri().isAbsolute()) { //not an absolute uri
             throw new ServerException("missing resource");
         }else if (resourceStorage.getUriSet().contains(resource.getUri())) { // duplicate uri
             throw new ServerException("invalid resource");
         }
-    }
-
-    private  void checkRemove(Resource resource) throws  ServerException {
-
-
-        Resource r = new Resource(null,null,null,resource.getUri(),
-                resource.getChannel(),resource.getOwner(),null);
-
-        if (resource.getOwner().length()==1&&resource.getOwner().toCharArray()[0]=='*') {// * owner
-            throw new ServerException("invalid resource");
-        }else if (resource.getUri().isEmpty()) {//uri is empty
-            throw new ServerException("missing resource");
-        }else if (!resource.getUri().matches("(.*):(.*)")) { //not an absolute uri
-            throw new ServerException("missing resource");
-        }else if (resourceStorage.searchWithTemplate(r).isEmpty()){ //did not exist
-            throw new ServerException("cannot remove resource");
-        }
-    }
-
-    private void checkShare(Resource resource)  throws ServerException {
-
     }
 
     private void respondSuccess() throws IOException {
@@ -91,20 +72,24 @@ public class ServiceThread extends Thread {
     }
 
     private void publish(Resource resource) throws ServerException, IOException {
-        Resource r = new Resource(null,null,null,resource.getUri(),
-                resource.getChannel(),resource.getOwner(),null);
-        if (!resourceStorage.searchWithTemplate(r).isEmpty()){ //did not exist
+        if (resourceStorage.containsKey(resource)){// check whether it is an update
             resourceStorage.remove(resource);
+            resourceStorage.add(resource);
+        }else {
+            checkCommand(resource); // check whether it is valid
+            resourceStorage.add(resource);
         }
-        checkCommand(resource);
-        resourceStorage.add(resource);
         respondSuccess();
     }
 
     private void remove(Resource resource) throws ServerException, IOException {
-        checkRemove(resource);
-        resourceStorage.remove(resource);
-        respondSuccess();
+        if (resourceStorage.containsKey(resource)){
+            resourceStorage.remove(resource);
+            respondSuccess();
+        }else{
+            checkCommand(resource); // check whether it is valid
+            throw new ServerException("cannot remove resource"); // the resource did not exist
+        }
     }
 
     private void share(String secret, Resource resource) throws ServerException, IOException {
@@ -119,10 +104,17 @@ public class ServiceThread extends Thread {
             }
             if (!f.exists()) {
                 throw new ServerException("invalid resource");
-            } else {
-                System.out.println("add to resource");
-                resourceStorage.add(resource);
-                respondSuccess();
+            } else{
+                if (f.isFile()){
+                    checkCommand(resource);
+                    System.out.println("add to resource");
+                    resourceStorage.add(resource);
+                    respondSuccess();
+                }
+                else{
+                    // not sure whether it is cannot or missing
+                    throw new ServerException("cannot share resource");
+                }
             }
         }
     }
