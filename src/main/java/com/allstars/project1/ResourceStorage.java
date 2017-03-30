@@ -34,6 +34,10 @@ public class ResourceStorage {
         System.out.println(this.toJson());
     }
 
+    public synchronized boolean containsKey(Resource r){
+        return resources.containsKey(r);
+    }
+
     // for debug usage
     public synchronized String toJson() {
         return new Gson().toJson(resources.values().toArray(new Resource[this.resources.size()]));
