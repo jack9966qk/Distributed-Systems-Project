@@ -8,5 +8,6 @@ import com.google.gson.Gson;
 public class Constants {
     public static final Gson GSON = new Gson();
     public static final int DEFAULT_EXCHANGE_INTERVAL = 1000 * 60 * 10;
+    public static final int DEFAULT_CONNECTION_INTERVAL = 1000;
     // TODO more...
 }

@@ -171,8 +171,14 @@ public class ServiceThread extends Thread {
     }
 
     private void exchange(EzServer[] servers) throws ServerException, IOException {
-        this.serverList.addAll(Arrays.asList(servers));
-        System.out.println(this.serverList);
+        Debug.infoPrintln("handle exchange request");
+        Debug.infoPrintln("request server list: " + Arrays.toString(servers));
+        for (EzServer server : servers) {
+            if (Server.self != server) {
+                this.serverList.add(server);
+            }
+        }
+        Debug.infoPrintln("updated server list: " + this.serverList);
         respondSuccess();
     }
 

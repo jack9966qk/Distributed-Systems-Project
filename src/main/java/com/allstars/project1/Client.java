@@ -1,6 +1,7 @@
 package com.allstars.project1;
 
 import java.io.*;
+import java.net.InetAddress;
 import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -181,6 +182,8 @@ public class Client {
         DataInputStream in = new DataInputStream(socket.getInputStream());
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
 
+        Debug.infoPrintln(makeJsonFrom("EXCHANGE", servers));
+
         // send request
         out.writeUTF(makeJsonFrom("EXCHANGE", servers));
 
@@ -288,6 +291,7 @@ public class Client {
             } else if (cmd.hasOption("exchange")) {
                 EzServer[] servers = Arrays.stream(cmd.getOptionValue("servers").split(","))
                         .map(EzServer::fromString).toArray(EzServer[]::new);
+                Debug.infoPrintln(Arrays.toString(servers));
                 exchange(socket, servers);
             }
         } catch (IOException e) {
