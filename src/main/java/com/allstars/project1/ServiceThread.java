@@ -12,6 +12,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by Jack on 24/3/2017.
@@ -62,7 +63,7 @@ public class ServiceThread extends Thread {
     }
 
     private void respondResource(Resource resource, long size) throws IOException {
-        outputStream.writeUTF(resource.toJsonWithSize(size));
+        outputStream.writeUTF(resource.sizeAdded(size).toJson());
     }
 
     private void respondResultSize(int size) throws IOException {
@@ -72,6 +73,7 @@ public class ServiceThread extends Thread {
     }
 
     private void publish(Resource resource) throws ServerException, IOException {
+        // TODO check URI not a file scheme
         if (resourceStorage.containsKey(resource)){// check whether it is an update
             resourceStorage.remove(resource);
             resourceStorage.add(resource);
@@ -107,7 +109,7 @@ public class ServiceThread extends Thread {
             } else{
                 if (f.isFile()){
                     checkCommand(resource);
-                    System.out.println("add to resource");
+                    Debug.println("add to resource");
                     resourceStorage.add(resource);
                     respondSuccess();
                 }
@@ -120,7 +122,9 @@ public class ServiceThread extends Thread {
     }
 
     private void query(Resource template, boolean relay) throws ServerException, IOException {
-        Set<Resource> results = resourceStorage.searchWithTemplate(template);
+        Set<Resource> results = resourceStorage.searchWithTemplate(template).stream().map(
+                r -> r.ezServerAdded(Server.self) // add EzServer info for all result from itself
+        ).collect(Collectors.toSet());
 
         if (relay) {
             for (EzServer server : serverList) {
@@ -135,7 +139,7 @@ public class ServiceThread extends Thread {
 
         respondSuccess();
         for (Resource resource : results) {
-            respondResource(resource);
+            respondResource(resource.ownerHidden()); // hide owner information
         }
         respondResultSize(results.size());
     }
@@ -150,11 +154,11 @@ public class ServiceThread extends Thread {
             String path = uri.getPath();
             File file = new File(path);
             FileInputStream fileInputStream = new FileInputStream(file);
-            System.out.println("send success");
+            Debug.println("send success");
             respondSuccess();
-            System.out.println("send resource");
+            Debug.println("send resource");
             respondResource(resource, file.length());
-            System.out.println("send file");
+            Debug.println("send file");
             byte[] bytes = new byte[16 * 1024];
             int count;
             while ((count = fileInputStream.read(bytes)) > 0) {
@@ -198,27 +202,27 @@ public class ServiceThread extends Thread {
 
             String command = obj.get("command").getAsString();
             if (command.equals("PUBLISH")) {
-                Resource resource = Resource.fromJsonElem(obj.get("resource"));
+                Resource resource = Resource.parseAndNormalise(obj.get("resource"));
                 publish(resource);
             } else if (command.equals("REMOVE")) {
-                Resource resource = Resource.fromJsonElem(obj.get("resource"));
+                Resource resource = Resource.parseAndNormalise(obj.get("resource"));
                 remove(resource);
             } else if (command.equals("SHARE")) {
                 String secret = obj.get("secret").getAsString();
-                System.out.println(obj);
-                Resource resource = Resource.fromJsonElem(obj.get("resource"));
+                Debug.println(obj);
+                Resource resource = Resource.parseAndNormalise(obj.get("resource"));
                 share(secret, resource);
             } else if (command.equals("QUERY")) {
-                System.out.println(reqJson);
+                Debug.println(reqJson);
                 boolean relay = obj.get("relay").getAsBoolean();
                 Resource resourceTemplate = Resource.fromJsonElem(obj.get("resourceTemplate"));
                 query(resourceTemplate, relay);
             } else if (command.equals("FETCH")) {
-                System.out.println(obj.get("resourceTemplate"));
+                Debug.println(obj.get("resourceTemplate"));
                 Resource resourceTemplate = Resource.fromJsonElem(obj.get("resourceTemplate"));
                 fetch(resourceTemplate);
             } else if (command.equals("EXCHANGE")) {
-                System.out.println(obj);
+                Debug.println(obj);
                 exchange(new Gson().fromJson(obj.get("serverList"), EzServer[].class));
             } else {
                 throw new ServerException("invalid command");

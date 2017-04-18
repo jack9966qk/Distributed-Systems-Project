@@ -4,6 +4,8 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class Resource {
     public String getName() {
@@ -69,20 +71,72 @@ public class Resource {
         this.ezServer = ezServer;
     }
 
+    public Resource ezServerAdded(EzServer ezServer) {
+        return new Resource(
+                this.name,
+                this.description,
+                this.tags,
+                this.uri,
+                this.channel,
+                this.owner,
+                ezServer.toString(),
+                this.resourceSize
+        );
+    }
+
+    public Resource sizeAdded(long size) {
+        return new Resource(
+                this.name,
+                this.description,
+                this.tags,
+                this.uri,
+                this.channel,
+                this.owner,
+                this.ezServer,
+                size
+        );
+    }
+
+    public Resource ownerHidden() {
+        return new Resource(
+                this.name,
+                this.description,
+                this.tags,
+                this.uri,
+                this.channel,
+                "*",
+                this.ezServer,
+                this.resourceSize
+        );
+    }
+
+    static List<String> stringsToLower(String[] strings) {
+        return Arrays.stream(strings).map(t -> t.toLowerCase()).collect(Collectors.toList());
+    }
+
     public boolean matchesTemplate(Resource template) {
         if (!this.channel.equals(template.channel)) {
             return false;
         } else if (!template.getOwner().equals("") && !this.owner.equals(template.owner)) {
             return false;
-        } else if (template.getTags() != null && !Arrays.asList(this.tags).containsAll(Arrays.asList(template.tags))) { // TODO case insensitive
+        } else if (template.getTags() != null &&
+                !stringsToLower(this.tags).containsAll(stringsToLower(template.tags))) {
             return false;
         } else if (template.getUri() != null && !template.getUri().equals("") && !this.uri.equals(template.getUri())) {
             return false;
         } else {
-            return true; // TODO if candidate name contains the template name as a substring (for non "" template name), OR
-//            The candidate description contains the template description as a substring (for non "" template descriptions)
-//            OR
-//            The template description and name are both ""))
+            if (this.name.contains(template.getName())) {
+                // if candidate name contains the template name as a substring (for non "" template name), OR
+                return true;
+            } else if (this.description.contains(template.getDescription())) {
+                // The candidate description contains the template description as a substring (for non "" template descriptions) OR
+                return true;
+            } else if (template.getDescription().equals("") && template.getName().equals("")) {
+                // The template description and name are both ""
+                return true;
+            } else {
+                return false;
+            }
         }
     }
 
@@ -94,10 +148,6 @@ public class Resource {
         return new Gson().toJson(this);
     }
 
-    public String toJsonWithSize(long size) {
-        return new Resource(this.name, this.description, this.tags, this.uri, this.channel, this.owner, this.ezServer, size).toJson();
-    }
-
     public static Resource fromJson(String json) {
         return new Gson().fromJson(json, Resource.class);
     }
@@ -106,15 +156,45 @@ public class Resource {
         return new Gson().fromJson(elem, Resource.class);
     }
 
+    public static Resource parseAndNormalise(String json) {
+        Resource r = fromJson(json);
+        return r.normalised();
+    }
+    
+    public static Resource parseAndNormalise(JsonElement elem) {
+        Resource r = fromJsonElem(elem);
+        return r.normalised();
+    }
+
+    static String normaliseStr(String s) {
+        return s.replace("\0", "").trim();
+    }
+
+    /**
+     * Fill missing fields with empty string and array,
+     * remove "\0" and whitespaces at the start/end
+     * @return normalised resource
+     */
+    public Resource normalised() {
+        String name = (this.name != null) ? normaliseStr(this.name) : "";
+        String description = (this.description != null) ? normaliseStr(this.description) : "";
+        String[] tags;
+        if (this.tags != null) {
+            tags = Arrays.stream(this.tags).map(Resource::normaliseStr).toArray(String[]::new);
+        } else {
+            tags = new String[0];
+        }
+        String uri = (this.uri != null) ? normaliseStr(this.uri) : "";
+        String channel = (this.channel != null) ? normaliseStr(this.channel) : "";
+        String owner = (this.owner != null) ? normaliseStr(this.owner) : "";
+        String ezServer = (this.ezServer != null) ? normaliseStr(this.ezServer) : "";
+        return new Resource(name, description, tags, uri, channel, owner, ezServer);
+    }
 
     // =========EQUALS AND HASHCODE AUTOMATICALLY IMPLEMENTED BY INTELLIJ IDEA=======
     // may need to be changed in the future
-
     @Override
     public boolean equals(Object o) {
-
-        // TODO match only primary keys
-
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
