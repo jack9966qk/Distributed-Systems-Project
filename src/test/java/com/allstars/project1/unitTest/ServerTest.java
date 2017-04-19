@@ -1,21 +1,21 @@
 package com.allstars.project1.unitTest;
 
 import com.allstars.project1.Server;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 
-import static org.junit.jupiter.api.Assertions.*;
+import java.util.ArrayList;
 
 /**
  * Created by Zheping on 2017/3/25.
  */
 class ServerTest {
+
+    ServiceThread service = null;
 
     class ServiceThread extends Thread {
 
@@ -51,7 +51,8 @@ class ServerTest {
 
     @BeforeEach
     void setUp() {
-        new ServiceThread().start();
+        service = new ServiceThread();
+        service.start();
         try {
             Thread.sleep(10000);
         } catch (InterruptedException e) {
@@ -119,9 +120,20 @@ class ServerTest {
                 "}" +
                 "]}";
 
+        ArrayList<String> commands = new ArrayList<String>();
+        commands.add(publish);
+        commands.add(remove);
+        commands.add(query);
+        commands.add(exchange);
+        commands.add(fetch);
+
         try {
             c = new Client();
-            c.sendRequest(exchange);
+            for (String s : commands) {
+                System.out.println(s);
+                c.sendRequest(s);
+            }
+
         } catch (IOException e) {
             e.printStackTrace();
         }

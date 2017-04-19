@@ -1,7 +1,7 @@
 package com.allstars.project1.unitTest;
 
 import com.allstars.project1.Client;
-import static org.junit.jupiter.api.Assertions.fail;
+import com.allstars.project1.Resource;
 
 import org.apache.commons.cli.CommandLine;
 import org.junit.jupiter.api.*;
@@ -14,14 +14,14 @@ import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 /**
  * Created by Zheping on 2017/3/26.
  */
 class ClientTest {
 
-    static ServerSocket serviceSocket = null;
+    private static ServerSocket serviceSocket = null;
+    private Socket clientSocket = null;
+    private Resource resource;
 
     class ServiceThread extends Thread {
         private DataInputStream inputStream;
@@ -84,11 +84,10 @@ class ClientTest {
 
     @Test
     void connectToServer() {
-        String connectionTest = "connectToServer succeed";
         String host = "localhost";
         int port = 2334;
 
-        Socket clientSocket = Client.connectToServer(host, port);
+        clientSocket = Client.connectToServer(host, port);
 
         serverAccept();
     }
@@ -100,38 +99,83 @@ class ClientTest {
         System.out.println(cmd.toString());
     }
 
+    @Test
+    void publish() {
+        String[] publish = new String[] {"-host","localhost", "-port", "2334","-publish","-name","''",
+                "-description","''","-uri","",
+                "-tags",""};
+        CommandLine cmd = Client.getOptions(publish);
+        resource = Client.makeResourceFromCmd(cmd);
+
+        try {
+            Client.publish(clientSocket, resource);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     @Disabled
     @Test
     void share() {
-        String[] share;
+        String share;
     }
 
     @Disabled
     @Test
     void query() {
-        String[] query;
-        fail("Not fully implemented yet.");
+//        String query = "{'command': 'QUERY', " +
+//                "'relay': true, " +
+//                "'resourceTemplate': {" +
+//                "'name': '', " +
+//                "'tags': [], " +
+//                "'description': '', " +
+//                "'uri': '', " +
+//                "'channel': '', " +
+//                "'owner': '', " +
+//                "'ezserver': null}}";
+        // give a resource template
+        // Client.query(clientSocket, false, resource);
     }
 
     @Disabled
     @Test
     void fetch() {
-        String[] fetch;
-        fail("Not fully implemented yet.");
+//        String fetch = "{'command': 'FETCH', " +
+//                "'resourceTemplate': {'name': '', " +
+//                "'tags': [], " +
+//                "'description': '', " +
+//                "'uri': 'file:\\/\\/\\/\\/home\\/aaron\\/EZShare\\/ezshare.jar', " +
+//                "'channel': '', " +
+//                "'owner': '', " +
+//                "'ezserver': null}}";
     }
 
     @Disabled
     @Test
     void exchange() {
-        String[] exchange;
-        fail("Not fully implemented yet.");
+//        String exchange = "{'command': 'EXCHANGE', " +
+//                "'serverList': [" +
+//                "{" +
+//                "'hostname': 'localhost', " +
+//                "'port': 2333" +
+//                "}," +
+//                "{" +
+//                "'hostname': '115.146.85.24', " +
+//                "'port': 2333" +
+//                "}" +
+//                "]}";
     }
 
 
-    @Disabled
     @Test
     void makeResourceFromCmd() {
-        fail("Not fully implemented yet.");
+        String[] publish = new String[] {"-host","localhost", "-port", "2334","-publish","-name","''",
+                                        "-description","''","-uri","",
+                                        "-tags",""};
+        CommandLine cmd = Client.getOptions(publish);
+
+        resource = Client.makeResourceFromCmd(cmd);
+        System.out.println(resource.getName());
     }
 
 }
