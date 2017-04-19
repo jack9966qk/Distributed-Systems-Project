@@ -35,7 +35,7 @@ public class ResourceStorage {
     }
 
     public synchronized boolean containsKey(Resource r){
-        return resources.containsKey(r);
+        return resources.containsKey(r.getKey());
     }
 
     // for debug usage
