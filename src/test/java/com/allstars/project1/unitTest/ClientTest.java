@@ -87,7 +87,11 @@ class ClientTest {
         String host = "localhost";
         int port = 2334;
 
-        clientSocket = Client.connectToServer(host, port);
+        try {
+            clientSocket = Client.connectToServer(host, port, 1000);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         serverAccept();
     }
@@ -175,7 +179,7 @@ class ClientTest {
         CommandLine cmd = Client.getOptions(publish);
 
         resource = Client.makeResourceFromCmd(cmd);
-        System.out.println(resource.getName());
+        Assertions.assertTrue(resource.getName().equals(""));
     }
 
 }
