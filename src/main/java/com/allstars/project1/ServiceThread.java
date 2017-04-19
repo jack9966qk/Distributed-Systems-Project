@@ -1,11 +1,8 @@
 package com.allstars.project1;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.sun.org.apache.xerces.internal.util.URI;
-
 import java.io.*;
 import java.net.Socket;
 import java.net.URISyntaxException;
@@ -32,8 +29,6 @@ public class ServiceThread extends Thread {
         this.resourceStorage = resourceStorage;
         this.serverList = serverList;
     }
-
-
 
     private void checkCommand(Resource resource) throws ServerException {
         // created a resource only with the primary keys
@@ -128,7 +123,7 @@ public class ServiceThread extends Thread {
 
         if (relay) {
             for (EzServer server : serverList) {
-                Socket socket = Client.connectToServer(server.hostname, server.port);
+                Socket socket = Client.connectToServer(server.hostname, server.port, Constants.DEFAULT_TIMEOUT);
                 results.addAll(Client.query(socket, false, template));
             }
         }

@@ -160,7 +160,7 @@ public class Resource {
         Resource r = fromJson(json);
         return r.normalised();
     }
-    
+
     public static Resource parseAndNormalise(JsonElement elem) {
         Resource r = fromJsonElem(elem);
         return r.normalised();

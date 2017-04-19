@@ -1,6 +1,7 @@
 package com.allstars.project1;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.Socket;
 import java.util.HashSet;
 import java.util.Set;
@@ -28,7 +29,7 @@ public class ExchangeThread extends Thread {
 
     private boolean running = false;
 
-    private void exchange() throws IOException {
+    private void exchange() {
         Debug.infoPrintln("send exchange request to servers: " + serverList);
         Set<EzServer> allServers = new HashSet<>();
         allServers.addAll(serverList);
@@ -43,9 +44,17 @@ public class ExchangeThread extends Thread {
         }
         for (EzServer server : servers) {
             Debug.infoPrintln("sending to " + server);
-            Socket socket = Client.connectToServer(server.hostname, server.port);
-            Client.exchange(socket, allServers.toArray(new EzServer[serverList.size()]));
-            socket.close();
+            Socket socket = null;
+            try {
+                socket = Client.connectToServer(server.hostname, server.port, Constants.DEFAULT_TIMEOUT);
+                Client.exchange(socket, allServers.toArray(new EzServer[serverList.size()]));
+                socket.close();
+            } catch (ConnectException e) {
+                Debug.infoPrintln("Failed to connect to " + server + ". Remove server from exchange list");
+                serverList.remove(server);
+            } catch (IOException e) {
+                Debug.infoPrintln("Unknown error communicating with " + server);
+            }
         }
     }
 
@@ -63,11 +72,7 @@ public class ExchangeThread extends Thread {
                 e.printStackTrace();
             }
 
-            try {
-                exchange();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            exchange();
         }
 
         Debug.infoPrintln("exchange thread terminated");
