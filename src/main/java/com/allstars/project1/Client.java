@@ -1,9 +1,7 @@
 package com.allstars.project1;
 
 import java.io.*;
-import java.net.Socket;
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.net.*;
 import java.util.*;
 
 import com.google.gson.Gson;
@@ -135,7 +133,7 @@ public class Client {
         return resources;
     }
 
-    public static void fetch(Socket socket, Resource template) throws IOException, URISyntaxException {
+    public static void fetch(Socket socket, Resource template) throws IOException {
         // http://stackoverflow.com/questions/9520911/java-sending-and-receiving-file-byte-over-sockets
 
         DataInputStream in = new DataInputStream(socket.getInputStream());
@@ -157,7 +155,12 @@ public class Client {
         if (success) {
             String path = resource.getUri();
             String filename = path.substring(path.lastIndexOf('/') + 1);
-            java.net.URI uri = new java.net.URI("./" + filename);
+            URI uri = null;
+            try {
+                uri = new URI("./" + filename);
+            } catch (URISyntaxException e) {
+                e.printStackTrace();
+            }
             FileOutputStream fileOutputStream = new FileOutputStream(new File(uri.getPath()));
 
             byte[] bytes = new byte[16*1024];
@@ -174,12 +177,14 @@ public class Client {
             fileOutputStream.close();
         }
         String sizeResponse = in.readUTF();
-        // TODO
+        // TODO check size
     }
 
     public static void exchange(Socket socket, EzServer[] servers) throws IOException {
         DataInputStream in = new DataInputStream(socket.getInputStream());
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+
+        Debug.infoPrintln(makeJsonFrom("EXCHANGE", servers));
 
         // send request
         out.writeUTF(makeJsonFrom("EXCHANGE", servers));
@@ -238,24 +243,19 @@ public class Client {
     }
 
 
-    public static Socket connectToServer(String host, int port) {
+    public static Socket connectToServer(String host, int port, int timeout) throws IOException {
         // TODO connect to server
-        Socket socket = null;
-        try {
-            socket = new Socket(host, port);
-
-            System.out.println("Connection Established");
-            return socket;
+        Socket socket;
+        socket = new Socket(host, port);
+        socket.setSoTimeout(timeout);
+        System.out.println("Connection Established");
+        return socket;
 //            DataInputStream in = new DataInputStream(socket.getInputStream());
 //            DataOutputStream out = new DataOutputStream(socket.getOutputStream());
 //            System.out.println("Sending data");
 //            out.writeUTF(args[0]);     // UTF is a string encoding see Sn. 4.4
 //            String data = in.readUTF();   // read a line of data from the stream
 //            System.out.println("Received: "+ data) ;
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
     }
 
 
@@ -270,7 +270,13 @@ public class Client {
         // TODO print error if no command
         // ...
 
-        Socket socket = connectToServer(host, port);
+        Socket socket = null;
+        try {
+            socket = connectToServer(host, port, Constants.DEFAULT_TIMEOUT);
+        } catch (IOException e) {
+            Debug.infoPrintln("Failed to connect to server, please check server availability and internet connection.");
+            return;
+        }
 
         try {
             if (cmd.hasOption("publish")) {
@@ -288,12 +294,13 @@ public class Client {
             } else if (cmd.hasOption("exchange")) {
                 EzServer[] servers = Arrays.stream(cmd.getOptionValue("servers").split(","))
                         .map(EzServer::fromString).toArray(EzServer[]::new);
+                Debug.infoPrintln(Arrays.toString(servers));
                 exchange(socket, servers);
             }
+        } catch (SocketTimeoutException e) {
+            Debug.infoPrintln("Timeout communicating with server, please check connections and try again.");
         } catch (IOException e) {
-            e.printStackTrace();
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
+            Debug.infoPrintln("Unknown connection error, please check connections and try again.");
         }
     }
 }

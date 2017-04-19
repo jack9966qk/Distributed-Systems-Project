@@ -14,22 +14,24 @@ import org.apache.commons.cli.*;
 public class Server {
     public static ResourceStorage resourceStorage = new ResourceStorage();
     public static Set<EzServer> serverList = Collections.synchronizedSet(new HashSet<>());
+    public static EzServer self;
 
     public static void startServer(int connectionIntervalLimit, int exchangeInterval, String secret, String host, int port) {
+        self = new EzServer(host, port);
         try {
             // for sending exchange request to other servers
             // TODO finish this and enable
-            ExchangeThread exchangeThread = new ExchangeThread(exchangeInterval, serverList, host, port);
-//            exchangeThread.start();
+            ExchangeThread exchangeThread = new ExchangeThread(exchangeInterval, serverList);
+            exchangeThread.start();
 
             ServerSocket listenSocket = new ServerSocket(port);
             int i = 0;
             while (true) {
                 // wait for new client
-                System.out.println("Server listening for a connection");
+                Debug.infoPrintln("Server listening for a connection");
                 Socket clientSocket = listenSocket.accept();
                 i++;
-                System.out.println("Received connection " + i );
+                Debug.infoPrintln("Received connection " + i );
                 // start a new thread handling the client
                 // TODO limitation on total number of threads
                 ServiceThread c = new ServiceThread(clientSocket, secret, resourceStorage, serverList);
@@ -37,7 +39,7 @@ public class Server {
                 Thread.sleep(connectionIntervalLimit);
             }
         } catch(IOException e) {
-            System.out.println("Listen socket:"+e.getMessage());
+            Debug.infoPrintln("Listen socket:"+e.getMessage());
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -63,10 +65,10 @@ public class Server {
         try {
             cmd = parser.parse(options, args);
         } catch (ParseException e) {
-            System.out.println("parse exception");
-        } finally {
-            return cmd;
+            Debug.infoPrintln("parse exception");
         }
+
+        return cmd;
     }
 
     public static void main(String[] args) {
@@ -74,11 +76,12 @@ public class Server {
 
         // set debug
         Debug.setEnablePrint(cmd.hasOption("debug"));
+        Debug.infoPrintln("hello");
 
         // determine secret
         String secret = null;
         if (!cmd.hasOption("secret")) {
-            // TODO generate random secret
+            // generate random secret
             // from http://stackoverflow.com/questions/41107/how-to-generate-a-random-alpha-numeric-string
             SecureRandom random = new SecureRandom();
             secret = new BigInteger(130, random).toString(32);
@@ -98,13 +101,13 @@ public class Server {
             if (cmd.hasOption("connectionintervallimit")) {
                 connectionIntervalLimit = Integer.parseInt(cmd.getOptionValue("connectionintervallimit"));
             } else {
-                connectionIntervalLimit = 1000;
+                connectionIntervalLimit = Constants.DEFAULT_CONNECTION_INTERVAL;
             }
             int exchangeInterval;
             if (cmd.hasOption("exchangeinterval")) {
                 exchangeInterval = Integer.parseInt(cmd.getOptionValue("exchangeinterval"));
             } else {
-                exchangeInterval = 1000;
+                exchangeInterval = Constants.DEFAULT_EXCHANGE_INTERVAL;
             }
 
             // start the server

@@ -15,6 +15,7 @@ public class ServerException extends Exception {
         this.errorMessage = errorMessage;
     }
 
+
     public String toJson() {
         Map<String, String> map = new HashMap<>();
         map.put("response", "ERROR");
