@@ -16,6 +16,18 @@ public class Server {
     public static Set<EzServer> serverList = Collections.synchronizedSet(new HashSet<>());
     public static EzServer self;
 
+    private static boolean running = true;
+    private static Thread mainThread;
+
+    public static boolean isRunning() {
+        return running;
+    }
+
+    public static void stop() {
+        running = false;
+        mainThread.interrupt();
+    }
+
     public static void startServer(int connectionIntervalLimit, int exchangeInterval, String secret, String host, int port) {
         self = new EzServer(host, port);
         try {
@@ -26,7 +38,7 @@ public class Server {
 
             ServerSocket listenSocket = new ServerSocket(port);
             int i = 0;
-            while (true) {
+            while (running) {
                 // wait for new client
                 Debug.infoPrintln("Server listening for a connection");
                 Socket clientSocket = listenSocket.accept();
@@ -41,7 +53,9 @@ public class Server {
         } catch(IOException e) {
             Debug.infoPrintln("Listen socket:"+e.getMessage());
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            if (running) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -73,6 +87,8 @@ public class Server {
 
     public static void main(String[] args) {
         CommandLine cmd = getOptions(args);
+
+        mainThread = Thread.currentThread();
 
         // set debug
         Debug.setEnablePrint(cmd.hasOption("debug"));

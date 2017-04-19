@@ -15,9 +15,9 @@ import java.util.ArrayList;
  */
 class ServerTest {
 
-    ServiceThread service = null;
+    ServerThread service = null;
 
-    class ServiceThread extends Thread {
+    class ServerThread extends Thread {
 
         @Override
         public void run() {
@@ -51,7 +51,7 @@ class ServerTest {
 
     @BeforeEach
     void setUp() {
-        service = new ServiceThread();
+        service = new ServerThread();
         service.start();
         try {
             Thread.sleep(10000);
