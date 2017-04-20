@@ -51,9 +51,7 @@ public class ServiceThread extends Thread {
              throw new ServerException("invalid resourceTemplate");
     	 }else if (!Paths.get(template.getUri()).toUri().isAbsolute()) { 
              throw new ServerException("missing resourceTemplate");
-         }else if (resourceStorage.getUriSet().contains(template.getUri())) { 
-             throw new ServerException("invalid resourceTemplate");
-         }	
+         }
     }
 
     private void respondSuccess() throws IOException {
