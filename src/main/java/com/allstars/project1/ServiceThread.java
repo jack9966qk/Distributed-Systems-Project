@@ -124,7 +124,6 @@ public class ServiceThread extends Thread {
     }
 
     private void query(Resource template, boolean relay) throws ServerException, IOException {
-        checkTemplate(template);
         Set<Resource> results = resourceStorage.searchWithTemplate(template).stream().map(
                 r -> r.ezServerAdded(Server.self) // add EzServer info for all result from itself
         ).collect(Collectors.toSet());
