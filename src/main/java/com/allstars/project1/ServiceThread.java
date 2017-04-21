@@ -46,6 +46,16 @@ public class ServiceThread extends Thread {
             throw new ServerException("invalid resource");
         }
     }
+       private void checkTemplate(Resource template) throws ServerException{
+            Resource r = new Resource(null,null,null,template.getUri(),
+                template.getChannel(),null,null);
+    	 if (template.getOwner()=="*") {
+             throw new ServerException("invalid resourceTemplate");
+    	 }else if (!Paths.get(template.getUri()).toUri().isAbsolute()) { 
+             throw new ServerException("missing resourceTemplate");
+         }else if(!resourceStorage.containsKey(r)){
+          throw new ServerException("missing resourceTemplate");}
+    }
 
     private void respondSuccess() throws IOException {
         JsonObject json = new JsonObject();
@@ -140,7 +150,7 @@ public class ServiceThread extends Thread {
     }
 
     private void fetch(Resource template) throws ServerException, IOException {
-        // TODO check valid...
+        checkTemplate(template);// TODO check valid...
 
         Resource resource = new ArrayList<>(Server.resourceStorage.searchWithTemplate(template)).get(0);
 
@@ -172,6 +182,9 @@ public class ServiceThread extends Thread {
     private void exchange(EzServer[] servers) throws ServerException, IOException {
         Debug.infoPrintln("handle exchange request");
         Debug.infoPrintln("request server list: " + Arrays.toString(servers));
+                if(!((servers) instanceof EzServer[])){
+        	throw new ServerException("missing server list");
+        }else{
         for (EzServer server : servers) {
             if (Server.self != server) {
                 this.serverList.add(server);
@@ -180,7 +193,7 @@ public class ServiceThread extends Thread {
         Debug.infoPrintln("updated server list: " + this.serverList);
         respondSuccess();
     }
-
+}
 
     @Override
     public void run() {
