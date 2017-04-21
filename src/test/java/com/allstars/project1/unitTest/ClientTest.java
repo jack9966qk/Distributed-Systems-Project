@@ -173,12 +173,13 @@ class ClientTest {
 
     @Test
     void makeResourceFromCmd() {
-        String[] publish = new String[] {"-host","localhost", "-port", "2334","-publish","-name","''",
-                                        "-description","''","-uri","",
+        String[] publish = new String[] {"-host","localhost", "-port", "2334","-publish","-name","",
+                                        "-description","","-uri","",
                                         "-tags",""};
         CommandLine cmd = Client.getOptions(publish);
 
         resource = Client.makeResourceFromCmd(cmd);
+        System.out.println(resource.getName());
         Assertions.assertTrue(resource.getName().equals(""));
     }
 
