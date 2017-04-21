@@ -124,8 +124,8 @@ class ServerTest {
         commands.add(publish);
         commands.add(remove);
         commands.add(query);
+        //commands.add(fetch);
         commands.add(exchange);
-        commands.add(fetch);
 
         try {
             c = new Client();
