@@ -55,7 +55,7 @@ public class ServiceThread extends Thread {
             Resource r = new Resource(null,null,null,template.getUri(),
                 template.getChannel(),null,null);
     	 if (r.getUri().isEmpty()) {
-            throw new ServerException("missing resource");
+            throw new ServerException("missing resourceTemplate");
         }else if (!Paths.get(template.getUri()).toUri().isAbsolute()) { 
              throw new ServerException("missing resourceTemplate");
          }else if(!resourceStorage.containsKey(r)){
