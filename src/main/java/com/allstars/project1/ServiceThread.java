@@ -34,6 +34,11 @@ public class ServiceThread extends Thread {
         this.serverList = serverList;
     }
 
+    private boolean isFile(String uri){
+        File f = new File(uri);
+        return  f.isFile();
+    }
+
     private void checkCommand(Resource resource) throws ServerException {
         // created a resource only with the primary keys
         Resource r = new Resource(null,null,null,resource.getUri(),
@@ -82,7 +87,10 @@ public class ServiceThread extends Thread {
     }
 
     private void publish(Resource resource) throws ServerException, IOException {
-        // TODO check URI not a file scheme
+        // check whether the uri is a file scheme
+        if (isFile(resource.getUri())){
+            throw new ServerException("cannot publish resource");
+        }
         if (resourceStorage.containsKey(resource)){// check whether it is an update
             resourceStorage.remove(resource);
             resourceStorage.add(resource);
@@ -107,26 +115,19 @@ public class ServiceThread extends Thread {
         if (!secret.equals(this.secret)) {
             throw new ServerException("incorrect secret");
         } else {
-            File f = null;
-//            try {
-//                f = new File(new URL(resource.getUri()).toURI());
-//            } catch (URISyntaxException e) {
-//                e.printStackTrace();
-//            }
-            f = new File(URI.create(resource.getUri()));
-            if (!f.exists()) {
-                throw new ServerException("invalid resource");
-            } else{
-                if (f.isFile()){
-                    checkCommand(resource);
-                    Debug.println("add to resource");
-                    resourceStorage.add(resource);
-                    respondSuccess();
+            File f;
+            f = new File(resource.getUri());
+            if (f.isFile()){
+                if (!f.exists()) {
+                    throw new ServerException("invalid resource");
                 }
-                else{
-                    // not sure whether it is cannot or missing
-                    throw new ServerException("cannot share resource");
-                }
+                checkCommand(resource);
+                Debug.println("add to resource");
+                resourceStorage.add(resource);
+                respondSuccess();
+            }
+            else {
+                throw new ServerException("cannot share resource");
             }
         }
     }
