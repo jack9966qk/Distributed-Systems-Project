@@ -49,9 +49,9 @@ public class ServiceThread extends Thread {
        private void checkTemplate(Resource template) throws ServerException{
             Resource r = new Resource(null,null,null,template.getUri(),
                 template.getChannel(),null,null);
-    	 if (template.getOwner()=="*") {
-             throw new ServerException("invalid resourceTemplate");
-    	 }else if (!Paths.get(template.getUri()).toUri().isAbsolute()) { 
+    	 if (r.getUri().isEmpty()) {
+            throw new ServerException("missing resource");
+        }else if (!Paths.get(template.getUri()).toUri().isAbsolute()) { 
              throw new ServerException("missing resourceTemplate");
          }else if(!resourceStorage.containsKey(r)){
           throw new ServerException("missing resourceTemplate");}
