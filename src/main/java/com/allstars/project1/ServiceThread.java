@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import java.io.*;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Paths;
@@ -20,9 +21,13 @@ public class ServiceThread extends Thread {
     private String secret;
     private ResourceStorage resourceStorage;
     private Set<EzServer> serverList;
+    Socket socket;
+    Map<SocketAddress, Date> lastConnectionTime;
 
-    public ServiceThread(Socket clientSocket, String secret, ResourceStorage resourceStorage, Set<EzServer> serverList)
+    public ServiceThread(Map<SocketAddress, Date> lastConnectionTime, Socket clientSocket, String secret, ResourceStorage resourceStorage, Set<EzServer> serverList)
         throws IOException {
+        this.socket = clientSocket;
+        this.lastConnectionTime = lastConnectionTime;
         this.inputStream = new DataInputStream(clientSocket.getInputStream());
         this.outputStream = new DataOutputStream(clientSocket.getOutputStream());
         this.secret = secret;
@@ -198,6 +203,22 @@ public class ServiceThread extends Thread {
     @Override
     public void run() {
         try {
+            // wait for rest of connection interval
+            long waitTime = 0;
+            SocketAddress clientAddress = socket.getRemoteSocketAddress();
+            if (lastConnectionTime.containsKey(clientAddress)) {
+                Date lastTime = lastConnectionTime.get(clientAddress);
+                Date now = new Date();
+                waitTime = now.getTime() - lastTime.getTime();
+                if (waitTime < 0) {
+                    waitTime = 0;
+                }
+            }
+            wait(waitTime);
+
+            // record this connection time
+            lastConnectionTime.put(clientAddress, new Date());
+
             // read json from socket
             String reqJson = inputStream.readUTF();
             JsonParser parser = new JsonParser();
@@ -243,6 +264,8 @@ public class ServiceThread extends Thread {
             } catch (IOException e1) {
                 e1.printStackTrace();
             }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 }

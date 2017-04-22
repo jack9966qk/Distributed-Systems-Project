@@ -2,10 +2,7 @@ package com.allstars.project1;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.net.InetAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.net.UnknownHostException;
+import java.net.*;
 import java.security.SecureRandom;
 import java.util.*;
 
@@ -14,6 +11,7 @@ import org.apache.commons.cli.*;
 public class Server {
     public static ResourceStorage resourceStorage = new ResourceStorage();
     public static Set<EzServer> serverList = Collections.synchronizedSet(new HashSet<>());
+    public static HashMap<SocketAddress, Date> lastConnectionTime = new HashMap<>();
     public static EzServer self;
 
     private static boolean running = true;
@@ -42,11 +40,12 @@ public class Server {
                 // wait for new client
                 Debug.infoPrintln("Server listening for a connection");
                 Socket clientSocket = listenSocket.accept();
+                SocketAddress clientAddress = clientSocket.getRemoteSocketAddress();
                 i++;
                 Debug.infoPrintln("Received connection " + i );
                 // start a new thread handling the client
                 // TODO limitation on total number of threads
-                ServiceThread c = new ServiceThread(clientSocket, secret, resourceStorage, serverList);
+                ServiceThread c = new ServiceThread(lastConnectionTime, clientSocket, secret, resourceStorage, serverList);
                 c.start();
                 Thread.sleep(connectionIntervalLimit);
             }
