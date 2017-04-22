@@ -3,11 +3,10 @@ package com.allstars.project1;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.sun.jndi.toolkit.url.Uri;
+
 import java.io.*;
-import java.net.Socket;
-import java.net.SocketAddress;
-import java.net.URISyntaxException;
-import java.net.URL;
+import java.net.*;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -45,7 +44,7 @@ public class ServiceThread extends Thread {
         }else if (resource.getUri().isEmpty()) {//uri is empty
             throw new ServerException("missing resource");
         }
-        else if (!Paths.get(resource.getUri()).toUri().isAbsolute()) { //not an absolute uri
+        else if (!URI.create(resource.getUri()).isAbsolute()) { //not an absolute uri
             throw new ServerException("missing resource");
         }else if (resourceStorage.getUriSet().contains(resource.getUri())) { // duplicate uri
             throw new ServerException("invalid resource");
@@ -109,11 +108,12 @@ public class ServiceThread extends Thread {
             throw new ServerException("incorrect secret");
         } else {
             File f = null;
-            try {
-                f = new File(new URL(resource.getUri()).toURI());
-            } catch (URISyntaxException e) {
-                e.printStackTrace();
-            }
+//            try {
+//                f = new File(new URL(resource.getUri()).toURI());
+//            } catch (URISyntaxException e) {
+//                e.printStackTrace();
+//            }
+            f = new File(URI.create(resource.getUri()));
             if (!f.exists()) {
                 throw new ServerException("invalid resource");
             } else{
@@ -214,7 +214,7 @@ public class ServiceThread extends Thread {
                     waitTime = 0;
                 }
             }
-            wait(waitTime);
+            sleep(waitTime);
 
             // record this connection time
             lastConnectionTime.put(clientAddress, new Date());
