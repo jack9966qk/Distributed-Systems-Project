@@ -66,7 +66,7 @@ public class Client {
     }
 
 
-    private static void publish(Socket socket, Resource resource) throws IOException {
+    public static void publish(Socket socket, Resource resource) throws IOException {
         DataInputStream in = new DataInputStream(socket.getInputStream());
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
 
@@ -78,7 +78,7 @@ public class Client {
         handleResponse(response);
     }
 
-    private static void remove(Socket socket, Resource resource) throws IOException {
+    public static void remove(Socket socket, Resource resource) throws IOException {
         DataInputStream in = new DataInputStream(socket.getInputStream());
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
 
@@ -228,7 +228,7 @@ public class Client {
         }
     }
 
-    static Resource makeResourceFromCmd(CommandLine cmd) {
+    public static Resource makeResourceFromCmd(CommandLine cmd) {
         String name = cmd.getOptionValue("name", "");
         String description = cmd.getOptionValue("description", "");
         String[] tags = null;

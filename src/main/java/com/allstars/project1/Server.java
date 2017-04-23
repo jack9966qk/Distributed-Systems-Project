@@ -23,6 +23,7 @@ public class Server {
 
     public static void stop() {
         running = false;
+        mainThread.stop();
         mainThread.interrupt();
     }
 
