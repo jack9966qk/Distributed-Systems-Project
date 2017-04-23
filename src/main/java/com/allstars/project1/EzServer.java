@@ -1,5 +1,8 @@
 package com.allstars.project1;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
 /**
  * Created by Jack on 24/3/2017.
  */
@@ -17,6 +20,21 @@ public class EzServer {
         String host = parts[0];
         int port = Integer.parseInt(parts[1]);
         return new EzServer(host, port);
+    }
+
+    public static EzServer fromJson(String json) {
+        return fromJson(new JsonParser().parse(json).getAsJsonObject());
+    }
+
+    public static EzServer fromJson(JsonObject jsonObj) {
+        if (!jsonObj.has("port") || !jsonObj.has("hostname")) {
+            return null;
+        } else if (jsonObj.get("port").getAsJsonPrimitive().isNumber() &&
+                jsonObj.get("hostname").getAsJsonPrimitive().isString()) {
+            return Constants.GSON.fromJson(jsonObj, EzServer.class);
+        } else {
+            return null;
+        }
     }
 
     @Override

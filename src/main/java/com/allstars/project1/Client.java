@@ -184,10 +184,11 @@ public class Client {
         DataInputStream in = new DataInputStream(socket.getInputStream());
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
 
-        Debug.infoPrintln(makeJsonFrom("EXCHANGE", servers));
+        String message = makeJsonFrom("EXCHANGE", servers);
 
         // send request
-        out.writeUTF(makeJsonFrom("EXCHANGE", servers));
+        out.writeUTF(message);
+        Debug.infoPrintln("SENT: " + message);
 
         // wait for response
         String response = in.readUTF();
