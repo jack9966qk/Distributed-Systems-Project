@@ -7,6 +7,8 @@ import com.sun.jndi.toolkit.url.Uri;
 
 import java.io.*;
 import java.net.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -35,8 +37,14 @@ public class ServiceThread extends Thread {
     }
 
     private boolean isFile(String uri){
-        File f = new File(uri);
-        return  f.isFile();
+        URI u = URI.create(uri);
+        String scheme = u.getScheme();
+        try {
+            return scheme.equalsIgnoreCase("file");
+        } catch (NullPointerException e) {
+            return false; // No scheme was found
+        }
+
     }
 
     private void checkCommand(Resource resource) throws ServerException {
