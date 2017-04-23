@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.sun.jndi.toolkit.url.Uri;
+import com.google.gson.*;
 
 import java.io.*;
 import java.net.*;
@@ -200,6 +201,7 @@ public class ServiceThread extends Thread {
         	throw new ServerException("missing server list");
         }else{
         for (EzServer server : servers) {
+            System.out.println(server);
             if (Server.self != server) {
                 this.serverList.add(server);
             }
@@ -208,6 +210,26 @@ public class ServiceThread extends Thread {
         respondSuccess();
     }
 }
+
+    private EzServer[] parseExchange(JsonObject obj) throws ServerException {
+        // check if contains serverList
+        if (!obj.has("serverList")) {
+            throw new ServerException("missing server list");
+        }
+
+        // parse servers, check if all servers are valid
+        List<EzServer> servers = new ArrayList<>();
+        JsonArray elems = obj.getAsJsonArray("serverList");
+        for (JsonElement elem : elems) {
+            EzServer server = EzServer.fromJson(elem.getAsJsonObject());
+            if (server == null) {
+                throw new ServerException("invalid server record");
+            } else {
+                servers.add(server);
+            }
+        }
+        return servers.toArray(new EzServer[servers.size()]);
+    }
 
     @Override
     public void run() {
@@ -230,6 +252,7 @@ public class ServiceThread extends Thread {
 
             // read json from socket
             String reqJson = inputStream.readUTF();
+            Debug.println("RECEIVED: " + reqJson);
             JsonParser parser = new JsonParser();
             JsonObject obj = parser.parse(reqJson).getAsJsonObject();
 
@@ -261,7 +284,7 @@ public class ServiceThread extends Thread {
                 fetch(resourceTemplate);
             } else if (command.equals("EXCHANGE")) {
                 Debug.println(obj);
-                exchange(new Gson().fromJson(obj.get("serverList"), EzServer[].class));
+                exchange(parseExchange(obj));
             } else {
                 throw new ServerException("invalid command");
             }
