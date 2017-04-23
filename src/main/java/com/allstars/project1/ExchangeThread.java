@@ -46,7 +46,7 @@ public class ExchangeThread extends Thread {
             Logging.logInfo("sending to " + server);
             Socket socket = null;
             try {
-                socket = Client.connectToServer(server.hostname, server.port, Constants.DEFAULT_TIMEOUT);
+                socket = Client.connectToServer(server.hostname, server.port, Static.DEFAULT_TIMEOUT);
                 Client.exchange(socket, allServers.toArray(new EzServer[serverList.size()]));
                 socket.close();
             } catch (ConnectException e) {

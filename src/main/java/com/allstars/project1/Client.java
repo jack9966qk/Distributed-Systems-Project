@@ -3,16 +3,12 @@ package com.allstars.project1;
 import java.io.*;
 import java.net.*;
 import java.util.*;
-import java.util.logging.Logger;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.apache.commons.cli.*;
 
 public class Client {
-    private static Gson gson = new Gson();
-
     private static boolean handleResponse(String response) {
         JsonObject resObj = new JsonParser().parse(response).getAsJsonObject();
         if (resObj.get("response").getAsString().equals("success")) {
@@ -24,16 +20,11 @@ public class Client {
             return false;
         }
     }
-    
-    private static void sendUTF(DataOutputStream out, String string) throws IOException {
-        out.writeUTF(string);
-        Logging.logFine("SENT: " + string);
-    }
 
     private static String makeJsonFrom(String command, Resource resource) {
         JsonObject jsonObject = new JsonObject();
         jsonObject.addProperty("command", command);
-        jsonObject.add("resource", new Gson().toJsonTree(resource));
+        jsonObject.add("resource", Static.GSON.toJsonTree(resource));
         return jsonObject.toString();
     }
 
@@ -41,7 +32,7 @@ public class Client {
         if (isTemplate) {
             JsonObject jsonObject = new JsonObject();
             jsonObject.addProperty("command", command);
-            jsonObject.add("resourceTemplate", new Gson().toJsonTree(resource));
+            jsonObject.add("resourceTemplate", Static.GSON.toJsonTree(resource));
             return jsonObject.toString();
         } else {
             return makeJsonFrom(command, resource);
@@ -52,7 +43,7 @@ public class Client {
         JsonObject jsonObject = new JsonObject();
         jsonObject.addProperty("command", command);
         jsonObject.addProperty("secret", secret);
-        jsonObject.add("resource", new Gson().toJsonTree(resource));
+        jsonObject.add("resource", Static.GSON.toJsonTree(resource));
         return jsonObject.toString();
     }
 
@@ -60,14 +51,14 @@ public class Client {
         JsonObject jsonObject = new JsonObject();
         jsonObject.addProperty("command", command);
         jsonObject.addProperty("relay", relay);
-        jsonObject.add("resourceTemplate", new Gson().toJsonTree(resource));
+        jsonObject.add("resourceTemplate", Static.GSON.toJsonTree(resource));
         return jsonObject.toString();
     }
 
     private static String makeJsonFrom(String command, EzServer[] serverList) {
         JsonObject jsonObject = new JsonObject();
         jsonObject.addProperty("command", command);
-        jsonObject.add("serverList", new Gson().toJsonTree(serverList));
+        jsonObject.add("serverList", Static.GSON.toJsonTree(serverList));
         return jsonObject.toString();
     }
 
@@ -77,10 +68,10 @@ public class Client {
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
 
         // send request
-        sendUTF(out, makeJsonFrom("PUBLISH", resource));
+        Static.sendJsonUTF(out, makeJsonFrom("PUBLISH", resource));
 
         // wait for response
-        String response = in.readUTF();
+        String response = Static.readJsonUTF(in);
         handleResponse(response);
     }
 
@@ -89,10 +80,10 @@ public class Client {
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
 
         // send request
-        sendUTF(out, makeJsonFrom("REMOVE", resource));
+        Static.sendJsonUTF(out, makeJsonFrom("REMOVE", resource));
 
         // wait for response
-        String response = in.readUTF();
+        String response = Static.readJsonUTF(in);
         handleResponse(response);
     }
 
@@ -101,10 +92,10 @@ public class Client {
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
 
         // send request
-        sendUTF(out, makeJsonFrom("SHARE", secret, resource));
+        Static.sendJsonUTF(out, makeJsonFrom("SHARE", secret, resource));
 
         // wait for response
-        String response = in.readUTF();
+        String response = Static.readJsonUTF(in);
         handleResponse(response);
     }
 
@@ -113,19 +104,19 @@ public class Client {
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
 
         // send request
-        sendUTF(out, makeJsonFrom("QUERY", relay, template));
+        Static.sendJsonUTF(out, makeJsonFrom("QUERY", relay, template));
 
         Set<Resource> resources = new HashSet<>();
 
         // wait for response
-        String response = in.readUTF();
+        String response = Static.readJsonUTF(in);
         boolean success = handleResponse(response);
         if (success) {
-            JsonObject jsonObj = new JsonParser().parse(in.readUTF()).getAsJsonObject();
+            JsonObject jsonObj = new JsonParser().parse(Static.readJsonUTF(in)).getAsJsonObject();
             while (!jsonObj.has("resultSize")) {
                 Logging.logFine(jsonObj);
-                resources.add(Constants.GSON.fromJson(jsonObj, Resource.class));
-                jsonObj = new JsonParser().parse(in.readUTF()).getAsJsonObject();
+                resources.add(Static.GSON.fromJson(jsonObj, Resource.class));
+                jsonObj = new JsonParser().parse(Static.readJsonUTF(in)).getAsJsonObject();
             }
             Logging.logFine(jsonObj);
             if (jsonObj.get("resultSize").getAsInt() != resources.size()) {
@@ -146,13 +137,13 @@ public class Client {
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
 
         // send request
-        sendUTF(out, makeJsonFrom("FETCH", template, true));
+        Static.sendJsonUTF(out, makeJsonFrom("FETCH", template, true));
 
         // wait for response
-        String response = in.readUTF();
+        String response = Static.readJsonUTF(in);
         boolean success = handleResponse(response);
         Logging.logFine("read resource");
-        Resource resource = Resource.fromJson(in.readUTF());
+        Resource resource = Resource.fromJson(Static.readJsonUTF(in));
         Logging.logFine(resource.getName());
         Logging.logFine("read file");
         long totalSize = resource.getResourceSize();
@@ -182,7 +173,7 @@ public class Client {
             Logging.logFine("read file complete");
             fileOutputStream.close();
         }
-        String sizeResponse = in.readUTF();
+        String sizeResponse = Static.readJsonUTF(in);
         // TODO check size
     }
 
@@ -193,11 +184,11 @@ public class Client {
         String message = makeJsonFrom("EXCHANGE", servers);
 
         // send request
-        sendUTF(out, message);
+        Static.sendJsonUTF(out, message);
         Logging.logInfo("SENT: " + message);
 
         // wait for response
-        String response = in.readUTF();
+        String response = Static.readJsonUTF(in);
         handleResponse(response);
     }
 
@@ -273,10 +264,14 @@ public class Client {
             Logging.logInfo("No command found, please check your input and try again.");
         }
 
+        // set debug
+        Logging.setEnablePrint(cmd.hasOption("debug"));
+        Logging.logInfo("setting debug on");
+
         // connect to server
         Socket socket = null;
         try {
-            socket = connectToServer(host, port, Constants.DEFAULT_TIMEOUT);
+            socket = connectToServer(host, port, Static.DEFAULT_TIMEOUT);
         } catch (IOException e) {
             Logging.logInfo("Failed to connect to server, please check server availability and internet connection.");
             return;

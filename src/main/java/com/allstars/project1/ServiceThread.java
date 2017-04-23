@@ -74,21 +74,21 @@ public class ServiceThread extends Thread {
     private void respondSuccess() throws IOException {
         JsonObject json = new JsonObject();
         json.addProperty("response", "success");
-        outputStream.writeUTF(json.toString());
+        Static.sendJsonUTF(outputStream, json.toString());
     }
 
     private void respondResource(Resource resource) throws IOException {
-        outputStream.writeUTF(resource.toJson());
+        Static.sendJsonUTF(outputStream, resource.toJson());
     }
 
     private void respondResource(Resource resource, long size) throws IOException {
-        outputStream.writeUTF(resource.sizeAdded(size).toJson());
+        Static.sendJsonUTF(outputStream, resource.sizeAdded(size).toJson());
     }
 
     private void respondResultSize(int size) throws IOException {
         JsonObject json = new JsonObject();
         json.addProperty("resultSize", size);
-        outputStream.writeUTF(json.toString());
+        Static.sendJsonUTF(outputStream, json.toString());
     }
 
     private void publish(Resource resource) throws ServerException, IOException {
@@ -143,7 +143,7 @@ public class ServiceThread extends Thread {
 
         if (relay) {
             for (EzServer server : serverList) {
-                Socket socket = Client.connectToServer(server.hostname, server.port, Constants.DEFAULT_TIMEOUT);
+                Socket socket = Client.connectToServer(server.hostname, server.port, Static.DEFAULT_TIMEOUT);
                 results.addAll(Client.query(socket, false, template));
             }
         }
@@ -246,7 +246,7 @@ public class ServiceThread extends Thread {
             lastConnectionTime.put(clientAddress, new Date());
 
             // read json from socket
-            String reqJson = inputStream.readUTF();
+            String reqJson = Static.readJsonUTF(inputStream);
             Logging.logFine("RECEIVED: " + reqJson);
             JsonParser parser = new JsonParser();
             JsonObject obj = parser.parse(reqJson).getAsJsonObject();
@@ -287,7 +287,7 @@ public class ServiceThread extends Thread {
             e.printStackTrace();
         } catch (ServerException e) {
             try {
-                outputStream.writeUTF(e.toJson());
+                Static.sendJsonUTF(outputStream, e.toJson());
             } catch (IOException e1) {
                 e1.printStackTrace();
             }

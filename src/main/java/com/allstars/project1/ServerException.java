@@ -1,7 +1,5 @@
 package com.allstars.project1;
 
-import com.google.gson.Gson;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -20,6 +18,6 @@ public class ServerException extends Exception {
         Map<String, String> map = new HashMap<>();
         map.put("response", "ERROR");
         map.put("errorMessage", errorMessage);
-        return new Gson().toJson(map);
+        return Static.GSON.toJson(map);
     }
 }

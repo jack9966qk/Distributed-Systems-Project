@@ -31,7 +31,7 @@ public class EzServer {
             return null;
         } else if (jsonObj.get("port").getAsJsonPrimitive().isNumber() &&
                 jsonObj.get("hostname").getAsJsonPrimitive().isString()) {
-            return Constants.GSON.fromJson(jsonObj, EzServer.class);
+            return Static.GSON.fromJson(jsonObj, EzServer.class);
         } else {
             return null;
         }

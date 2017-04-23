@@ -1,6 +1,5 @@
 package com.allstars.project1;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 
 import java.util.Arrays;
@@ -145,15 +144,15 @@ public class Resource {
     }
 
     public String toJson() {
-        return new Gson().toJson(this);
+        return Static.GSON.toJson(this);
     }
 
     public static Resource fromJson(String json) {
-        return new Gson().fromJson(json, Resource.class);
+        return Static.GSON.fromJson(json, Resource.class);
     }
 
     public static Resource fromJsonElem(JsonElement elem) {
-        return new Gson().fromJson(elem, Resource.class);
+        return Static.GSON.fromJson(elem, Resource.class);
     }
 
     public static Resource parseAndNormalise(String json) {

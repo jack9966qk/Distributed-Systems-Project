@@ -1,6 +1,4 @@
 package com.allstars.project1;
-import com.google.gson.Gson;
-import com.sun.org.apache.regexp.internal.RE;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -40,6 +38,6 @@ public class ResourceStorage {
 
     // for debug usage
     public synchronized String toJson() {
-        return new Gson().toJson(resources.values().toArray(new Resource[this.resources.size()]));
+        return Static.GSON.toJson(resources.values().toArray(new Resource[this.resources.size()]));
     }
 }

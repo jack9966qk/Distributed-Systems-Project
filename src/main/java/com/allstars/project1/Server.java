@@ -117,13 +117,13 @@ public class Server {
             if (cmd.hasOption("connectionintervallimit")) {
                 connectionIntervalLimit = Integer.parseInt(cmd.getOptionValue("connectionintervallimit"));
             } else {
-                connectionIntervalLimit = Constants.DEFAULT_CONNECTION_INTERVAL;
+                connectionIntervalLimit = Static.DEFAULT_CONNECTION_INTERVAL;
             }
             int exchangeInterval;
             if (cmd.hasOption("exchangeinterval")) {
                 exchangeInterval = Integer.parseInt(cmd.getOptionValue("exchangeinterval"));
             } else {
-                exchangeInterval = Constants.DEFAULT_EXCHANGE_INTERVAL;
+                exchangeInterval = Static.DEFAULT_EXCHANGE_INTERVAL;
             }
 
             // start the server
