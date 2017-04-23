@@ -24,14 +24,14 @@ public class ResourceStorage {
 
     public synchronized void add(Resource resource) {
         resources.put(resource.getKey(), resource);
-        System.out.println("Added new resource");
-        System.out.println(this.toJson());
+        Logging.logFine("Added new resource");
+        Logging.logFine(this.toJson());
     }
 
     public synchronized void remove(Resource resource) {
         resources.remove(resource.getKey());
-        System.out.println("Removed resource");
-        System.out.println(this.toJson());
+        Logging.logFine("Removed resource");
+        Logging.logFine(this.toJson());
     }
 
     public synchronized boolean containsKey(Resource r){

@@ -2,15 +2,16 @@ package com.allstars.project1;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.logging.Logger;
 
 /**
  * Created by Jack on 23/3/2017.
  */
-public class Debug {
+public class Logging {
     private static boolean enablePrint = false;
 
     public static void setEnablePrint(boolean enablePrint) {
-        Debug.enablePrint = enablePrint;
+        Logging.enablePrint = enablePrint;
     }
 
     private static String getPrefix() {
@@ -23,16 +24,16 @@ public class Debug {
                 .replaceAll("com\\.allstars\\.project1\\.", "")
                 .replaceAll("\\(.*\\)", "");
 
-        return date + " " + pos + " ";
+        return date + " - [" + pos + "] ";
     }
 
-    public static void infoPrintln(Object obj) {
-        System.out.println(getPrefix() + "[INFO] " + obj.toString());
+    public static void logInfo(Object obj) {
+        System.out.println(getPrefix() + "- [INFO] - " + obj.toString());
     }
 
-    public static void println(Object obj) {
+    public static void logFine(Object obj) {
         if (enablePrint) {
-            System.out.println(getPrefix() + "[FINE] " + obj.toString());
+            System.out.println(getPrefix() + "- [FINE] - " + obj.toString());
         }
     }
 }

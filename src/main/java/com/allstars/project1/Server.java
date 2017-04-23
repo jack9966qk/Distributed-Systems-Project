@@ -39,11 +39,11 @@ public class Server {
             int i = 0;
             while (running) {
                 // wait for new client
-                Debug.infoPrintln("Server listening for a connection");
+                Logging.logInfo("Server listening for a connection");
                 Socket clientSocket = listenSocket.accept();
                 SocketAddress clientAddress = clientSocket.getRemoteSocketAddress();
                 i++;
-                Debug.infoPrintln("Received connection " + i );
+                Logging.logInfo("Received connection " + i );
                 // start a new thread handling the client
                 // TODO limitation on total number of threads
                 ServiceThread c = new ServiceThread(lastConnectionTime, clientSocket, secret, resourceStorage, serverList);
@@ -51,7 +51,7 @@ public class Server {
                 Thread.sleep(connectionIntervalLimit);
             }
         } catch(IOException e) {
-            Debug.infoPrintln("Listen socket:"+e.getMessage());
+            Logging.logInfo("Listen socket:"+e.getMessage());
         } catch (InterruptedException e) {
             if (running) {
                 e.printStackTrace();
@@ -79,7 +79,7 @@ public class Server {
         try {
             cmd = parser.parse(options, args);
         } catch (ParseException e) {
-            Debug.infoPrintln("parse exception");
+            Logging.logInfo("parse exception");
         }
 
         return cmd;
@@ -91,8 +91,8 @@ public class Server {
         mainThread = Thread.currentThread();
 
         // set debug
-        Debug.setEnablePrint(cmd.hasOption("debug"));
-        Debug.infoPrintln("hello");
+        Logging.setEnablePrint(cmd.hasOption("debug"));
+        Logging.logInfo("setting debug on");
 
         // determine secret
         String secret = null;

@@ -3,6 +3,7 @@ package com.allstars.project1;
 import java.io.*;
 import java.net.*;
 import java.util.*;
+import java.util.logging.Logger;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -15,13 +16,18 @@ public class Client {
     private static boolean handleResponse(String response) {
         JsonObject resObj = new JsonParser().parse(response).getAsJsonObject();
         if (resObj.get("response").getAsString().equals("success")) {
-            System.out.println("success");
+            Logging.logInfo("success");
             return true;
         } else {
-            System.out.println(response);
-            System.out.println("error: " + resObj.get("errorMessage").getAsString());
+            Logging.logFine("RECEIVED: " + response);
+            Logging.logInfo("error: " + resObj.get("errorMessage").getAsString());
             return false;
         }
+    }
+    
+    private static void sendUTF(DataOutputStream out, String string) throws IOException {
+        out.writeUTF(string);
+        Logging.logFine("SENT: " + string);
     }
 
     private static String makeJsonFrom(String command, Resource resource) {
@@ -71,43 +77,43 @@ public class Client {
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
 
         // send request
-        out.writeUTF(makeJsonFrom("PUBLISH", resource));
+        sendUTF(out, makeJsonFrom("PUBLISH", resource));
 
         // wait for response
         String response = in.readUTF();
         handleResponse(response);
     }
 
-    public static void remove(Socket socket, Resource resource) throws IOException {
+    protected static void remove(Socket socket, Resource resource) throws IOException {
         DataInputStream in = new DataInputStream(socket.getInputStream());
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
 
         // send request
-        out.writeUTF(makeJsonFrom("REMOVE", resource));
+        sendUTF(out, makeJsonFrom("REMOVE", resource));
 
         // wait for response
         String response = in.readUTF();
         handleResponse(response);
     }
 
-    public static void share(Socket socket, String secret, Resource resource) throws IOException {
+    protected static void share(Socket socket, String secret, Resource resource) throws IOException {
         DataInputStream in = new DataInputStream(socket.getInputStream());
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
 
         // send request
-        out.writeUTF(makeJsonFrom("SHARE", secret, resource));
+        sendUTF(out, makeJsonFrom("SHARE", secret, resource));
 
         // wait for response
         String response = in.readUTF();
         handleResponse(response);
     }
 
-    public static Set<Resource> query(Socket socket, boolean relay, Resource template) throws IOException {
+    protected static Set<Resource> query(Socket socket, boolean relay, Resource template) throws IOException {
         DataInputStream in = new DataInputStream(socket.getInputStream());
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
 
         // send request
-        out.writeUTF(makeJsonFrom("QUERY", relay, template));
+        sendUTF(out, makeJsonFrom("QUERY", relay, template));
 
         Set<Resource> resources = new HashSet<>();
 
@@ -117,11 +123,11 @@ public class Client {
         if (success) {
             JsonObject jsonObj = new JsonParser().parse(in.readUTF()).getAsJsonObject();
             while (!jsonObj.has("resultSize")) {
-                System.out.println(jsonObj);
+                Logging.logFine(jsonObj);
                 resources.add(Constants.GSON.fromJson(jsonObj, Resource.class));
                 jsonObj = new JsonParser().parse(in.readUTF()).getAsJsonObject();
             }
-            System.out.println(jsonObj);
+            Logging.logFine(jsonObj);
             if (jsonObj.get("resultSize").getAsInt() != resources.size()) {
                 // TODO
                 // something wrong happened
@@ -133,24 +139,24 @@ public class Client {
         return resources;
     }
 
-    public static void fetch(Socket socket, Resource template) throws IOException {
+    protected static void fetch(Socket socket, Resource template) throws IOException {
         // http://stackoverflow.com/questions/9520911/java-sending-and-receiving-file-byte-over-sockets
 
         DataInputStream in = new DataInputStream(socket.getInputStream());
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
 
         // send request
-        out.writeUTF(makeJsonFrom("FETCH", template, true));
+        sendUTF(out, makeJsonFrom("FETCH", template, true));
 
         // wait for response
         String response = in.readUTF();
         boolean success = handleResponse(response);
-        System.out.println("read resource");
+        Logging.logFine("read resource");
         Resource resource = Resource.fromJson(in.readUTF());
-        System.out.println(resource.getName());
-        System.out.println("read file");
+        Logging.logFine(resource.getName());
+        Logging.logFine("read file");
         long totalSize = resource.getResourceSize();
-        System.out.println(totalSize);
+        Logging.logFine(totalSize);
         long sizeRead = 0;
         if (success) {
             String path = resource.getUri();
@@ -173,29 +179,29 @@ public class Client {
                 fileOutputStream.write(bytes, 0, count);
                 toRead = (int) Math.min(totalSize - sizeRead, 16 * 1024);
             }
-            System.out.println("read file complete");
+            Logging.logFine("read file complete");
             fileOutputStream.close();
         }
         String sizeResponse = in.readUTF();
         // TODO check size
     }
 
-    public static void exchange(Socket socket, EzServer[] servers) throws IOException {
+    protected static void exchange(Socket socket, EzServer[] servers) throws IOException {
         DataInputStream in = new DataInputStream(socket.getInputStream());
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
 
         String message = makeJsonFrom("EXCHANGE", servers);
 
         // send request
-        out.writeUTF(message);
-        Debug.infoPrintln("SENT: " + message);
+        sendUTF(out, message);
+        Logging.logInfo("SENT: " + message);
 
         // wait for response
         String response = in.readUTF();
         handleResponse(response);
     }
 
-    public static CommandLine getOptions(String[] args) {
+    public static CommandLine getOptions(String[] args) throws ParseException {
         Options options = new Options();
 
         options.addOption(Option.builder("channel").hasArg().type(Integer.class).build());
@@ -217,15 +223,7 @@ public class Client {
         options.addOption(Option.builder("uri").hasArg().type(String.class).build());
 
         CommandLineParser parser = new DefaultParser();
-        CommandLine cmd = null;
-        try {
-            cmd = parser.parse(options, args);
-        } catch (ParseException e) {
-            System.out.println(e);
-            System.out.println("parse exception");
-        } finally {
-            return cmd;
-        }
+        return parser.parse(options, args);
     }
 
     public static Resource makeResourceFromCmd(CommandLine cmd) {
@@ -243,42 +241,48 @@ public class Client {
         return new Resource(name, description, tags, uri, channel, owner, servers[0], null);
     }
 
-
     public static Socket connectToServer(String host, int port, int timeout) throws IOException {
         // TODO connect to server
         Socket socket;
         socket = new Socket(host, port);
         socket.setSoTimeout(timeout);
-        System.out.println("Connection Established");
+        Logging.logFine("Connection Established");
         return socket;
-//            DataInputStream in = new DataInputStream(socket.getInputStream());
-//            DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-//            System.out.println("Sending data");
-//            out.writeUTF(args[0]);     // UTF is a string encoding see Sn. 4.4
-//            String data = in.readUTF();   // read a line of data from the stream
-//            System.out.println("Received: "+ data) ;
     }
 
-
     public static void main(String[] args) {
-        CommandLine cmd = getOptions(args);
+
+        // command line arguments parsing
+        CommandLine cmd = null;
+        try {
+            cmd = getOptions(args);
+        } catch (ParseException e) {
+            Logging.logInfo("Command line parsing failed, please check if arguments are missing or incorrect.");
+            return;
+        }
         String host = cmd.getOptionValue("host");
         int port = Integer.parseInt(cmd.getOptionValue("port"));
-
-
         Resource resource = makeResourceFromCmd(cmd);
 
-        // TODO print error if no command
-        // ...
+        if (!cmd.hasOption("publish") &&
+                !cmd.hasOption("remove") &&
+                !cmd.hasOption("share") &&
+                !cmd.hasOption("query") &&
+                !cmd.hasOption("fetch") &&
+                !cmd.hasOption("remove")) {
+            Logging.logInfo("No command found, please check your input and try again.");
+        }
 
+        // connect to server
         Socket socket = null;
         try {
             socket = connectToServer(host, port, Constants.DEFAULT_TIMEOUT);
         } catch (IOException e) {
-            Debug.infoPrintln("Failed to connect to server, please check server availability and internet connection.");
+            Logging.logInfo("Failed to connect to server, please check server availability and internet connection.");
             return;
         }
 
+        // figure out command and handle each case
         try {
             if (cmd.hasOption("publish")) {
                 publish(socket, resource);
@@ -288,20 +292,20 @@ public class Client {
                 String secret = cmd.getOptionValue("secret");
                 share(socket, secret, resource);
             } else if (cmd.hasOption("query")) {
-                query(socket, true, new Resource(null, null, null, null, null, null, null, null));
-//                query(socket, resource);
+                query(socket, true, resource);
             } else if (cmd.hasOption("fetch")) {
                 fetch(socket, resource);
             } else if (cmd.hasOption("exchange")) {
-                EzServer[] servers = Arrays.stream(cmd.getOptionValue("servers").split(","))
+                EzServer[] servers = Arrays.stream(cmd.getOptionValue("servers")
+                        .split(","))
                         .map(EzServer::fromString).toArray(EzServer[]::new);
-                Debug.infoPrintln(Arrays.toString(servers));
+                Logging.logInfo(Arrays.toString(servers));
                 exchange(socket, servers);
             }
         } catch (SocketTimeoutException e) {
-            Debug.infoPrintln("Timeout communicating with server, please check connections and try again.");
+            Logging.logInfo("Timeout communicating with server, please check connections and try again.");
         } catch (IOException e) {
-            Debug.infoPrintln("Unknown connection error, please check connections and try again.");
+            Logging.logInfo("Unknown connection error, please check connections and try again.");
         }
     }
 }

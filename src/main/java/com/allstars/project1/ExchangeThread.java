@@ -30,7 +30,7 @@ public class ExchangeThread extends Thread {
     private boolean running = false;
 
     private void exchange() {
-        Debug.infoPrintln("send exchange request to servers: " + serverList);
+        Logging.logInfo("send exchange request to servers: " + serverList);
         Set<EzServer> allServers = new HashSet<>();
         allServers.addAll(serverList);
         allServers.add(Server.self);
@@ -43,17 +43,17 @@ public class ExchangeThread extends Thread {
             servers.addAll(serverList);
         }
         for (EzServer server : servers) {
-            Debug.infoPrintln("sending to " + server);
+            Logging.logInfo("sending to " + server);
             Socket socket = null;
             try {
                 socket = Client.connectToServer(server.hostname, server.port, Constants.DEFAULT_TIMEOUT);
                 Client.exchange(socket, allServers.toArray(new EzServer[serverList.size()]));
                 socket.close();
             } catch (ConnectException e) {
-                Debug.infoPrintln("Failed to connect to " + server + ". Remove server from exchange list");
+                Logging.logInfo("Failed to connect to " + server + ". Remove server from exchange list");
                 serverList.remove(server);
             } catch (IOException e) {
-                Debug.infoPrintln("Unknown error communicating with " + server);
+                Logging.logInfo("Unknown error communicating with " + server);
             }
         }
     }
@@ -75,6 +75,6 @@ public class ExchangeThread extends Thread {
             exchange();
         }
 
-        Debug.infoPrintln("exchange thread terminated");
+        Logging.logInfo("exchange thread terminated");
     }
 }

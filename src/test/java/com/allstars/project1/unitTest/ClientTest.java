@@ -4,6 +4,7 @@ import com.allstars.project1.Client;
 import com.allstars.project1.Resource;
 
 import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.ParseException;
 import org.junit.jupiter.api.*;
 
 
@@ -99,7 +100,12 @@ class ClientTest {
     @Test
     void getOptions() {
         String[] testCmd = new String[] {"-host","localhost", "-port", "2334","-publish"};
-        CommandLine cmd = Client.getOptions(testCmd);
+        CommandLine cmd = null;
+        try {
+            cmd = Client.getOptions(testCmd);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
         System.out.println(cmd.toString());
     }
 
@@ -108,7 +114,12 @@ class ClientTest {
         String[] publish = new String[] {"-host","localhost", "-port", "2334","-publish","-name","''",
                 "-description","''","-uri","",
                 "-tags",""};
-        CommandLine cmd = Client.getOptions(publish);
+        CommandLine cmd = null;
+        try {
+            cmd = Client.getOptions(publish);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
         resource = Client.makeResourceFromCmd(cmd);
 
         try {
@@ -176,7 +187,12 @@ class ClientTest {
         String[] publish = new String[] {"-host","localhost", "-port", "2334","-publish","-name","",
                                         "-description","","-uri","",
                                         "-tags",""};
-        CommandLine cmd = Client.getOptions(publish);
+        CommandLine cmd = null;
+        try {
+            cmd = Client.getOptions(publish);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
 
         resource = Client.makeResourceFromCmd(cmd);
         System.out.println(resource.getName());

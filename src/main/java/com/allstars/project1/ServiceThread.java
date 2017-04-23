@@ -1,15 +1,11 @@
 package com.allstars.project1;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.sun.jndi.toolkit.url.Uri;
 import com.google.gson.*;
 
 import java.io.*;
 import java.net.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -27,7 +23,7 @@ public class ServiceThread extends Thread {
     Map<SocketAddress, Date> lastConnectionTime;
 
     public ServiceThread(Map<SocketAddress, Date> lastConnectionTime, Socket clientSocket, String secret, ResourceStorage resourceStorage, Set<EzServer> serverList)
-        throws IOException {
+            throws IOException {
         this.socket = clientSocket;
         this.lastConnectionTime = lastConnectionTime;
         this.inputStream = new DataInputStream(clientSocket.getInputStream());
@@ -37,7 +33,7 @@ public class ServiceThread extends Thread {
         this.serverList = serverList;
     }
 
-    private boolean isFile(String uri){
+    private boolean isFile(String uri) {
         URI u = URI.create(uri);
         String scheme = u.getScheme();
         try {
@@ -45,34 +41,34 @@ public class ServiceThread extends Thread {
         } catch (NullPointerException e) {
             return false; // No scheme was found
         }
-
     }
 
     private void checkCommand(Resource resource) throws ServerException {
         // created a resource only with the primary keys
-        Resource r = new Resource(null,null,null,resource.getUri(),
-                resource.getChannel(),resource.getOwner(),null);
+        Resource r = new Resource(null, null, null, resource.getUri(),
+                resource.getChannel(), resource.getOwner(), null);
 
-        if (resource.getOwner().length()==1&&resource.getOwner().toCharArray()[0]=='*') {// * owner
+        if (resource.getOwner().length() == 1 && resource.getOwner().toCharArray()[0] == '*') {// * owner
             throw new ServerException("invalid resource");
-        }else if (resource.getUri().isEmpty()) {//uri is empty
+        } else if (resource.getUri().isEmpty()) {//uri is empty
             throw new ServerException("missing resource");
-        }
-        else if (!URI.create(resource.getUri()).isAbsolute()) { //not an absolute uri
+        } else if (!URI.create(resource.getUri()).isAbsolute()) { //not an absolute uri
             throw new ServerException("missing resource");
-        }else if (resourceStorage.getUriSet().contains(resource.getUri())) { // duplicate uri
+        } else if (resourceStorage.getUriSet().contains(resource.getUri())) { // duplicate uri
             throw new ServerException("invalid resource");
         }
     }
-       private void checkTemplate(Resource template) throws ServerException{
-            Resource r = new Resource(null,null,null,template.getUri(),
-                template.getChannel(),null,null);
-    	 if (r.getUri().isEmpty()) {
+
+    private void checkTemplate(Resource template) throws ServerException {
+        Resource r = new Resource(null, null, null, template.getUri(),
+                template.getChannel(), null, null);
+        if (r.getUri().isEmpty()) {
             throw new ServerException("missing resourceTemplate");
-        }else if (!Paths.get(template.getUri()).toUri().isAbsolute()) { 
-             throw new ServerException("missing resourceTemplate");
-         }else if(!resourceStorage.containsKey(r)){
-          throw new ServerException("missing resourceTemplate");}
+        } else if (!Paths.get(template.getUri()).toUri().isAbsolute()) {
+            throw new ServerException("missing resourceTemplate");
+        } else if (!resourceStorage.containsKey(r)) {
+            throw new ServerException("missing resourceTemplate");
+        }
     }
 
     private void respondSuccess() throws IOException {
@@ -97,13 +93,13 @@ public class ServiceThread extends Thread {
 
     private void publish(Resource resource) throws ServerException, IOException {
         // check whether the uri is a file scheme
-        if (isFile(resource.getUri())){
+        if (isFile(resource.getUri())) {
             throw new ServerException("cannot publish resource");
         }
-        if (resourceStorage.containsKey(resource)){// check whether it is an update
+        if (resourceStorage.containsKey(resource)) {// check whether it is an update
             resourceStorage.remove(resource);
             resourceStorage.add(resource);
-        }else {
+        } else {
             checkCommand(resource); // check whether it is valid
             resourceStorage.add(resource);
         }
@@ -111,10 +107,10 @@ public class ServiceThread extends Thread {
     }
 
     private void remove(Resource resource) throws ServerException, IOException {
-        if (resourceStorage.containsKey(resource)){
+        if (resourceStorage.containsKey(resource)) {
             resourceStorage.remove(resource);
             respondSuccess();
-        }else{
+        } else {
             checkCommand(resource); // check whether it is valid
             throw new ServerException("cannot remove resource"); // the resource did not exist
         }
@@ -126,16 +122,15 @@ public class ServiceThread extends Thread {
         } else {
             File f;
             f = new File(resource.getUri());
-            if (f.isFile()){
+            if (f.isFile()) {
                 if (!f.exists()) {
                     throw new ServerException("invalid resource");
                 }
                 checkCommand(resource);
-                Debug.println("add to resource");
+                Logging.logFine("add to resource");
                 resourceStorage.add(resource);
                 respondSuccess();
-            }
-            else {
+            } else {
                 throw new ServerException("cannot share resource");
             }
         }
@@ -154,7 +149,7 @@ public class ServiceThread extends Thread {
         }
 
         for (Resource r : results) {
-            Debug.println(r.toJson());
+            Logging.logFine(r.toJson());
         }
 
         respondSuccess();
@@ -174,11 +169,11 @@ public class ServiceThread extends Thread {
             String path = uri.getPath();
             File file = new File(path);
             FileInputStream fileInputStream = new FileInputStream(file);
-            Debug.println("send success");
+            Logging.logFine("send success");
             respondSuccess();
-            Debug.println("send resource");
+            Logging.logFine("send resource");
             respondResource(resource, file.length());
-            Debug.println("send file");
+            Logging.logFine("send file");
             byte[] bytes = new byte[16 * 1024];
             int count;
             while ((count = fileInputStream.read(bytes)) > 0) {
@@ -195,21 +190,21 @@ public class ServiceThread extends Thread {
     }
 
     private void exchange(EzServer[] servers) throws ServerException, IOException {
-        Debug.infoPrintln("handle exchange request");
-        Debug.infoPrintln("request server list: " + Arrays.toString(servers));
-                if(!((servers) instanceof EzServer[])){
-        	throw new ServerException("missing server list");
-        }else{
-        for (EzServer server : servers) {
-            System.out.println(server);
-            if (Server.self != server) {
-                this.serverList.add(server);
+        Logging.logInfo("handle exchange request");
+        Logging.logInfo("request server list: " + Arrays.toString(servers));
+        if (!((servers) instanceof EzServer[])) {
+            throw new ServerException("missing server list");
+        } else {
+            for (EzServer server : servers) {
+                Logging.logFine(server);
+                if (Server.self != server) {
+                    this.serverList.add(server);
+                }
             }
+            Logging.logInfo("updated server list: " + this.serverList);
+            respondSuccess();
         }
-        Debug.infoPrintln("updated server list: " + this.serverList);
-        respondSuccess();
     }
-}
 
     private EzServer[] parseExchange(JsonObject obj) throws ServerException {
         // check if contains serverList
@@ -252,7 +247,7 @@ public class ServiceThread extends Thread {
 
             // read json from socket
             String reqJson = inputStream.readUTF();
-            Debug.println("RECEIVED: " + reqJson);
+            Logging.logFine("RECEIVED: " + reqJson);
             JsonParser parser = new JsonParser();
             JsonObject obj = parser.parse(reqJson).getAsJsonObject();
 
@@ -270,20 +265,20 @@ public class ServiceThread extends Thread {
                 remove(resource);
             } else if (command.equals("SHARE")) {
                 String secret = obj.get("secret").getAsString();
-                Debug.println(obj);
+                Logging.logFine(obj);
                 Resource resource = Resource.parseAndNormalise(obj.get("resource"));
                 share(secret, resource);
             } else if (command.equals("QUERY")) {
-                Debug.println(reqJson);
+                Logging.logFine(reqJson);
                 boolean relay = obj.get("relay").getAsBoolean();
                 Resource resourceTemplate = Resource.fromJsonElem(obj.get("resourceTemplate"));
                 query(resourceTemplate, relay);
             } else if (command.equals("FETCH")) {
-                Debug.println(obj.get("resourceTemplate"));
+                Logging.logFine(obj.get("resourceTemplate"));
                 Resource resourceTemplate = Resource.fromJsonElem(obj.get("resourceTemplate"));
                 fetch(resourceTemplate);
             } else if (command.equals("EXCHANGE")) {
-                Debug.println(obj);
+                Logging.logFine(obj);
                 exchange(parseExchange(obj));
             } else {
                 throw new ServerException("invalid command");
