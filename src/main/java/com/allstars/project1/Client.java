@@ -24,7 +24,7 @@ public class Client {
     private static String makeJsonFrom(String command, Resource resource) {
         JsonObject jsonObject = new JsonObject();
         jsonObject.addProperty("command", command);
-        jsonObject.add("resource", Static.GSON.toJsonTree(resource));
+        jsonObject.add("resource", resource.toJsonElement());
         return jsonObject.toString();
     }
 
@@ -32,7 +32,7 @@ public class Client {
         if (isTemplate) {
             JsonObject jsonObject = new JsonObject();
             jsonObject.addProperty("command", command);
-            jsonObject.add("resourceTemplate", Static.GSON.toJsonTree(resource));
+            jsonObject.add("resourceTemplate", resource.toJsonElement());
             return jsonObject.toString();
         } else {
             return makeJsonFrom(command, resource);
@@ -43,7 +43,7 @@ public class Client {
         JsonObject jsonObject = new JsonObject();
         jsonObject.addProperty("command", command);
         jsonObject.addProperty("secret", secret);
-        jsonObject.add("resource", Static.GSON.toJsonTree(resource));
+        jsonObject.add("resource", resource.toJsonElement());
         return jsonObject.toString();
     }
 
@@ -51,7 +51,7 @@ public class Client {
         JsonObject jsonObject = new JsonObject();
         jsonObject.addProperty("command", command);
         jsonObject.addProperty("relay", relay);
-        jsonObject.add("resourceTemplate", Static.GSON.toJsonTree(resource));
+        jsonObject.add("resourceTemplate", resource.toJsonElement());
         return jsonObject.toString();
     }
 
@@ -221,15 +221,13 @@ public class Client {
         String name = cmd.getOptionValue("name", "");
         String description = cmd.getOptionValue("description", "");
         String[] tags = null;
-        if (cmd.hasOption("tag")) {
-            tags = cmd.getOptionValue("tag").split(",");
+        if (cmd.hasOption("tags")) {
+            tags = cmd.getOptionValue("tags").split(",");
         }
         String uri = cmd.getOptionValue("uri", "");
         String channel = cmd.getOptionValue("channel", "");
         String owner = cmd.getOptionValue("owner", "");
-        String[] servers = cmd.getOptionValue("server", "").split(",");
-
-        return new Resource(name, description, tags, uri, channel, owner, servers[0], null);
+        return new Resource(name, description, tags, uri, channel, owner, null);
     }
 
     public static Socket connectToServer(String host, int port, int timeout) throws IOException {
@@ -254,6 +252,7 @@ public class Client {
         String host = cmd.getOptionValue("host");
         int port = Integer.parseInt(cmd.getOptionValue("port"));
         Resource resource = makeResourceFromCmd(cmd);
+
 
         if (!cmd.hasOption("publish") &&
                 !cmd.hasOption("remove") &&

@@ -1,5 +1,6 @@
 package com.allstars.project1;
 
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 
 import java.util.Arrays;
@@ -31,8 +32,8 @@ public class Resource {
         return owner;
     }
 
-    public String getEzServer() {
-        return ezServer;
+    public String getEzserver() {
+        return ezserver;
     }
 
     public Long getResourceSize() {
@@ -45,21 +46,21 @@ public class Resource {
     private String uri = "";
     private String channel = "";
     private String owner = "";
-    private String ezServer = null;
+    private String ezserver = null;
     private Long resourceSize = null;
 
-    public Resource(String name, String description, String[] tags, String uri, String channel, String owner, String ezServer, Long resourceSize) {
+    public Resource(String name, String description, String[] tags, String uri, String channel, String owner, String ezserver, Long resourceSize) {
         this.name = name;
         this.description = description;
         this.tags = tags;
         this.uri = uri;
         this.channel = channel;
         this.owner = owner;
-        this.ezServer = ezServer;
+        this.ezserver = ezserver;
         this.resourceSize = resourceSize;
     }
 
-    public Resource(String name, String description, String[] tags, String uri, String channel, String owner, String ezServer) {
+    public Resource(String name, String description, String[] tags, String uri, String channel, String owner, String ezserver) {
         // TODO normalise strings
         this.name = name;
         this.description = description;
@@ -67,7 +68,7 @@ public class Resource {
         this.uri = uri;
         this.channel = channel;
         this.owner = owner;
-        this.ezServer = ezServer;
+        this.ezserver = ezserver;
     }
 
     public Resource ezServerAdded(EzServer ezServer) {
@@ -91,7 +92,7 @@ public class Resource {
                 this.uri,
                 this.channel,
                 this.owner,
-                this.ezServer,
+                this.ezserver,
                 size
         );
     }
@@ -104,7 +105,7 @@ public class Resource {
                 this.uri,
                 this.channel,
                 "*",
-                this.ezServer,
+                this.ezserver,
                 this.resourceSize
         );
     }
@@ -147,6 +148,10 @@ public class Resource {
         return Static.GSON.toJson(this);
     }
 
+    public JsonElement toJsonElement() {
+        return Static.GSON.toJsonTree(this);
+    }
+
     public static Resource fromJson(String json) {
         return Static.GSON.fromJson(json, Resource.class);
     }
@@ -186,7 +191,7 @@ public class Resource {
         String uri = (this.uri != null) ? normaliseStr(this.uri) : "";
         String channel = (this.channel != null) ? normaliseStr(this.channel) : "";
         String owner = (this.owner != null) ? normaliseStr(this.owner) : "";
-        String ezServer = (this.ezServer != null) ? normaliseStr(this.ezServer) : "";
+        String ezServer = (this.ezserver != null) ? normaliseStr(this.ezserver) : "";
         return new Resource(name, description, tags, uri, channel, owner, ezServer);
     }
 
@@ -211,7 +216,7 @@ public class Resource {
             return false;
         if (owner != null ? !owner.equals(resource.owner) : resource.owner != null)
             return false;
-        return ezServer != null ? ezServer.equals(resource.ezServer) : resource.ezServer == null;
+        return ezserver != null ? ezserver.equals(resource.ezserver) : resource.ezserver == null;
     }
 
     @Override
@@ -222,7 +227,7 @@ public class Resource {
         result = 31 * result + (uri != null ? uri.hashCode() : 0);
         result = 31 * result + (channel != null ? channel.hashCode() : 0);
         result = 31 * result + (owner != null ? owner.hashCode() : 0);
-        result = 31 * result + (ezServer != null ? ezServer.hashCode() : 0);
+        result = 31 * result + (ezserver != null ? ezserver.hashCode() : 0);
         result = 31 * result + (resourceSize != null ? resourceSize.hashCode() : 0);
         return result;
     }
