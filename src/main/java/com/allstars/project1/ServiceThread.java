@@ -68,9 +68,7 @@ public class ServiceThread extends Thread {
             throw new ServerException("invalid resourceTemplate");
         } else if (!URI.create(r.getUri()).isAbsolute()) {   // not an absolute uri
             throw new ServerException("missing resourceTemplate");  
-        } else if (!resourceStorage.containsKey(r)) {     // not match 
-            throw new ServerException("invalid resourceTemplate");
-        }
+        } 
     }  
 
     private void respondSuccess() throws IOException {
