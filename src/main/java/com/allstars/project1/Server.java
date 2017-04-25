@@ -14,7 +14,7 @@ public class Server {
     public static HashMap<SocketAddress, Date> lastConnectionTime = new HashMap<>();
     public static EzServer self;
 
-    private static boolean running = true;
+    private static boolean running = false;
     private static Thread mainThread;
 
     public static boolean isRunning() {
@@ -23,7 +23,6 @@ public class Server {
 
     public static void stop() {
         running = false;
-        mainThread.stop();
         mainThread.interrupt();
     }
 
@@ -37,6 +36,8 @@ public class Server {
 
             ServerSocket listenSocket = new ServerSocket(port);
             int i = 0;
+            Logging.logInfo("Server initialisation complete");
+            running = true;
             while (running) {
                 // wait for new client
                 Logging.logInfo("Server listening for a connection");
@@ -55,6 +56,8 @@ public class Server {
         } catch (InterruptedException e) {
             if (running) {
                 e.printStackTrace();
+            } else {
+                Logging.logInfo("Server shutting down...");
             }
         }
     }
