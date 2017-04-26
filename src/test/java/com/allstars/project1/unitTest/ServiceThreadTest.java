@@ -176,7 +176,7 @@ class ServiceThreadTest {
                 "'owner': 'Leo', " +
                 "'ezserver': null}}");
 
-        // publish resource with same CHANNEL and URI, BUT different OWENER
+        // publish resource with same CHANNEL and URI, BUT different OWNER
         commandFail.add("{'command': 'PUBLISH', " +
                 "'resource': {" +
                 "'name': 'UOM again and again', " +
@@ -187,6 +187,17 @@ class ServiceThreadTest {
                 "'owner': 'Jack', " +
                 "'ezserver': null}}");
 
+        // publish UOM again with same URI and OWNER but diff CHANNEL
+        commandSuccess.add("{'command': 'PUBLISH', " +
+                "'resource': {" +
+                "'name': 'UOM again', " +
+                "'tags': ['web', 'jack'], " +
+                "'description': 'university of melbourne second time', " +
+                "'uri': 'http:\\/\\/www.unimelb.edu.au', " +
+                "'channel': 'Another Web', " +
+                "'owner': 'Leo', " +
+                "'ezserver': null}}");
+
         // publish resource with OWNER = '*'
         commandFail.add("{'command': 'PUBLISH', " +
                 "'resource': {" +
@@ -194,6 +205,17 @@ class ServiceThreadTest {
                 "'tags': ['double'], " +
                 "'description': 'LeoGoodMan', " +
                 "'uri': 'http:\\/\\/www.unimelb.edu.au', " +
+                "'channel': 'Web', " +
+                "'owner': '*', " +
+                "'ezserver': null}}");
+
+        // publish a file
+        commandFail.add("{'command': 'PUBLISH', " +
+                "'resource': {" +
+                "'name': 'Leo', " +
+                "'tags': ['double'], " +
+                "'description': 'LeoGoodMan', " +
+                "'uri': 'file:///c:/path/to/the%20file.txt', " +
                 "'channel': 'Web', " +
                 "'owner': '*', " +
                 "'ezserver': null}}");
