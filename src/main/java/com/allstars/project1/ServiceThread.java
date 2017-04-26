@@ -44,6 +44,13 @@ public class ServiceThread extends Thread {
         }
     }
 
+    private void checkResource(Resource resource) throws ServerException {
+        if (resource == null) {
+            throw new ServerException("missing resource");
+        }
+        // TODO "invalid resource" If the resource contained incorrect information that could not be recovered from:
+    }
+
     private void checkCommand(Resource resource) throws ServerException {
         // created a resource only with the primary keys
         Resource r = new Resource(null, null, null, resource.getUri(),
@@ -93,6 +100,7 @@ public class ServiceThread extends Thread {
     }
 
     private void publish(Resource resource) throws ServerException, IOException {
+        checkResource(resource);
         // check whether the uri is a file scheme
         if (isFile(resource.getUri())) {
             throw new ServerException("cannot publish resource");
@@ -108,6 +116,7 @@ public class ServiceThread extends Thread {
     }
 
     private void remove(Resource resource) throws ServerException, IOException {
+        checkResource(resource);
         if (resourceStorage.containsKey(resource)) {
             resourceStorage.remove(resource);
             respondSuccess();
@@ -118,6 +127,7 @@ public class ServiceThread extends Thread {
     }
 
     private void share(String secret, Resource resource) throws ServerException, IOException {
+        checkResource(resource);
         if (!secret.equals(this.secret)) {
             throw new ServerException("incorrect secret");
         } else {
@@ -161,9 +171,14 @@ public class ServiceThread extends Thread {
     }
 
     private void fetch(Resource template) throws ServerException, IOException {
-        checkTemplate(template);// TODO check valid...
+        checkTemplate(template);
 
-        Resource resource = new ArrayList<>(Server.resourceStorage.searchWithTemplate(template)).get(0);
+        List<Resource> results = new ArrayList<>(Server.resourceStorage.searchWithTemplate(template));
+        if (results.size() == 0) {
+            // undefined behaviour, chose to report error
+            throw new ServerException("cannot fetch resource");
+        }
+        Resource resource = results.get(0);
 
         try {
             java.net.URI uri = new java.net.URI(template.getUri());

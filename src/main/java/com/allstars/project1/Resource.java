@@ -167,7 +167,7 @@ public class Resource {
 
     public static Resource parseAndNormalise(JsonElement elem) {
         Resource r = fromJsonElem(elem);
-        return r.normalised();
+        return r == null ? null : r.normalised();
     }
 
     static String normaliseStr(String s) {

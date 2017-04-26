@@ -47,19 +47,19 @@ public class AdditionalTest {
         }
     }
 
-    class Verifier extends Thread {
-        class ServerThread extends Thread {
-            String[] args;
+    class ServerThread extends Thread {
+        String[] args;
 
-            public ServerThread(String[] args) {
-                this.args = args;
-            }
-
-            public void run() {
-                Server.main(args);
-            }
+        public ServerThread(String[] args) {
+            this.args = args;
         }
 
+        public void run() {
+            Server.main(args);
+        }
+    }
+
+    class Verifier extends Thread {
         List<TestCase> testCases;
         boolean testWithSunrise;
         String[] serverArgs;
@@ -157,6 +157,50 @@ public class AdditionalTest {
             }
         }
     }
+
+    class ServerVerifier extends Thread {
+
+        String requestJson;
+        String expectedResponseJson;
+        boolean testWithSunrise = false;
+
+        boolean successful = false;
+
+        public ServerVerifier(String requestJson, String expectedResponseJson, boolean testWithSunrise) {
+            this.requestJson = requestJson;
+            this.expectedResponseJson = expectedResponseJson;
+            this.testWithSunrise = testWithSunrise;
+        }
+
+        @Override
+        public void run() {
+            new ServerThread("-port 9999".split(" ")).start();
+            try {
+                Server.waitUntilReady();
+                Socket socket = new Socket("localhost", 9999);
+                new DataOutputStream(socket.getOutputStream()).writeUTF(requestJson);
+                assertJsonEquivalent(new DataInputStream(socket.getInputStream()).readUTF(), expectedResponseJson);
+                successful = true;
+            } catch (Exception e) {
+                successful = false;
+                e.printStackTrace();
+            } finally {
+                if (Server.isRunning()) {
+                    Server.stop();
+                }
+                synchronized (this) {
+                    notifyAll();
+                }
+            }
+        }
+
+        public synchronized void test() throws InterruptedException {
+            this.start();
+            wait(1000 * 10);
+            Assertions.assertTrue(this.successful);
+        }
+    }
+
 
     private void testWith(String[] serverArgs, String[] clientArgs, String expectedRequestJson, String expectedResponseJson, boolean testWithSunrise) throws InterruptedException {
         List<TestCase> testCases = new ArrayList<>();
@@ -278,6 +322,26 @@ public class AdditionalTest {
                         "}",
                 "{\"response\":\"success\"}"
         ));
+        // add it one more time, should get the same result
+        testCases.add(new TestCase(
+                "-host localhost -port 3780 -publish -name Leo -owner Jack -channel LeosChannel -uri http://leo.com -tags leo,ntr -debug".split(" "),
+                "{\n" +
+                        "   \"command\":\"PUBLISH\",\n" +
+                        "   \"resource\":{\n" +
+                        "      \"name\":\"Leo\",\n" +
+                        "      \"tags\":[\n" +
+                        "         \"leo\",\n" +
+                        "         \"ntr\"\n" +
+                        "      ],\n" +
+                        "      \"owner\":\"Jack\",\n" +
+                        "      \"description\":\"\",\n" +
+                        "      \"uri\":\"http://leo.com\",\n" +
+                        "      \"channel\":\"LeosChannel\",\n" +
+                        "      \"ezserver\":null\n" +
+                        "   }\n" +
+                        "}",
+                "{\"response\":\"success\"}"
+        ));
         // remove the resource added
         testCases.add(new TestCase(
                 "-host localhost -port 3780 -remove -name Leo -owner Jack -channel LeosChannel -uri http://leo.com -tags leo,ntr -debug".split(" "),
@@ -339,6 +403,28 @@ public class AdditionalTest {
                 "{\"response\":\"success\"}"
         ));
         testMultipleWith("-port 3780 -debug".split(" "), testCases, false);
+    }
+
+    @Test
+    void testInvalidRequests() throws InterruptedException {
+        new ServerVerifier("{\"command\": \"PUBLISH\"}",
+                "{ \"response\" : \"error\", \"errorMessage\" : \"missing resource\" }",
+                false).test();
+
+        new ServerVerifier("{\n" +
+                "    \"command\": \"FETCH\",\n" +
+                "    \"resourceTemplate\": {\n" +
+                "        \"name\": \"\",\n" +
+                "        \"tags\": [],\n" +
+                "        \"description\": \"\",\n" +
+                "        \"uri\": \"file:\\/\\/\\/\\/home\\/aaron\\/EZShare\\/ezshare.jar\",\n" +
+                "        \"channel\": \"my_private_channel\",\n" +
+                "        \"owner\": \"\",\n" +
+                "        \"ezserver\": null\n" +
+                "    }\n" +
+                "}",
+                "{ \"response\" : \"error\", \"errorMessage\" : \"cannot fetch resource\" }",
+                false).test();
     }
 
     @Test

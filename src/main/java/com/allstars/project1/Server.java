@@ -67,7 +67,7 @@ public class Server {
         }
     }
 
-    public static CommandLine getOptions(String[] args) {
+    public static CommandLine getOptions(String[] args) throws ParseException {
         Options options = new Options();
 
         options.addOption(Option.builder("advertisedhostname").desc("advertised hostname")
@@ -83,18 +83,17 @@ public class Server {
         options.addOption(Option.builder("debug").desc("print debug information").build());
 
         CommandLineParser parser = new DefaultParser();
-        CommandLine cmd = null;
-        try {
-            cmd = parser.parse(options, args);
-        } catch (ParseException e) {
-            Logging.logInfo("parse exception");
-        }
-
-        return cmd;
+        return parser.parse(options, args);
     }
 
     public static void main(String[] args) {
-        CommandLine cmd = getOptions(args);
+        CommandLine cmd = null;
+        try {
+            cmd = getOptions(args);
+        } catch (ParseException e) {
+            Logging.logInfo("Command line arguments missing or invalid, please try again");
+            return;
+        }
 
         mainThread = Thread.currentThread();
 
