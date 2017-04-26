@@ -8,19 +8,59 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.apache.commons.cli.*;
 
+/**
+ * EzShare client implementation,
+ */
 public class Client {
+    /**
+     * Handle response from server
+     * @param response response from server
+     * @return true if success, false otherwise
+     */
     private static boolean handleResponse(String response) {
         JsonObject resObj = new JsonParser().parse(response).getAsJsonObject();
         if (resObj.get("response").getAsString().equals("success")) {
-            Logging.logInfo("success");
+            Logging.logInfo("command successful");
             return true;
         } else {
-            Logging.logFine("RECEIVED: " + response);
             Logging.logInfo("error: " + resObj.get("errorMessage").getAsString());
             return false;
         }
     }
 
+    /**
+     * Handle resultSize response from server
+     * @param responseObj response from server as JSONObject
+     * @param expectedSize expected number of resources received
+     * @return true if reported number matches expected, false otherwise
+     */
+    private static boolean handleSizeResponse(JsonObject responseObj, int expectedSize) {
+        int size = responseObj.get("resultSize").getAsInt();
+        if (size != expectedSize) {
+            Logging.logInfo("WARNING: number of results received different to reported number from server");
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    /**
+     * Handle resultSize response from server
+     * @param response response from server
+     * @param expectedSize expected number of resources received
+     * @return true if reported number matches expected, false otherwise
+     */
+    private static boolean handleSizeResponse(String response, int expectedSize) {
+        JsonObject resObj = new JsonParser().parse(response).getAsJsonObject();
+        return handleSizeResponse(resObj, expectedSize);
+    }
+
+    /**
+     * Make json from arguments
+     * @param command the command
+     * @param resource the resource
+     * @return json with arguments as fields
+     */
     private static String makeJsonFrom(String command, Resource resource) {
         JsonObject jsonObject = new JsonObject();
         jsonObject.addProperty("command", command);
@@ -28,6 +68,13 @@ public class Client {
         return jsonObject.toString();
     }
 
+    /**
+     * Make json from arguments
+     * @param command the command
+     * @param resource the resource
+     * @param isTemplate true if resource is template, false otherwise
+     * @return json with arguments as fields
+     */
     private static String makeJsonFrom(String command, Resource resource, boolean isTemplate) {
         if (isTemplate) {
             JsonObject jsonObject = new JsonObject();
@@ -39,6 +86,13 @@ public class Client {
         }
     }
 
+    /**
+     * Make json from arguments
+     * @param command the command
+     * @param secret the secret
+     * @param resource the resource
+     * @return json with arguments as fields
+     */
     private static String makeJsonFrom(String command, String secret, Resource resource) {
         JsonObject jsonObject = new JsonObject();
         jsonObject.addProperty("command", command);
@@ -47,6 +101,13 @@ public class Client {
         return jsonObject.toString();
     }
 
+    /**
+     * Make json from arguments
+     * @param command the command
+     * @param relay true if need relay, false otherwise
+     * @param resource the resource
+     * @return json with arguments as fields
+     */
     private static String makeJsonFrom(String command, boolean relay, Resource resource) {
         JsonObject jsonObject = new JsonObject();
         jsonObject.addProperty("command", command);
@@ -55,6 +116,12 @@ public class Client {
         return jsonObject.toString();
     }
 
+    /**
+     * Make json from arguments
+     * @param command the command
+     * @param serverList an array of EzServer to send in exchange
+     * @return json with arguments as fields
+     */
     private static String makeJsonFrom(String command, EzServer[] serverList) {
         JsonObject jsonObject = new JsonObject();
         jsonObject.addProperty("command", command);
@@ -62,7 +129,12 @@ public class Client {
         return jsonObject.toString();
     }
 
-
+    /**
+     * Make publish request
+     * @param socket socket used to communicate with server
+     * @param resource resource to be published
+     * @throws IOException any network error
+     */
     public static void publish(Socket socket, Resource resource) throws IOException {
         DataInputStream in = new DataInputStream(socket.getInputStream());
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
@@ -75,6 +147,12 @@ public class Client {
         handleResponse(response);
     }
 
+    /**
+     * Make remove request
+     * @param socket socket used to communicate with server
+     * @param resource resource to be removed
+     * @throws IOException any network error
+     */
     protected static void remove(Socket socket, Resource resource) throws IOException {
         DataInputStream in = new DataInputStream(socket.getInputStream());
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
@@ -87,6 +165,13 @@ public class Client {
         handleResponse(response);
     }
 
+    /**
+     * Make share request
+     * @param socket socket used to communicate with server
+     * @param secret secret of server
+     * @param resource resource to be published
+     * @throws IOException any network error
+     */
     protected static void share(Socket socket, String secret, Resource resource) throws IOException {
         DataInputStream in = new DataInputStream(socket.getInputStream());
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
@@ -99,6 +184,14 @@ public class Client {
         handleResponse(response);
     }
 
+    /**
+     * Make query request
+     * @param socket socket used to communicate with server
+     * @param relay true if need relay, false otherwise
+     * @param template resource template used for searching
+     * @return query result as set of resources
+     * @throws IOException any network error
+     */
     protected static Set<Resource> query(Socket socket, boolean relay, Resource template) throws IOException {
         DataInputStream in = new DataInputStream(socket.getInputStream());
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
@@ -113,23 +206,28 @@ public class Client {
         boolean success = handleResponse(response);
         if (success) {
             JsonObject jsonObj = new JsonParser().parse(Static.readJsonUTF(in)).getAsJsonObject();
+            int numReceived = 0;
             while (!jsonObj.has("resultSize")) {
+                numReceived += 1;
                 Logging.logFine(jsonObj);
                 resources.add(Static.GSON.fromJson(jsonObj, Resource.class));
                 jsonObj = new JsonParser().parse(Static.readJsonUTF(in)).getAsJsonObject();
             }
             Logging.logFine(jsonObj);
-            if (jsonObj.get("resultSize").getAsInt() != resources.size()) {
-                // TODO
-                // something wrong happened
-            }
+            handleSizeResponse(jsonObj, numReceived);
         } else {
-            // TODO
+            Logging.logInfo("query failed, client exiting...");
         }
 
         return resources;
     }
 
+    /**
+     * Make fetch request
+     * @param socket socket used to communicate with server
+     * @param template resource template used for searching
+     * @throws IOException any network error
+     */
     protected static void fetch(Socket socket, Resource template) throws IOException {
         // http://stackoverflow.com/questions/9520911/java-sending-and-receiving-file-byte-over-sockets
 
@@ -145,6 +243,8 @@ public class Client {
         Logging.logFine("read resource");
         Resource resource = Resource.fromJson(Static.readJsonUTF(in));
         Logging.logFine(resource.getName());
+
+        // got resource, start reading bytes of file
         Logging.logFine("read file");
         long totalSize = resource.getResourceSize();
         Logging.logFine(totalSize);
@@ -173,10 +273,18 @@ public class Client {
             Logging.logFine("read file complete");
             fileOutputStream.close();
         }
+
+        // check number of resources to be 1 (as specified)
         String sizeResponse = Static.readJsonUTF(in);
-        // TODO check size
+        handleSizeResponse(sizeResponse, 1);
     }
 
+    /**
+     * Make exchange request
+     * @param socket socket used to communicate with server
+     * @param servers array of known EzServers to be sent
+     * @throws IOException any network error
+     */
     protected static void exchange(Socket socket, EzServer[] servers) throws IOException {
         DataInputStream in = new DataInputStream(socket.getInputStream());
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
@@ -192,6 +300,12 @@ public class Client {
         handleResponse(response);
     }
 
+    /**
+     * Parse command line arguments
+     * @param args arguments passed from main function
+     * @return CommandLine object as parse result
+     * @throws ParseException error in parsing
+     */
     public static CommandLine getOptions(String[] args) throws ParseException {
         Options options = new Options();
 
@@ -217,6 +331,11 @@ public class Client {
         return parser.parse(options, args);
     }
 
+    /**
+     * Construct a resource object from command line arguments
+     * @param cmd CommandLine object containing arguments
+     * @return a new resource object from arguments
+     */
     public static Resource makeResourceFromCmd(CommandLine cmd) {
         String name = cmd.getOptionValue("name", "");
         String description = cmd.getOptionValue("description", "");
@@ -230,8 +349,15 @@ public class Client {
         return new Resource(name, description, tags, uri, channel, owner, null);
     }
 
+    /**
+     * Establish connection to a server
+     * @param host host of server
+     * @param port port of server
+     * @param timeout timeout in milliseconds for all operations with the server
+     * @return Socket of the server
+     * @throws IOException any network error
+     */
     public static Socket connectToServer(String host, int port, int timeout) throws IOException {
-        // TODO connect to server
         Socket socket;
         socket = new Socket(host, port);
         socket.setSoTimeout(timeout);
@@ -239,6 +365,10 @@ public class Client {
         return socket;
     }
 
+    /**
+     * The main function for client
+     * @param args command line arguments
+     */
     public static void main(String[] args) {
 
         // command line arguments parsing
