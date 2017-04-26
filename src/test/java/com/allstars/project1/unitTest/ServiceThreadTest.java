@@ -394,7 +394,53 @@ class ServiceThreadTest {
         // exchange with no serverList specified in the JSON template
         commandFail.add("{'command': 'EXCHANGE'}");
 
-        //TODO writing SHARE command tests
+        // share with correct secret but empty uri
+        commandFail.add("{'command': 'SHARE', " +
+                "'secret': 'JackBigLeg'" +
+                "'resource': {" +
+                "'name': '', " +
+                "'tags': [], " +
+                "'description': '', " +
+                "'uri': '', " +
+                "'channel': 'Personal', " +
+                "'owner': 'Leo', " +
+                "'ezserver': null}}");
+
+        // share with incorrect secret, correct uri???
+        commandFail.add("{'command': 'SHARE', " +
+                "'secret': 'JackBigGay'" +
+                "'resource': {" +
+                "'name': '', " +
+                "'tags': [], " +
+                "'description': '', " +
+                "'uri': 'file:\\/\\/~/Desktop/test.png', " +
+                "'channel': 'Personal', " +
+                "'owner': 'Leo', " +
+                "'ezserver': null}}");
+
+        // share with correct secret, correct uri???
+        commandSuccess.add("{'command': 'SHARE', " +
+                "'secret': 'JackBigLeg'" +
+                "'resource': {" +
+                "'name': '', " +
+                "'tags': [], " +
+                "'description': '', " +
+                "'uri': 'file:\\/\\/~/Desktop/test.png', " +
+                "'channel': 'Personal', " +
+                "'owner': 'Leo', " +
+                "'ezserver': null}}");
+
+        // share with correct secret, correct uri??? different owner
+        commandFail.add("{'command': 'SHARE', " +
+                "'secret': 'JackBigLeg'" +
+                "'resource': {" +
+                "'name': '', " +
+                "'tags': [], " +
+                "'description': '', " +
+                "'uri': 'file:\\/\\/~/Desktop/test.png', " +
+                "'channel': 'Personal', " +
+                "'owner': 'Jack', " +
+                "'ezserver': null}}");
 
         // remove resource which is not existed #1
         commandFail.add("{'command': 'REMOVE', " +
