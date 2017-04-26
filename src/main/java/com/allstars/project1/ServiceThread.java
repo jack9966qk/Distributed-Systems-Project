@@ -50,13 +50,13 @@ public class ServiceThread extends Thread {
                 resource.getChannel(), resource.getOwner(), null);
 
         if (resource.getOwner().length() == 1 && resource.getOwner().toCharArray()[0] == '*') {// * owner
-            throw new ServerException("invalid resource");
+            throw new ServerException("cannot publish resource");
         } else if (resource.getUri().isEmpty()) {//uri is empty
-            throw new ServerException("missing resource");
+            throw new ServerException("cannot publish resource");
         } else if (!URI.create(resource.getUri()).isAbsolute()) { //not an absolute uri
-            throw new ServerException("missing resource");
+            throw new ServerException("cannot publish resource");
         } else if (resourceStorage.getUriSet().contains(resource.getUri())) { // duplicate uri
-            throw new ServerException("invalid resource");
+            throw new ServerException("cannot publish resource");
         }
     }
 
