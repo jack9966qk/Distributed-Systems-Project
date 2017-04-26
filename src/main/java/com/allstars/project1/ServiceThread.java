@@ -62,7 +62,7 @@ public class ServiceThread extends Thread {
      private void checkTemplate(Resource template) throws ServerException {
         Resource r = new Resource(null, null, null, template.getUri(),
                 template.getChannel(), null, null);
-        if (r.getUri().isEmpty()) {            // uri is empty
+        if (r.getUri().isEmpty()|r.getChannel().isEmpty()) {   // uri or uri is empty
             throw new ServerException("missing resourceTemplate");
         } else if (!isFile(r.getUri())) {      // not a file
             throw new ServerException("invalid resourceTemplate");
