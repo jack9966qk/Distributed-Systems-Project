@@ -31,8 +31,6 @@ public class ServerThread extends Thread {
             String request = inputStream.readUTF();
             outputStream.writeUTF("Got request" + request);
             outputStream.flush();
-
-
         } catch (IOException e) {
             e.printStackTrace();
         }
