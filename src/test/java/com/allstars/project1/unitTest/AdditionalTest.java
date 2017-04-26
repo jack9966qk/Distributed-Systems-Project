@@ -10,6 +10,7 @@ import org.junit.jupiter.api.*;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.net.BindException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -60,9 +61,8 @@ public class AdditionalTest {
         }
 
         List<TestCase> testCases;
-        ServerThread serverThread;
         boolean testWithSunrise;
-
+        String[] serverArgs;
 
         public boolean isSuccessful() {
             return successful;
@@ -71,9 +71,9 @@ public class AdditionalTest {
         boolean successful = true;
 
         public Verifier(String[] serverArgs, List<TestCase> testCases, boolean testWithSunrise) {
+            this.serverArgs = serverArgs;
             this.testCases = testCases;
             this.testWithSunrise = testWithSunrise;
-            this.serverThread = new ServerThread(serverArgs);
         }
 
         private String getResponse(String host, int port, String request) throws IOException {
@@ -92,7 +92,12 @@ public class AdditionalTest {
             try {
                 // create a dummy server to check request from client
                 synchronized (this) {
-                    dummyServerSocket = new ServerSocket(3780);
+                    while (true) {
+                        try {
+                            dummyServerSocket = new ServerSocket(3780);
+                            break;
+                        } catch (BindException e) {}
+                    }
                     notifyAll();
                 }
                 client = dummyServerSocket.accept();
@@ -109,7 +114,7 @@ public class AdditionalTest {
                     return;
                 }
 
-                this.serverThread.start();
+                new ServerThread(serverArgs).start();
                 Server.waitUntilReady();
 
                 // get response from our server
@@ -124,13 +129,17 @@ public class AdditionalTest {
                     assertJsonEquivalent(sunriseRes, expectedResponseJson);
                 }
             } catch (Exception e) {
+                throw e;
+            } finally {
                 if (client != null) {
                     client.close();
                 }
                 if (dummyServerSocket != null) {
                     dummyServerSocket.close();
                 }
-                throw e;
+                if (Server.isRunning()) {
+                    Server.stop();
+                }
             }
         }
 
@@ -138,9 +147,6 @@ public class AdditionalTest {
             try {
                 for (TestCase testCase: testCases) {
                     testOne(testCase.getExpectedRequestJson(), testCase.getExpectedResponseJson());
-                }
-                if (Server.isRunning()) {
-                    Server.stop();
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -250,9 +256,9 @@ public class AdditionalTest {
     }
 
     @Test
-    void testPublish() throws InterruptedException {
-        // A normal resource
+    void testPublishRemove() throws InterruptedException {
         List<TestCase> testCases = new ArrayList<>();
+        // add a resource
         testCases.add(new TestCase(
                 "-host localhost -port 3780 -publish -name Leo -owner Jack -channel LeosChannel -uri http://leo.com -tags leo,ntr -debug".split(" "),
                 "{\n" +
@@ -271,6 +277,46 @@ public class AdditionalTest {
                         "   }\n" +
                         "}",
                 "{\"response\":\"success\"}"
+        ));
+        // remove the resource added
+        testCases.add(new TestCase(
+                "-host localhost -port 3780 -remove -name Leo -owner Jack -channel LeosChannel -uri http://leo.com -tags leo,ntr -debug".split(" "),
+                "{\n" +
+                        "   \"command\":\"REMOVE\",\n" +
+                        "   \"resource\":{\n" +
+                        "      \"name\":\"Leo\",\n" +
+                        "      \"tags\":[\n" +
+                        "         \"leo\",\n" +
+                        "         \"ntr\"\n" +
+                        "      ],\n" +
+                        "      \"owner\":\"Jack\",\n" +
+                        "      \"description\":\"\",\n" +
+                        "      \"uri\":\"http://leo.com\",\n" +
+                        "      \"channel\":\"LeosChannel\",\n" +
+                        "      \"ezserver\":null\n" +
+                        "   }\n" +
+                        "}",
+                "{\"response\":\"success\"}"
+        ));
+        // try remove again, should fail since resource no longer exists
+        testCases.add(new TestCase(
+                "-host localhost -port 3780 -remove -name Leo -owner Jack -channel LeosChannel -uri http://leo.com -tags leo,ntr -debug".split(" "),
+                "{\n" +
+                        "   \"command\":\"REMOVE\",\n" +
+                        "   \"resource\":{\n" +
+                        "      \"name\":\"Leo\",\n" +
+                        "      \"tags\":[\n" +
+                        "         \"leo\",\n" +
+                        "         \"ntr\"\n" +
+                        "      ],\n" +
+                        "      \"owner\":\"Jack\",\n" +
+                        "      \"description\":\"\",\n" +
+                        "      \"uri\":\"http://leo.com\",\n" +
+                        "      \"channel\":\"LeosChannel\",\n" +
+                        "      \"ezserver\":null\n" +
+                        "   }\n" +
+                        "}",
+                "{ \"response\" : \"error\", \"errorMessage\" : \"cannot remove resource\" }"
         ));
         testMultipleWith("-port 3780 -debug".split(" "), testCases, false);
 
@@ -293,9 +339,6 @@ public class AdditionalTest {
                 "{\"response\":\"success\"}"
         ));
         testMultipleWith("-port 3780 -debug".split(" "), testCases, false);
-
-
-        // nothing about resource specified
     }
 
     @Test

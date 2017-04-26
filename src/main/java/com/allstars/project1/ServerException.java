@@ -16,7 +16,7 @@ public class ServerException extends Exception {
 
     public String toJson() {
         Map<String, String> map = new HashMap<>();
-        map.put("response", "ERROR");
+        map.put("response", "error");
         map.put("errorMessage", errorMessage);
         return Static.GSON.toJson(map);
     }
