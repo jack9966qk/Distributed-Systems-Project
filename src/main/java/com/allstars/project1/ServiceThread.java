@@ -21,8 +21,9 @@ public class ServiceThread extends Thread {
     private Set<EzServer> serverList;
     private Socket socket;
     private Map<SocketAddress, Date> lastConnectionTime;
+    private EzServer server;
 
-    public ServiceThread(Map<SocketAddress, Date> lastConnectionTime, Socket clientSocket, String secret, ResourceStorage resourceStorage, Set<EzServer> serverList)
+    public ServiceThread(Map<SocketAddress, Date> lastConnectionTime, Socket clientSocket, String secret, ResourceStorage resourceStorage, Set<EzServer> serverList, EzServer server)
             throws IOException {
         this.socket = clientSocket;
         this.lastConnectionTime = lastConnectionTime;
@@ -31,6 +32,7 @@ public class ServiceThread extends Thread {
         this.secret = secret;
         this.resourceStorage = resourceStorage;
         this.serverList = serverList;
+        this.server = server;
     }
 
     private boolean isFile(String uri) {
@@ -138,7 +140,7 @@ public class ServiceThread extends Thread {
 
     private void query(Resource template, boolean relay) throws ServerException, IOException {
         Set<Resource> results = resourceStorage.searchWithTemplate(template).stream().map(
-                r -> r.ezServerAdded(Server.self) // add EzServer info for all result from itself
+                r -> r.ezServerAdded(server) // add EzServer info for all result from itself
         ).collect(Collectors.toSet());
 
         if (relay) {

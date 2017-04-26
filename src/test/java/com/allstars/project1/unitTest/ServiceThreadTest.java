@@ -14,7 +14,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.util.*;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -27,14 +26,16 @@ class ServiceThreadTest {
     public static ResourceStorage resourceStorage = new ResourceStorage();
     public static Set<EzServer> serverList = Collections.synchronizedSet(new HashSet<>());
     public static HashMap<SocketAddress, Date> lastConnectionTime = new HashMap<>();
-    public static EzServer self;
+
 
     class DummyServer {
         ServerSocket serverSocket;
+        public EzServer self;
 
         DummyServer () {
             try {
                 serverSocket = new ServerSocket(PORT);
+                self = new EzServer(HOST, PORT);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -46,7 +47,7 @@ class ServiceThreadTest {
                 Socket clientSocket = serverSocket.accept();
                 String secret = "JackBigLeg";
 
-                ServiceThread serviceThread = new ServiceThread(lastConnectionTime, clientSocket, secret, resourceStorage, serverList);
+                ServiceThread serviceThread = new ServiceThread(lastConnectionTime, clientSocket, secret, resourceStorage, serverList, self);
 
                 serviceThread.start();
                 Thread.sleep(5000);
@@ -150,7 +151,7 @@ class ServiceThreadTest {
         // publish resource UOM
         commandSuccess.add("{'command': 'PUBLISH', " +
                 "'resource': {" +
-                "'name': 'UOM', " +
+                "'name': 'UOM' " +
                 "'tags': ['web', 'uom', 'jack', 'bigleg'], " +
                 "'description': 'university of melbourne first time', " +
                 "'uri': 'http:\\/\\/www.unimelb.edu.au', " +
@@ -311,9 +312,6 @@ class ServiceThreadTest {
                 "'owner': '', " +
                 "'ezserver': null}}");
 
-        // query command missing a resourceTemplate
-        queryCommandFail.add("{'command': 'QUERY'}");
-
 //        // fetch the resource UOM with correct URI and CHANNEL
 //        commandSuccess.add("{'command': 'FETCH', " +
 //                "'resourceTemplate': {'name': '', " +
@@ -344,25 +342,15 @@ class ServiceThreadTest {
                 "'owner': '', " +
                 "'ezserver': null}}");
 
-//        // fetch the resource UOM with no resourceTemplate
-//        commandFail.add("{'command': 'FETCH'}");
-
-        // fetch the resource UOM with incorrect resourceTemplate missing DESCRIPTION and TAGS
+        // fetch the resource UOM with empty URI field
         commandFail.add("{'command': 'FETCH', " +
                 "'resourceTemplate': {'name': '', " +
-                "'uri': 'http:\\/\\/www.unimelb.edu.au', " +
+                "'tags': [], " +
+                "'description': '', " +
+                "'uri': '', " +
                 "'channel': 'Web', " +
                 "'owner': '', " +
                 "'ezserver': null}}");
-
-//        // fetch the resource UOM with missing URI field
-//        commandFail.add("{'command': 'FETCH', " +
-//                "'resourceTemplate': {'name': '', " +
-//                "'tags': [], " +
-//                "'description': '', " +
-//                "'channel': 'Web', " +
-//                "'owner': '', " +
-//                "'ezserver': null}}");
 
         // fetch the resource UOM with missing CHANNEL field
         commandFail.add("{'command': 'FETCH', " +
@@ -396,7 +384,7 @@ class ServiceThreadTest {
 
         // share with correct secret but empty uri
         commandFail.add("{'command': 'SHARE', " +
-                "'secret': 'JackBigLeg'" +
+                "'secret': 'JackBigLeg', " +
                 "'resource': {" +
                 "'name': '', " +
                 "'tags': [], " +
@@ -408,7 +396,7 @@ class ServiceThreadTest {
 
         // share with incorrect secret, correct uri???
         commandFail.add("{'command': 'SHARE', " +
-                "'secret': 'JackBigGay'" +
+                "'secret': 'JackBigGay', " +
                 "'resource': {" +
                 "'name': '', " +
                 "'tags': [], " +
@@ -418,26 +406,50 @@ class ServiceThreadTest {
                 "'owner': 'Leo', " +
                 "'ezserver': null}}");
 
-        // share with correct secret, correct uri???
-        commandSuccess.add("{'command': 'SHARE', " +
-                "'secret': 'JackBigLeg'" +
-                "'resource': {" +
-                "'name': '', " +
-                "'tags': [], " +
-                "'description': '', " +
-                "'uri': 'file:\\/\\/~/Desktop/test.png', " +
-                "'channel': 'Personal', " +
-                "'owner': 'Leo', " +
-                "'ezserver': null}}");
+//        // share with correct secret, correct uri???
+//        commandSuccess.add("{'command': 'SHARE', " +
+//                "'secret': 'JackBigLeg', " +
+//                "'resource': {" +
+//                "'name': '', " +
+//                "'tags': [], " +
+//                "'description': '', " +
+//                "'uri': 'file:\\/\\/home/Desktop/test.png', " +
+//                "'channel': 'Personal', " +
+//                "'owner': 'Leo', " +
+//                "'ezserver': null}}");
 
         // share with correct secret, correct uri??? different owner
         commandFail.add("{'command': 'SHARE', " +
-                "'secret': 'JackBigLeg'" +
+                "'secret': 'JackBigLeg', " +
                 "'resource': {" +
                 "'name': '', " +
                 "'tags': [], " +
                 "'description': '', " +
                 "'uri': 'file:\\/\\/~/Desktop/test.png', " +
+                "'channel': 'Personal', " +
+                "'owner': 'Jack', " +
+                "'ezserver': null}}");
+
+        // share with empty secret, correct uri???
+        commandFail.add("{'command': 'SHARE', " +
+                "'secret': '', " +
+                "'resource': {" +
+                "'name': '', " +
+                "'tags': [], " +
+                "'description': '', " +
+                "'uri': 'file:\\/\\/~/Desktop/test.png', " +
+                "'channel': 'Personal', " +
+                "'owner': 'Leo', " +
+                "'ezserver': null}}");
+
+        // share with correct secret, incorrect uri
+        commandFail.add("{'command': 'SHARE', " +
+                "'secret': 'JackBigLeg', " +
+                "'resource': {" +
+                "'name': '', " +
+                "'tags': [], " +
+                "'description': '', " +
+                "'uri': 'file:\\/\\/~/Desktop/test1.png', " +
                 "'channel': 'Personal', " +
                 "'owner': 'Jack', " +
                 "'ezserver': null}}");
@@ -555,7 +567,6 @@ class ServiceThreadTest {
             System.out.println(lastRequest);
             c.sendRequest(lastRequest);
             boolean success = c.getResponse();
-            //assert the respond to be success
             Assertions.assertTrue(success);
 
 

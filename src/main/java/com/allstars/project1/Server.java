@@ -54,7 +54,7 @@ public class Server {
                 Logging.logInfo("Received connection " + i );
                 // start a new thread handling the client
                 // TODO limitation on total number of threads
-                ServiceThread c = new ServiceThread(lastConnectionTime, clientSocket, secret, resourceStorage, serverList);
+                ServiceThread c = new ServiceThread(lastConnectionTime, clientSocket, secret, resourceStorage, serverList, self);
                 c.start();
                 Thread.sleep(connectionIntervalLimit);
             }
