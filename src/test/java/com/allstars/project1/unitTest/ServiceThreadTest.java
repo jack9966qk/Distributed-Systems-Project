@@ -30,18 +30,20 @@ class ServiceThreadTest {
 
     class DummyServer {
         ServerSocket serverSocket;
+        Thread mainThread;
         public EzServer self;
 
         DummyServer () {
             try {
                 serverSocket = new ServerSocket(PORT);
                 self = new EzServer(HOST, PORT);
+                mainThread = Thread.currentThread();
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
 
-        void DummyServerAccept() {
+        void dummyServerAccept() {
 
             try {
                 Socket clientSocket = serverSocket.accept();
@@ -57,6 +59,10 @@ class ServiceThreadTest {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+        }
+
+        void dummyServerStop() {
+            mainThread.interrupt();
         }
     }
 
@@ -163,7 +169,7 @@ class ServiceThreadTest {
         commandSuccess.add("{'command': 'PUBLISH', " +
                 "'resource': {" +
                 "'name': 'UOM again', " +
-                "'tags': ['web'], " +
+                "'tags': ['web', 'jack'], " +
                 "'description': 'university of melbourne second time', " +
                 "'uri': 'http:\\/\\/www.unimelb.edu.au', " +
                 "'channel': 'Web', " +
@@ -240,7 +246,7 @@ class ServiceThreadTest {
                 "'owner': 'LEO', " +
                 "'ezserver': null}}");
 
-        // query with a resourceTemplate with CHANNEL and correct TAGS
+        // query with a resourceTemplate with CHANNEL and correct TAGS (upper case)
         queryCommandSuccess.add("{'command': 'QUERY', " +
                 "'relay': false, " +
                 "'resourceTemplate': {" +
@@ -312,15 +318,15 @@ class ServiceThreadTest {
                 "'owner': '', " +
                 "'ezserver': null}}");
 
-//        // fetch the resource UOM with correct URI and CHANNEL
-//        commandSuccess.add("{'command': 'FETCH', " +
-//                "'resourceTemplate': {'name': '', " +
-//                "'tags': [], " +
-//                "'description': '', " +
-//                "'uri': 'http:\\/\\/www.unimelb.edu.au', " +
-//                "'channel': 'Web', " +
-//                "'owner': '', " +
-//                "'ezserver': null}}");
+        // fetch the resource UOM with correct URI and CHANNEL
+        commandSuccess.add("{'command': 'FETCH', " +
+                "'resourceTemplate': {'name': '', " +
+                "'tags': [], " +
+                "'description': '', " +
+                "'uri': 'http:\\/\\/www.unimelb.edu.au', " +
+                "'channel': 'Web', " +
+                "'owner': '', " +
+                "'ezserver': null}}");
 
         // fetch the resource UOM with incorrect URI and correct CHANNEL
         commandFail.add("{'command': 'FETCH', " +
@@ -342,7 +348,7 @@ class ServiceThreadTest {
                 "'owner': '', " +
                 "'ezserver': null}}");
 
-        // fetch the resource UOM with empty URI field
+        // fetch the resource UOM with empty URI
         commandFail.add("{'command': 'FETCH', " +
                 "'resourceTemplate': {'name': '', " +
                 "'tags': [], " +
@@ -352,12 +358,13 @@ class ServiceThreadTest {
                 "'owner': '', " +
                 "'ezserver': null}}");
 
-        // fetch the resource UOM with missing CHANNEL field
+        // fetch the resource UOM with empty CHANNEL
         commandFail.add("{'command': 'FETCH', " +
                 "'resourceTemplate': {'name': '', " +
                 "'tags': [], " +
                 "'description': '', " +
                 "'uri': 'http:\\/\\/www.unimelb.edu.au', " +
+                "'channel': ''" +
                 "'owner': '', " +
                 "'ezserver': null}}");
 
@@ -487,6 +494,7 @@ class ServiceThreadTest {
                 "'owner': 'Leo', " +
                 "'ezserver': null}}");
 
+          // 
 //        // remove resource UOM again [the resourceKey is (Leo, Web, http:\/\/www.unimelb.edu.au)]
 //        commandSuccess.add("{'command': 'REMOVE', " +
 //                "'resource': {" +
@@ -505,7 +513,7 @@ class ServiceThreadTest {
 
             for (String s : commandSuccess) {
                 DummyClient c = new DummyClient();
-                server.DummyServerAccept();
+                server.dummyServerAccept();
                 System.out.println(s);
                 c.sendRequest(s);
 
@@ -518,7 +526,7 @@ class ServiceThreadTest {
 
             for (String s : commandFail) {
                 DummyClient c = new DummyClient();
-                server.DummyServerAccept();
+                server.dummyServerAccept();
                 System.out.println(s);
                 c.sendRequest(s);
 
@@ -530,7 +538,7 @@ class ServiceThreadTest {
 
             for (String s : queryCommandSuccess) {
                 DummyClient c = new DummyClient();
-                server.DummyServerAccept();
+                server.dummyServerAccept();
                 System.out.println(s);
                 c.sendRequest(s);
 
@@ -543,7 +551,7 @@ class ServiceThreadTest {
 
             for (String s : queryCommandFail) {
                 DummyClient c = new DummyClient();
-                server.DummyServerAccept();
+                server.dummyServerAccept();
                 System.out.println(s);
                 c.sendRequest(s);
 
@@ -563,7 +571,7 @@ class ServiceThreadTest {
                 "'ezserver': null}}";
 
             DummyClient c = new DummyClient();
-            server.DummyServerAccept();
+            server.dummyServerAccept();
             System.out.println(lastRequest);
             c.sendRequest(lastRequest);
             boolean success = c.getResponse();
@@ -572,6 +580,8 @@ class ServiceThreadTest {
 
         } catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            server.dummyServerStop();
         }
     }
 
