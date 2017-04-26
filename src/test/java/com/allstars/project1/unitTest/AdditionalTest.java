@@ -62,12 +62,6 @@ public class AdditionalTest {
             wait(timeout);
         }
 
-        private void waitForServerThreadToBeReady() throws InterruptedException {
-            this.serverThread.start();
-            while (!Server.isRunning()) { // busy waiting
-                sleep(100);
-            }
-        }
 
         public void run() {
             try {
@@ -84,7 +78,8 @@ public class AdditionalTest {
                 dummyServerSocket.close();
 
                 try {
-                    waitForServerThreadToBeReady();
+                    this.serverThread.start();
+                    Server.waitUntilReady();
                 } catch (InterruptedException e) {
                     Assertions.fail(e.toString());
                 }
