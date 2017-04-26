@@ -59,7 +59,6 @@ class ServiceThreadTest {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-
         }
     }
 
@@ -289,64 +288,64 @@ class ServiceThreadTest {
         // query command missing a resourceTemplate
         commandFail.add("{'command': 'QUERY'}");
 
-//        // fetch the resource UOM with correct URI and CHANNEL
-//        commandSuccess.add("{'command': 'FETCH', " +
-//                "'resourceTemplate': {'name': '', " +
-//                "'tags': [], " +
-//                "'description': '', " +
-//                "'uri': 'http:\\/\\/www.unimelb.edu.au', " +
-//                "'channel': 'Personal', " +
-//                "'owner': '', " +
-//                "'ezserver': null}}");
-//
-//        // fetch the resource UOM with incorrect URI and correct CHANNEL
-//        commandFail.add("{'command': 'FETCH', " +
-//                "'resourceTemplate': {'name': '', " +
-//                "'tags': [], " +
-//                "'description': '', " +
-//                "'uri': 'http:\\/\\/www.uniuseless.edu.au', " +
-//                "'channel': 'Personal', " +
-//                "'owner': '', " +
-//                "'ezserver': null}}");
-//
-//        // fetch the resource UOM with correct URI and empty CHANNEL
-//        commandFail.add("{'command': 'FETCH', " +
-//                "'resourceTemplate': {'name': '', " +
-//                "'tags': [], " +
-//                "'description': '', " +
-//                "'uri': 'http:\\/\\/www.unimelb.edu.au', " +
-//                "'channel': '', " +
-//                "'owner': '', " +
-//                "'ezserver': null}}");
-//
-//        // fetch the resource UOM with no resourceTemplate
-//        commandFail.add("{'command': 'FETCH'}");
-//
-//        // fetch the resource UOM with incorrect resourceTemplate missing DESCRIPTION and TAGS
-//        commandFail.add("{'command': 'FETCH', " +
-//                "'resourceTemplate': {'name': '', " +
-//                "'uri': 'http:\\/\\/www.unimelb.edu.au', " +
-//                "'channel': 'Personal', " +
-//                "'owner': '', " +
-//                "'ezserver': null}}");
-//
-//        // fetch the resource UOM with missing URI field
-//        commandFail.add("{'command': 'FETCH', " +
-//                "'resourceTemplate': {'name': '', " +
-//                "'tags': [], " +
-//                "'description': '', " +
-//                "'channel': 'Personal', " +
-//                "'owner': '', " +
-//                "'ezserver': null}}");
-//
-//        // fetch the resource UOM with missing CHANNEL field
-//        commandFail.add("{'command': 'FETCH', " +
-//                "'resourceTemplate': {'name': '', " +
-//                "'tags': [], " +
-//                "'description': '', " +
-//                "'uri': 'http:\\/\\/www.unimelb.edu.au', " +
-//                "'owner': '', " +
-//                "'ezserver': null}}");
+        // fetch the resource UOM with correct URI and CHANNEL
+        commandSuccess.add("{'command': 'FETCH', " +
+                "'resourceTemplate': {'name': '', " +
+                "'tags': [], " +
+                "'description': '', " +
+                "'uri': 'http:\\/\\/www.unimelb.edu.au', " +
+                "'channel': 'Personal', " +
+                "'owner': '', " +
+                "'ezserver': null}}");
+
+        // fetch the resource UOM with incorrect URI and correct CHANNEL
+        commandFail.add("{'command': 'FETCH', " +
+                "'resourceTemplate': {'name': '', " +
+                "'tags': [], " +
+                "'description': '', " +
+                "'uri': 'http:\\/\\/www.uniuseless.edu.au', " +
+                "'channel': 'Personal', " +
+                "'owner': '', " +
+                "'ezserver': null}}");
+
+        // fetch the resource UOM with correct URI and empty CHANNEL
+        commandFail.add("{'command': 'FETCH', " +
+                "'resourceTemplate': {'name': '', " +
+                "'tags': [], " +
+                "'description': '', " +
+                "'uri': 'http:\\/\\/www.unimelb.edu.au', " +
+                "'channel': '', " +
+                "'owner': '', " +
+                "'ezserver': null}}");
+
+        // fetch the resource UOM with no resourceTemplate
+        commandFail.add("{'command': 'FETCH'}");
+
+        // fetch the resource UOM with incorrect resourceTemplate missing DESCRIPTION and TAGS
+        commandFail.add("{'command': 'FETCH', " +
+                "'resourceTemplate': {'name': '', " +
+                "'uri': 'http:\\/\\/www.unimelb.edu.au', " +
+                "'channel': 'Personal', " +
+                "'owner': '', " +
+                "'ezserver': null}}");
+
+        // fetch the resource UOM with missing URI field
+        commandFail.add("{'command': 'FETCH', " +
+                "'resourceTemplate': {'name': '', " +
+                "'tags': [], " +
+                "'description': '', " +
+                "'channel': 'Personal', " +
+                "'owner': '', " +
+                "'ezserver': null}}");
+
+        // fetch the resource UOM with missing CHANNEL field
+        commandFail.add("{'command': 'FETCH', " +
+                "'resourceTemplate': {'name': '', " +
+                "'tags': [], " +
+                "'description': '', " +
+                "'uri': 'http:\\/\\/www.unimelb.edu.au', " +
+                "'owner': '', " +
+                "'ezserver': null}}");
 
         // exchange with a serverList
         commandSuccess.add("{'command': 'EXCHANGE', " +
@@ -368,6 +367,8 @@ class ServiceThreadTest {
 
         // exchange with no serverList specified in the JSON template
         commandFail.add("{'command': 'EXCHANGE'}");
+
+        //TODO writing SHARE command tests
 
         // remove resource which is not existed #1
         commandFail.add("{'command': 'REMOVE', " +

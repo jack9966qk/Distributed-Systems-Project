@@ -8,6 +8,7 @@ import com.allstars.project1.Static;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.ParseException;
 import org.junit.jupiter.api.*;
+import sun.jvm.hotspot.utilities.Assert;
 
 
 import java.util.ArrayList;
@@ -17,6 +18,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Arrays;
 
 /**
  * Created by Zheping on 2017/3/26.
@@ -115,6 +117,7 @@ class ClientTest {
         }
     }
 
+    @Disabled
     @Test
     void share() {
         String secret = "IHaveNoIdeaWhatTheHellIsThis";
@@ -129,6 +132,7 @@ class ClientTest {
         }
     }
 
+    @Disabled
     @Test
     void query() {
 
@@ -143,6 +147,7 @@ class ClientTest {
         }
     }
 
+    @Disabled
     @Test
     void fetch() {
 
@@ -157,6 +162,7 @@ class ClientTest {
         }
     }
 
+    @Disabled
     @Test
     void exchange() {
         EzServer[] servers = {new EzServer(HOST, 2333)};
@@ -174,10 +180,11 @@ class ClientTest {
 
     @Test
     void makeResourceFromCmd() {
-        String[] publish = new String[] {"-host","localhost", "-port", "2334","-publish","-name","",
-                                        "-description","","-uri","",
-                                        "-tags",""};
+        String[] publish = new String[] {"-host","localhost", "-port", "2334","-publish","-name","Leo",
+                                        "-description","LeoBigO","-uri","www.leo.com",
+                                        "-tags", "ntr,double", "-owner", "Leooo", "-channel", "Personal"};
         CommandLine cmd = null;
+
         try {
             cmd = Client.getOptions(publish);
         } catch (ParseException e) {
@@ -185,8 +192,20 @@ class ClientTest {
         }
 
         resource = Client.makeResourceFromCmd(cmd);
-        System.out.println(resource.getName());
-        Assertions.assertTrue(resource.getName().equals(""));
+
+        // Assert names
+        Assertions.assertTrue(resource.getName().equals("Leo"));
+        // Assert tags
+        String[] tags = {"ntr", "double"};
+        Assertions.assertTrue(Arrays.equals(tags, resource.getTags()));
+        // Assert uri
+        Assertions.assertTrue(resource.getUri().equals("www.leo.com"));
+        // Assert description
+        Assertions.assertTrue(resource.getDescription().equals("LeoBigO"));
+        // Assert owner
+        Assertions.assertTrue(resource.getOwner().equals("Leooo"));
+        // Assert channel
+        Assertions.assertTrue(resource.getChannel().equals("Personal"));
     }
 
     @Test
