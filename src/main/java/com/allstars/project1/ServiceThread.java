@@ -48,23 +48,25 @@ public class ServiceThread extends Thread {
         if (resource == null) {
             throw new ServerException("missing resource");
         }
-        // TODO "invalid resource" If the resource contained incorrect information that could not be recovered from:
+        // "invalid resource" was added to JsonParser.
     }
 
-    private void checkCommand(Resource resource) throws ServerException {
+    private boolean checkCommand(Resource resource) throws ServerException {
+        checkResource(resource);
         // created a resource only with the primary keys
         Resource r = new Resource(null, null, null, resource.getUri(),
                 resource.getChannel(), resource.getOwner(), null);
 
         if (resource.getOwner().length() == 1 && resource.getOwner().toCharArray()[0] == '*') {// * owner
-            throw new ServerException("cannot publish resource");
+            return false;
         } else if (resource.getUri().isEmpty()) {//uri is empty
-            throw new ServerException("cannot publish resource");
+            return false;
         } else if (!URI.create(resource.getUri()).isAbsolute()) { //not an absolute uri
-            throw new ServerException("cannot publish resource");
+            return false;
         } else if (resourceStorage.getUriSet().contains(resource.getUri())) { // duplicate uri
-            throw new ServerException("cannot publish resource");
+            return false;
         }
+        return true;
     }
 
      private void checkTemplate(Resource template) throws ServerException {
@@ -109,8 +111,11 @@ public class ServiceThread extends Thread {
             resourceStorage.remove(resource);
             resourceStorage.add(resource);
         } else {
-            checkCommand(resource); // check whether it is valid
-            resourceStorage.add(resource);
+            if (checkCommand(resource)){
+                resourceStorage.add(resource);
+            } else {
+                throw new ServerException("cannot publish resource");
+            }
         }
         respondSuccess();
     }
@@ -121,13 +126,14 @@ public class ServiceThread extends Thread {
             resourceStorage.remove(resource);
             respondSuccess();
         } else {
-            checkCommand(resource); // check whether it is valid
             throw new ServerException("cannot remove resource"); // the resource did not exist
         }
     }
 
     private void share(String secret, Resource resource) throws ServerException, IOException {
-        checkResource(resource);
+        if (secret == null) {
+            throw new ServerException("missing resource and/or secret");
+        }
         if (!secret.equals(this.secret)) {
             throw new ServerException("incorrect secret");
         } else {
@@ -135,9 +141,11 @@ public class ServiceThread extends Thread {
             f = new File(resource.getUri());
             if (f.isFile()) {
                 if (!f.exists()) {
-                    throw new ServerException("invalid resource");
+                    throw new ServerException("cannot share resource");
                 }
-                checkCommand(resource);
+                if (checkCommand(resource)) {
+                    throw new ServerException("cannot share resource");
+                }
                 Logging.logFine("add to resource");
                 resourceStorage.add(resource);
                 respondSuccess();
@@ -272,7 +280,8 @@ public class ServiceThread extends Thread {
             try {
                 obj = parser.parse(reqJson).getAsJsonObject();
             } catch (Exception e) {
-                throw new ServerException("cannot parse request as json");
+               // throw new ServerException("cannot parse request as json");
+                throw new ServerException("invalid resource");
             }
 
             // determine command type
@@ -289,7 +298,12 @@ public class ServiceThread extends Thread {
                 Resource resource = Resource.parseAndNormalise(obj.get("resource"));
                 remove(resource);
             } else if (command.equals("SHARE")) {
-                String secret = obj.get("secret").getAsString();
+                String secret;
+                try{
+                    secret = obj.get("secret").getAsString();
+                } catch (UnsupportedOperationException e) {
+                    secret = null;
+                }
                 Resource resource = Resource.parseAndNormalise(obj.get("resource"));
                 share(secret, resource);
             } else if (command.equals("QUERY")) {
