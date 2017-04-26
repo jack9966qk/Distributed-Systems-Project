@@ -131,6 +131,7 @@ public class ServiceThread extends Thread {
     }
 
     private void share(String secret, Resource resource) throws ServerException, IOException {
+        checkResource(resource);
         if (secret == null) {
             throw new ServerException("missing resource and/or secret");
         }
