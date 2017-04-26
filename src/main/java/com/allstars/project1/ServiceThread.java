@@ -175,8 +175,9 @@ public class ServiceThread extends Thread {
 
         List<Resource> results = new ArrayList<>(Server.resourceStorage.searchWithTemplate(template));
         if (results.size() == 0) {
-            // undefined behaviour, chose to report error
-            throw new ServerException("cannot fetch resource");
+            // 0 result
+            respondSuccess();
+            respondResultSize(0);
         }
         Resource resource = results.get(0);
 
