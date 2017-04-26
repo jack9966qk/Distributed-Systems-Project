@@ -12,6 +12,8 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -20,6 +22,29 @@ import java.util.Map;
 public class AdditionalTest {
     static int waitTime = 1000 * 30;
 
+    class TestCase {
+        public String[] getClientArgs() {
+            return clientArgs;
+        }
+
+        public String getExpectedRequestJson() {
+            return expectedRequestJson;
+        }
+
+        public String getExpectedResponseJson() {
+            return expectedResponseJson;
+        }
+
+        String[] clientArgs;
+        String expectedRequestJson;
+        String expectedResponseJson;
+
+        public TestCase(String[] clientArgs, String expectedRequestJson, String expectedResponseJson) {
+            this.clientArgs = clientArgs;
+            this.expectedRequestJson = expectedRequestJson;
+            this.expectedResponseJson = expectedResponseJson;
+        }
+    }
 
     class Verifier extends Thread {
         class ServerThread extends Thread {
@@ -34,10 +59,10 @@ public class AdditionalTest {
             }
         }
 
-        String expectedRequestJson;
-        String expectedResponseJson;
-        boolean testWithSunrise;
+        List<TestCase> testCases;
         ServerThread serverThread;
+        boolean testWithSunrise;
+
 
         public boolean isSuccessful() {
             return successful;
@@ -45,9 +70,8 @@ public class AdditionalTest {
 
         boolean successful = true;
 
-        public Verifier(String[] serverArgs, String expectedRequestJson, String expectedResponseJson, boolean testWithSunrise) {
-            this.expectedRequestJson = expectedRequestJson;
-            this.expectedResponseJson = expectedResponseJson;
+        public Verifier(String[] serverArgs, List<TestCase> testCases, boolean testWithSunrise) {
+            this.testCases = testCases;
             this.testWithSunrise = testWithSunrise;
             this.serverThread = new ServerThread(serverArgs);
         }
@@ -62,46 +86,44 @@ public class AdditionalTest {
             wait(timeout);
         }
 
-        private void waitForServerThreadToBeReady() throws InterruptedException {
-            this.serverThread.start();
-            while (!Server.isRunning()) { // busy waiting
-                sleep(100);
+        private void testOne(String expectedRequestJson, String expectedResponseJson) throws Exception {
+            ServerSocket dummyServerSocket;
+            synchronized (this) {
+                dummyServerSocket = new ServerSocket(3780);
+                System.out.println("dummy server listening for connection");
+                notifyAll();
+            }
+            Socket client = dummyServerSocket.accept();
+            DataInputStream stream = new DataInputStream(client.getInputStream());
+            String request = stream.readUTF();
+            assertJsonEquivalent(request, expectedRequestJson);
+            dummyServerSocket.close();
+
+            try {
+                this.serverThread.start();
+                Server.waitUntilReady();
+            } catch (InterruptedException e) {
+                Assertions.fail(e.toString());
+            }
+
+            // get response from our server
+            String serverRes = getResponse("localhost", 3780, request);
+            assertJsonEquivalent(serverRes, expectedResponseJson);
+            new DataOutputStream(client.getOutputStream()).writeUTF(serverRes);
+
+            if (testWithSunrise) {
+                // get response from sunrise
+                String sunriseRes = getResponse("sunrise.cis.unimelb.edu.au", 3780, request);
+                System.err.println(sunriseRes);
+                assertJsonEquivalent(sunriseRes, expectedResponseJson);
             }
         }
 
         public void run() {
             try {
-                ServerSocket dummyServerSocket;
-                synchronized (this) {
-                    dummyServerSocket = new ServerSocket(3780);
-                    System.out.println("dummy server listening for connection");
-                    notifyAll();
+                for (TestCase testCase: testCases) {
+                    testOne(testCase.getExpectedRequestJson(), testCase.getExpectedResponseJson());
                 }
-                Socket client = dummyServerSocket.accept();
-                DataInputStream stream = new DataInputStream(client.getInputStream());
-                String request = stream.readUTF();
-                assertJsonEquivalent(request, expectedRequestJson);
-                dummyServerSocket.close();
-
-                try {
-                    waitForServerThreadToBeReady();
-                } catch (InterruptedException e) {
-                    Assertions.fail(e.toString());
-                }
-
-                // get response from our server
-                String serverRes = getResponse("localhost", 3780, request);
-                assertJsonEquivalent(serverRes, expectedResponseJson);
-                Server.stop();
-                new DataOutputStream(client.getOutputStream()).writeUTF(serverRes);
-
-                if (testWithSunrise) {
-                    // get response from sunrise
-                    String sunriseRes = getResponse("sunrise.cis.unimelb.edu.au", 3780, request);
-                    System.err.println(sunriseRes);
-                    assertJsonEquivalent(sunriseRes, expectedResponseJson);
-                }
-
             } catch (Exception e) {
                 if (!e.getMessage().equals("assert failed")) {
                     e.printStackTrace();
@@ -112,6 +134,19 @@ public class AdditionalTest {
                 }
             }
         }
+    }
+
+    private void testWith(String[] serverArgs, List<TestCase> testCases, boolean testWithSunrise) throws InterruptedException {
+        Verifier verifier = new Verifier(serverArgs, testCases, testWithSunrise);
+        System.out.println("verifier initialised");
+        verifier.start();
+        verifier.waitForDummyServerToBeReady(1000 * 3);
+
+        for (TestCase testCase : testCases){
+            Client.main(testCase.getClientArgs());
+        }
+        verifier.join(waitTime);
+        Assertions.assertTrue(verifier.isSuccessful());
     }
 
     private void removeAllNullFields(JsonObject jsonObject) {
@@ -148,8 +183,9 @@ public class AdditionalTest {
 
     @Test
     void testPublish() throws InterruptedException {
-        Verifier verifier = new Verifier(
-                "-port 3780 -debug".split(" "),
+        List<TestCase> testCases = new ArrayList<>();
+        testCases.add(new TestCase(
+                "-host localhost -port 3780 -publish -name Leo -owner Jack -channel LeosChannel -uri http://leo.com -tags leo,ntr -debug".split(" "),
                 "{\n" +
                         "   \"command\":\"PUBLISH\",\n" +
                         "   \"resource\":{\n" +
@@ -165,16 +201,31 @@ public class AdditionalTest {
                         "      \"ezserver\":null\n" +
                         "   }\n" +
                         "}",
-                "{\"response\":\"success\"}",
-                false
-        );
-        System.out.println("verifier initialised");
-        verifier.start();
-        verifier.waitForDummyServerToBeReady(1000 * 3);
+                "{\"response\":\"success\"}"
+        ));
+        testWith("-port 3780 -debug".split(" "), testCases, false);
 
-        Client.main("-host localhost -port 3780 -publish -name Leo -owner Jack -channel LeosChannel -uri http://leo.com -tags leo,ntr -debug".split(" "));
-        verifier.join(waitTime);
-        Assertions.assertTrue(verifier.isSuccessful());
+        testCases = new ArrayList<>();
+        testCases.add(new TestCase(
+                "-host localhost -port 3780 -publish -name Leo -owner Jack -channel LeosChannel -uri http://leo.com -tags leo,ntr -debug".split(" "),
+                "{\n" +
+                        "   \"command\":\"PUBLISH\",\n" +
+                        "   \"resource\":{\n" +
+                        "      \"name\":\"Leo\",\n" +
+                        "      \"tags\":[\n" +
+                        "         \"leo\",\n" +
+                        "         \"ntr\"\n" +
+                        "      ],\n" +
+                        "      \"owner\":\"Jack\",\n" +
+                        "      \"description\":\"\",\n" +
+                        "      \"uri\":\"http://leo.com\",\n" +
+                        "      \"channel\":\"LeosChannel\",\n" +
+                        "      \"ezserver\":null\n" +
+                        "   }\n" +
+                        "}",
+                "{\"response\":\"success\"}"
+        ));
+        testWith("-port 3780 -debug".split(" "), testCases, false);
     }
 
     @Test

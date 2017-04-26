@@ -26,6 +26,12 @@ public class Server {
         mainThread.interrupt();
     }
 
+    public static void waitUntilReady() throws InterruptedException {
+        while (!Server.isRunning()) { // busy waiting
+            Thread.sleep(100);
+        }
+    }
+
     public static void startServer(int connectionIntervalLimit, int exchangeInterval, String secret, String host, int port) {
         self = new EzServer(host, port);
         try {
