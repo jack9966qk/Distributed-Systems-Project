@@ -87,10 +87,10 @@ public class AdditionalTest {
         }
 
         private void testOne(String expectedRequestJson, String expectedResponseJson) throws Exception {
+            // create a dummy server to check request from client
             ServerSocket dummyServerSocket;
             synchronized (this) {
                 dummyServerSocket = new ServerSocket(3780);
-                System.out.println("dummy server listening for connection");
                 notifyAll();
             }
             Socket client = dummyServerSocket.accept();
@@ -99,12 +99,8 @@ public class AdditionalTest {
             assertJsonEquivalent(request, expectedRequestJson);
             dummyServerSocket.close();
 
-            try {
-                this.serverThread.start();
-                Server.waitUntilReady();
-            } catch (InterruptedException e) {
-                Assertions.fail(e.toString());
-            }
+            this.serverThread.start();
+            Server.waitUntilReady();
 
             // get response from our server
             String serverRes = getResponse("localhost", 3780, request);
@@ -124,6 +120,7 @@ public class AdditionalTest {
                 for (TestCase testCase: testCases) {
                     testOne(testCase.getExpectedRequestJson(), testCase.getExpectedResponseJson());
                 }
+                Server.stop();
             } catch (Exception e) {
                 if (!e.getMessage().equals("assert failed")) {
                     e.printStackTrace();
@@ -140,9 +137,9 @@ public class AdditionalTest {
         Verifier verifier = new Verifier(serverArgs, testCases, testWithSunrise);
         System.out.println("verifier initialised");
         verifier.start();
-        verifier.waitForDummyServerToBeReady(1000 * 3);
 
         for (TestCase testCase : testCases){
+            verifier.waitForDummyServerToBeReady(1000 * 3);
             Client.main(testCase.getClientArgs());
         }
         verifier.join(waitTime);
@@ -205,17 +202,34 @@ public class AdditionalTest {
         ));
         testWith("-port 3780 -debug".split(" "), testCases, false);
 
+
+//        testCases = new ArrayList<>();
+//        testCases.add(new TestCase(
+//                "-host localhost -port 3780 -publish -name Leo -owner Jack -channel LeosChannel -uri http://leo.com -tags -debug".split(" "),
+//                "{\n" +
+//                        "   \"command\":\"PUBLISH\",\n" +
+//                        "   \"resource\":{\n" +
+//                        "      \"name\":\"Leo\",\n" +
+//                        "      \"tags\":[],\n" +
+//                        "      \"owner\":\"Jack\",\n" +
+//                        "      \"description\":\"\",\n" +
+//                        "      \"uri\":\"http://leo.com\",\n" +
+//                        "      \"channel\":\"LeosChannel\",\n" +
+//                        "      \"ezserver\":null\n" +
+//                        "   }\n" +
+//                        "}",
+//                "{\"response\":\"success\"}"
+//        ));
+//        testWith("-port 3780 -debug".split(" "), testCases, false);
+//
         testCases = new ArrayList<>();
         testCases.add(new TestCase(
-                "-host localhost -port 3780 -publish -name Leo -owner Jack -channel LeosChannel -uri http://leo.com -tags leo,ntr -debug".split(" "),
+                "-host localhost -port 3780 -publish -name Leo -owner Jack -channel LeosChannel -uri http://leo.com -debug".split(" "),
                 "{\n" +
                         "   \"command\":\"PUBLISH\",\n" +
                         "   \"resource\":{\n" +
                         "      \"name\":\"Leo\",\n" +
-                        "      \"tags\":[\n" +
-                        "         \"leo\",\n" +
-                        "         \"ntr\"\n" +
-                        "      ],\n" +
+                        "      \"tags\":[],\n" +
                         "      \"owner\":\"Jack\",\n" +
                         "      \"description\":\"\",\n" +
                         "      \"uri\":\"http://leo.com\",\n" +

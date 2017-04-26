@@ -32,15 +32,16 @@ public class Server {
         }
     }
 
-    public static void startServer(int connectionIntervalLimit, int exchangeInterval, String secret, String host, int port) {
+    public static void startServer(int connectionIntervalLimit, int exchangeInterval, String secret, String host, int port) throws IOException {
         self = new EzServer(host, port);
+        ServerSocket listenSocket = null;
         try {
             // for sending exchange request to other servers
             // TODO finish this and enable
             ExchangeThread exchangeThread = new ExchangeThread(exchangeInterval, serverList);
             exchangeThread.start();
 
-            ServerSocket listenSocket = new ServerSocket(port);
+            listenSocket = new ServerSocket(port);
             int i = 0;
             Logging.logInfo("Server initialisation complete");
             running = true;
@@ -57,12 +58,11 @@ public class Server {
                 c.start();
                 Thread.sleep(connectionIntervalLimit);
             }
-        } catch(IOException e) {
-            Logging.logInfo("Listen socket:"+e.getMessage());
         } catch (InterruptedException e) {
             if (running) {
                 e.printStackTrace();
             } else {
+                listenSocket.close();
                 Logging.logInfo("Server shutting down...");
             }
         }
@@ -138,6 +138,8 @@ public class Server {
             // start the server
             startServer(connectionIntervalLimit, exchangeInterval, secret, host, port);
         } catch (UnknownHostException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }

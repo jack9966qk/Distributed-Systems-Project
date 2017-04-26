@@ -19,8 +19,8 @@ public class ServiceThread extends Thread {
     private String secret;
     private ResourceStorage resourceStorage;
     private Set<EzServer> serverList;
-    Socket socket;
-    Map<SocketAddress, Date> lastConnectionTime;
+    private Socket socket;
+    private Map<SocketAddress, Date> lastConnectionTime;
 
     public ServiceThread(Map<SocketAddress, Date> lastConnectionTime, Socket clientSocket, String secret, ResourceStorage resourceStorage, Set<EzServer> serverList)
             throws IOException {
