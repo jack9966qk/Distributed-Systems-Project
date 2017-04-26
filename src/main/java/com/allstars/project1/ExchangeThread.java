@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
+ * Server thread for sending automatic exchange requests in fixed time interval
  * Created by Jack on 23/3/2017.
  */
 public class ExchangeThread extends Thread {
@@ -15,13 +16,18 @@ public class ExchangeThread extends Thread {
     private Set<EzServer> serverList;
     private Date lastExchangeTime;
 
+    /**
+     * Create a new exchange thread
+     * @param interval time interval between exchange being performed
+     * @param serverList a reference of list of servers to send exchange
+     */
     public ExchangeThread(int interval, Set<EzServer> serverList) {
         this.interval = interval;
         this.serverList = serverList;
     }
 
     /**
-     * Return true if thread is running, false otherwise
+     * Return true if thread is running, false otherwise (mainly for testing)
      * @return true if thread is running, false otherwise
      */
     public boolean isRunning() {
@@ -29,7 +35,7 @@ public class ExchangeThread extends Thread {
     }
 
     /**
-     * Terminate ExchangeThread
+     * Terminate ExchangeThread (mainly for testing)
      */
     public void terminate() {
         this.running = false;
@@ -70,6 +76,9 @@ public class ExchangeThread extends Thread {
         }
     }
 
+    /**
+     * Run the exchange thread
+     */
     @Override
     public void run() {
         running = true;
@@ -82,7 +91,9 @@ public class ExchangeThread extends Thread {
                     sleep(timeToWait);
                 } catch (InterruptedException e) {
                     if (running) {
-                        e.printStackTrace();
+                        Logging.logInfo("Exchange thread sleep interrupted");
+                    } else {
+                        break;
                     }
                 }
             }

@@ -5,6 +5,7 @@ import java.util.Date;
 import java.util.logging.Logger;
 
 /**
+ * Class for logging messages with "info" and "fine" level
  * Created by Jack on 23/3/2017.
  */
 public class Logging {
@@ -14,6 +15,10 @@ public class Logging {
         Logging.enablePrint = enablePrint;
     }
 
+    /**
+     * Get prefix of line to be logged
+     * @return prefix of line
+     */
     private static String getPrefix() {
         SimpleDateFormat dt = new SimpleDateFormat("dd/mm/yyyy hh:mm:ss.SSS");
         String date = dt.format(new Date());
@@ -27,10 +32,18 @@ public class Logging {
         return date + " - [" + pos + "] ";
     }
 
+    /**
+     * Log a message in "info" level
+     * @param obj object to be logged
+     */
     public static void logInfo(Object obj) {
         System.out.println(getPrefix() + "- [INFO] - " + obj.toString());
     }
 
+    /**
+     * Log a message in "fine"(debug) level
+     * @param obj object to be logged
+     */
     public static void logFine(Object obj) {
         if (enablePrint) {
             System.out.println(getPrefix() + "- [FINE] - " + obj.toString());
