@@ -8,6 +8,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 /**
+ * Class for globally available static variables, functions and constants
  * Created by Jack on 25/3/2017.
  */
 public class Static {
@@ -16,8 +17,6 @@ public class Static {
     public static final int DEFAULT_EXCHANGE_INTERVAL = 1000 * 60 * 10;
     public static final int DEFAULT_CONNECTION_INTERVAL = 1000;
     public static final int DEFAULT_TIMEOUT = 1000 * 10;
-
-    // TODO more?
 
     private static String addEscChar(String str) {
         return str.replace("/", "\\/");

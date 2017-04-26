@@ -1,12 +1,14 @@
 package com.allstars.project1;
 
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ *
+ */
 public class Resource {
     public String getName() {
         return name;

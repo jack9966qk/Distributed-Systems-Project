@@ -8,6 +8,9 @@ import java.util.*;
 
 import org.apache.commons.cli.*;
 
+/**
+ * EzShare server implementation,
+ */
 public class Server {
     public static ResourceStorage resourceStorage = new ResourceStorage();
     public static Set<EzServer> serverList = Collections.synchronizedSet(new HashSet<>());
@@ -21,17 +24,33 @@ public class Server {
         return running;
     }
 
+    /**
+     * Terminate server activity (for testing)
+     */
     public static void stop() {
         running = false;
         mainThread.interrupt();
     }
 
+    /**
+     * Block current thread until server is ready for connection (for testing)
+     * @throws InterruptedException Interrupted during sleep
+     */
     public static void waitUntilReady() throws InterruptedException {
         while (!Server.isRunning()) { // busy waiting
             Thread.sleep(100);
         }
     }
 
+    /**
+     * Setup server, open socket, start listening to connections
+     * @param connectionIntervalLimit
+     * @param exchangeInterval
+     * @param secret
+     * @param host
+     * @param port
+     * @throws IOException
+     */
     public static void startServer(int connectionIntervalLimit, int exchangeInterval, String secret, String host, int port) throws IOException {
         self = new EzServer(host, port);
         ServerSocket listenSocket = null;
@@ -67,6 +86,12 @@ public class Server {
         }
     }
 
+    /**
+     * Get command line options
+     * @param args
+     * @return
+     * @throws ParseException
+     */
     public static CommandLine getOptions(String[] args) throws ParseException {
         Options options = new Options();
 
@@ -86,6 +111,10 @@ public class Server {
         return parser.parse(options, args);
     }
 
+    /**
+     * Main function of Server, used through command line
+     * @param args command line arguments
+     */
     public static void main(String[] args) {
         CommandLine cmd = null;
         try {
@@ -135,10 +164,8 @@ public class Server {
 
             // start the server
             startServer(connectionIntervalLimit, exchangeInterval, secret, host, port);
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
         } catch (IOException e) {
-            e.printStackTrace();
+            Logging.logInfo("Unknown IOException in Server main thread");
         }
     }
 }
