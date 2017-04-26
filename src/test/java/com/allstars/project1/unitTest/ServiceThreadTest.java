@@ -151,7 +151,7 @@ class ServiceThreadTest {
         // publish resource UOM
         commandSuccess.add("{'command': 'PUBLISH', " +
                 "'resource': {" +
-                "'name': 'UOM' " +
+                "'name': 'UOM', " +
                 "'tags': ['web', 'uom', 'jack', 'bigleg'], " +
                 "'description': 'university of melbourne first time', " +
                 "'uri': 'http:\\/\\/www.unimelb.edu.au', " +
