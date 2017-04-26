@@ -8,8 +8,6 @@ import com.allstars.project1.Static;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.ParseException;
 import org.junit.jupiter.api.*;
-import sun.jvm.hotspot.utilities.Assert;
-
 
 import java.util.ArrayList;
 import java.io.DataInputStream;

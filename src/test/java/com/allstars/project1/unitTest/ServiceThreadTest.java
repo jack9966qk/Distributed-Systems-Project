@@ -1,9 +1,6 @@
 package com.allstars.project1.unitTest;
 
-import com.allstars.project1.EzServer;
-import com.allstars.project1.ResourceStorage;
-import com.allstars.project1.ServiceThread;
-import com.allstars.project1.Static;
+import com.allstars.project1.*;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.junit.jupiter.api.Assertions;
@@ -90,6 +87,31 @@ class ServiceThreadTest {
             }
         }
 
+        boolean getQueryResponse() {
+
+            String response;
+
+            try {
+                JsonObject jsonObj = new JsonParser().parse(Static.readJsonUTF(in)).getAsJsonObject();
+
+                if (jsonObj.get("response").getAsString().equals("success")) {
+
+                    while (!jsonObj.has("resultSize")) {
+                        jsonObj = new JsonParser().parse(Static.readJsonUTF(in)).getAsJsonObject();
+                    }
+
+                    if (jsonObj.get("resultSize").getAsInt() == 0) {
+                        return false;
+                    }
+
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            return true;
+        }
+
         boolean getResponse() {
 
             String response = null;
@@ -98,6 +120,7 @@ class ServiceThreadTest {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+
             JsonObject resObj = new JsonParser().parse(response).getAsJsonObject();
 
             if (resObj.get("response").getAsString().equals("success")) {
@@ -120,6 +143,9 @@ class ServiceThreadTest {
 
         ArrayList<String> commandSuccess = new ArrayList<String>();
         ArrayList<String> commandFail = new ArrayList<String>();
+
+        ArrayList<String> queryCommandSuccess = new ArrayList<String>();
+        ArrayList<String> queryCommandFail = new ArrayList<String>();
 
         // publish resource UOM
         commandSuccess.add("{'command': 'PUBLISH', " +
@@ -161,13 +187,13 @@ class ServiceThreadTest {
                 "'tags': ['double'], " +
                 "'description': 'LeoGoodMan', " +
                 "'uri': 'http:\\/\\/www.unimelb.edu.au', " +
-                "'channel': 'Personal', " +
+                "'channel': 'Web', " +
                 "'owner': '*', " +
                 "'ezserver': null}}");
 
         // query with an empty resourceTemplate
-        commandFail.add("{'command': 'QUERY', " +
-                "'relay': true, " +
+        queryCommandFail.add("{'command': 'QUERY', " +
+                "'relay': false, " +
                 "'resourceTemplate': {" +
                 "'name': '', " +
                 "'tags': [], " +
@@ -177,126 +203,126 @@ class ServiceThreadTest {
                 "'owner': '', " +
                 "'ezserver': null}}");
 
-        // query with a resourceTemplate with CHANNEL
-        commandSuccess.add("{'command': 'QUERY', " +
-                "'relay': true, " +
-                "'resourceTemplate': {" +
-                "'name': '', " +
-                "'tags': [], " +
-                "'description': '', " +
-                "'uri': '', " +
-                "'channel': 'Personal', " +
-                "'owner': '', " +
-                "'ezserver': null}}");
+//        // query with a resourceTemplate with CHANNEL
+//        queryCommandSuccess.add("{'command': 'QUERY', " +
+//                "'relay': false, " +
+//                "'resourceTemplate': {" +
+//                "'name': '', " +
+//                "'tags': [], " +
+//                "'description': '', " +
+//                "'uri': '', " +
+//                "'channel': 'Web', " +
+//                "'owner': '', " +
+//                "'ezserver': null}}");
 
         // query with a resourceTemplate with CHANNEL and correct OWNER
-        commandSuccess.add("{'command': 'QUERY', " +
-                "'relay': true, " +
+        queryCommandSuccess.add("{'command': 'QUERY', " +
+                "'relay': false, " +
                 "'resourceTemplate': {" +
                 "'name': '', " +
                 "'tags': [], " +
                 "'description': '', " +
                 "'uri': '', " +
-                "'channel': 'Personal', " +
+                "'channel': 'Web', " +
                 "'owner': 'Leo', " +
                 "'ezserver': null}}");
 
         // query with a resourceTemplate with CHANNEL and incorrect OWNER
-        commandFail.add("{'command': 'QUERY', " +
-                "'relay': true, " +
+        queryCommandFail.add("{'command': 'QUERY', " +
+                "'relay': false, " +
                 "'resourceTemplate': {" +
                 "'name': '', " +
                 "'tags': [], " +
                 "'description': '', " +
                 "'uri': '', " +
-                "'channel': 'Personal', " +
+                "'channel': 'Web', " +
                 "'owner': 'LEO', " +
                 "'ezserver': null}}");
 
         // query with a resourceTemplate with CHANNEL and correct TAGS
-        commandSuccess.add("{'command': 'QUERY', " +
-                "'relay': true, " +
+        queryCommandSuccess.add("{'command': 'QUERY', " +
+                "'relay': false, " +
                 "'resourceTemplate': {" +
                 "'name': '', " +
                 "'tags': ['WEB', 'JACK'], " +
                 "'description': '', " +
                 "'uri': '', " +
-                "'channel': 'Personal', " +
+                "'channel': 'Web', " +
                 "'owner': '', " +
                 "'ezserver': null}}");
 
         // query with a resourceTemplate with CHANNEL and incorrect TAGS
-        commandFail.add("{'command': 'QUERY', " +
-                "'relay': true, " +
+        queryCommandFail.add("{'command': 'QUERY', " +
+                "'relay': false, " +
                 "'resourceTemplate': {" +
                 "'name': '', " +
                 "'tags': ['WEB', 'JACK', 'laji'], " +
                 "'description': '', " +
                 "'uri': '', " +
-                "'channel': 'Personal', " +
+                "'channel': 'Web', " +
                 "'owner': '', " +
                 "'ezserver': null}}");
 
         // query with a resourceTemplate with CHANNEL and correct URI
-        commandSuccess.add("{'command': 'QUERY', " +
-                "'relay': true, " +
+        queryCommandSuccess.add("{'command': 'QUERY', " +
+                "'relay': false, " +
                 "'resourceTemplate': {" +
                 "'name': '', " +
                 "'tags': [], " +
                 "'description': '', " +
                 "'uri': 'http:\\/\\/www.unimelb.edu.au', " +
-                "'channel': 'Personal', " +
+                "'channel': 'Web', " +
                 "'owner': '', " +
                 "'ezserver': null}}");
 
         // query with a resourceTemplate with CHANNEL and incorrect URI
-        commandFail.add("{'command': 'QUERY', " +
-                "'relay': true, " +
+        queryCommandFail.add("{'command': 'QUERY', " +
+                "'relay': false, " +
                 "'resourceTemplate': {" +
                 "'name': '', " +
                 "'tags': [], " +
                 "'description': '', " +
                 "'uri': 'http:\\/\\/www.uniuseless.edu.au', " +
-                "'channel': 'Personal', " +
+                "'channel': 'Web', " +
                 "'owner': '', " +
                 "'ezserver': null}}");
 
         // query with a resourceTemplate with CHANNEL and NAME SUBSTRING
-        commandSuccess.add("{'command': 'QUERY', " +
-                "'relay': true, " +
+        queryCommandSuccess.add("{'command': 'QUERY', " +
+                "'relay': false, " +
                 "'resourceTemplate': {" +
                 "'name': 'U', " +
                 "'tags': [], " +
                 "'description': '', " +
                 "'uri': '', " +
-                "'channel': 'Personal', " +
+                "'channel': 'Web', " +
                 "'owner': '', " +
                 "'ezserver': null}}");
 
         // query with a resourceTemplate with CHANNEL and DESCRIPTION SUBSTRING
-        commandSuccess.add("{'command': 'QUERY', " +
-                "'relay': true, " +
+        queryCommandSuccess.add("{'command': 'QUERY', " +
+                "'relay': false, " +
                 "'resourceTemplate': {" +
                 "'name': 'U', " +
                 "'tags': [], " +
                 "'description': 'university of melbourne', " +
                 "'uri': '', " +
-                "'channel': 'Personal', " +
+                "'channel': 'Web', " +
                 "'owner': '', " +
                 "'ezserver': null}}");
 
         // query command missing a resourceTemplate
-        commandFail.add("{'command': 'QUERY'}");
+        queryCommandFail.add("{'command': 'QUERY'}");
 
-        // fetch the resource UOM with correct URI and CHANNEL
-        commandSuccess.add("{'command': 'FETCH', " +
-                "'resourceTemplate': {'name': '', " +
-                "'tags': [], " +
-                "'description': '', " +
-                "'uri': 'http:\\/\\/www.unimelb.edu.au', " +
-                "'channel': 'Personal', " +
-                "'owner': '', " +
-                "'ezserver': null}}");
+//        // fetch the resource UOM with correct URI and CHANNEL
+//        commandSuccess.add("{'command': 'FETCH', " +
+//                "'resourceTemplate': {'name': '', " +
+//                "'tags': [], " +
+//                "'description': '', " +
+//                "'uri': 'http:\\/\\/www.unimelb.edu.au', " +
+//                "'channel': 'Web', " +
+//                "'owner': '', " +
+//                "'ezserver': null}}");
 
         // fetch the resource UOM with incorrect URI and correct CHANNEL
         commandFail.add("{'command': 'FETCH', " +
@@ -304,7 +330,7 @@ class ServiceThreadTest {
                 "'tags': [], " +
                 "'description': '', " +
                 "'uri': 'http:\\/\\/www.uniuseless.edu.au', " +
-                "'channel': 'Personal', " +
+                "'channel': 'Web', " +
                 "'owner': '', " +
                 "'ezserver': null}}");
 
@@ -318,25 +344,25 @@ class ServiceThreadTest {
                 "'owner': '', " +
                 "'ezserver': null}}");
 
-        // fetch the resource UOM with no resourceTemplate
-        commandFail.add("{'command': 'FETCH'}");
+//        // fetch the resource UOM with no resourceTemplate
+//        commandFail.add("{'command': 'FETCH'}");
 
         // fetch the resource UOM with incorrect resourceTemplate missing DESCRIPTION and TAGS
         commandFail.add("{'command': 'FETCH', " +
                 "'resourceTemplate': {'name': '', " +
                 "'uri': 'http:\\/\\/www.unimelb.edu.au', " +
-                "'channel': 'Personal', " +
+                "'channel': 'Web', " +
                 "'owner': '', " +
                 "'ezserver': null}}");
 
-        // fetch the resource UOM with missing URI field
-        commandFail.add("{'command': 'FETCH', " +
-                "'resourceTemplate': {'name': '', " +
-                "'tags': [], " +
-                "'description': '', " +
-                "'channel': 'Personal', " +
-                "'owner': '', " +
-                "'ezserver': null}}");
+//        // fetch the resource UOM with missing URI field
+//        commandFail.add("{'command': 'FETCH', " +
+//                "'resourceTemplate': {'name': '', " +
+//                "'tags': [], " +
+//                "'description': '', " +
+//                "'channel': 'Web', " +
+//                "'owner': '', " +
+//                "'ezserver': null}}");
 
         // fetch the resource UOM with missing CHANNEL field
         commandFail.add("{'command': 'FETCH', " +
@@ -377,7 +403,7 @@ class ServiceThreadTest {
                 "'tags': [], " +
                 "'description': '', " +
                 "'uri': 'http:\\/\\/www.unimelb.edu.au', " +
-                "'channel': 'Web', " +
+                "'channel': 'Personal', " +
                 "'owner': 'Leo', " +
                 "'ezserver': null}}");
 
@@ -388,7 +414,7 @@ class ServiceThreadTest {
                 "'tags': [], " +
                 "'description': '', " +
                 "'uri': 'http:\\/\\/www.unimelb.edu.au', " +
-                "'channel': 'Personal', " +
+                "'channel': 'Web', " +
                 "'owner': 'Jack', " +
                 "'ezserver': null}}");
 
@@ -399,23 +425,25 @@ class ServiceThreadTest {
                 "'tags': [], " +
                 "'description': '', " +
                 "'uri': '', " +
-                "'channel': 'Personal', " +
+                "'channel': 'Web', " +
                 "'owner': 'Leo', " +
                 "'ezserver': null}}");
 
-        // remove resource UOM again [the resourceKey is (Leo, Personal, http:\/\/www.unimelb.edu.au)]
-        commandSuccess.add("{'command': 'REMOVE', " +
-                "'resource': {" +
-                "'name': '', " +
-                "'tags': [], " +
-                "'description': '', " +
-                "'uri': 'http:\\/\\/www.unimelb.edu.au', " +
-                "'channel': 'Personal', " +
-                "'owner': 'Leo', " +
-                "'ezserver': null}}");
+//        // remove resource UOM again [the resourceKey is (Leo, Web, http:\/\/www.unimelb.edu.au)]
+//        commandSuccess.add("{'command': 'REMOVE', " +
+//                "'resource': {" +
+//                "'name': '', " +
+//                "'tags': [], " +
+//                "'description': '', " +
+//                "'uri': 'http:\\/\\/www.unimelb.edu.au', " +
+//                "'channel': 'Web', " +
+//                "'owner': 'Leo', " +
+//                "'ezserver': null}}");
 
 
         try {
+
+            System.out.println("Sucessed cases:");
 
             for (String s : commandSuccess) {
                 DummyClient c = new DummyClient();
@@ -428,6 +456,8 @@ class ServiceThreadTest {
                 Assertions.assertTrue(success);
             }
 
+            System.out.println("Failed cases:");
+
             for (String s : commandFail) {
                 DummyClient c = new DummyClient();
                 server.DummyServerAccept();
@@ -437,6 +467,51 @@ class ServiceThreadTest {
                 boolean fail = c.getResponse();
                 Assertions.assertFalse(fail);
             }
+
+            System.out.println("Query success cases:");
+
+            for (String s : queryCommandSuccess) {
+                DummyClient c = new DummyClient();
+                server.DummyServerAccept();
+                System.out.println(s);
+                c.sendRequest(s);
+
+                boolean success = c.getQueryResponse();
+                //assert the respond to be success
+                Assertions.assertTrue(success);
+            }
+
+            System.out.println("Query fail cases:");
+
+            for (String s : queryCommandFail) {
+                DummyClient c = new DummyClient();
+                server.DummyServerAccept();
+                System.out.println(s);
+                c.sendRequest(s);
+
+                boolean success = c.getQueryResponse();
+                //assert the respond to be success
+                Assertions.assertFalse(success);
+            }
+
+            String lastRequest = "{'command': 'REMOVE', " +
+                "'resource': {" +
+                "'name': '', " +
+                "'tags': [], " +
+                "'description': '', " +
+                "'uri': 'http:\\/\\/www.unimelb.edu.au', " +
+                "'channel': 'Web', " +
+                "'owner': 'Leo', " +
+                "'ezserver': null}}";
+
+            DummyClient c = new DummyClient();
+            server.DummyServerAccept();
+            System.out.println(lastRequest);
+            c.sendRequest(lastRequest);
+            boolean success = c.getResponse();
+            //assert the respond to be success
+            Assertions.assertTrue(success);
+
 
         } catch (Exception e) {
             e.printStackTrace();
