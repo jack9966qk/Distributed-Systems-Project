@@ -339,7 +339,7 @@ public class Client {
     public static Resource makeResourceFromCmd(CommandLine cmd) {
         String name = cmd.getOptionValue("name", "");
         String description = cmd.getOptionValue("description", "");
-        String[] tags = null;
+        String[] tags = new String[0];
         if (cmd.hasOption("tags")) {
             tags = cmd.getOptionValue("tags").split(",");
         }

@@ -4,17 +4,28 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 /**
+ * EzServer object, represnt an EzShare server
  * Created by Jack on 24/3/2017.
  */
 public class EzServer {
     String hostname;
     int port;
 
+    /**
+     * Construct an EzServer object
+     * @param hostname hostname of server
+     * @param port port of server
+     */
     public EzServer(String hostname, int port) {
         this.hostname = hostname;
         this.port = port;
     }
 
+    /**
+     * Construct EzServer object from string
+     * @param string string in "host:port" format
+     * @return EzServer constructed
+     */
     static EzServer fromString(String string) {
         String[] parts = string.split(":");
         String host = parts[0];
@@ -22,10 +33,20 @@ public class EzServer {
         return new EzServer(host, port);
     }
 
+    /**
+     * Construct EzServer object from json
+     * @param json json string
+     * @return EzServer constructed
+     */
     public static EzServer fromJson(String json) {
         return fromJson(new JsonParser().parse(json).getAsJsonObject());
     }
 
+    /**
+     * Construct EzServer object from json
+     * @param jsonObj json object
+     * @return EzServer constructed
+     */
     public static EzServer fromJson(JsonObject jsonObj) {
         if (!jsonObj.has("port") || !jsonObj.has("hostname")) {
             return null;

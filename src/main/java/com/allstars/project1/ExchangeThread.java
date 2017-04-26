@@ -18,10 +18,17 @@ public class ExchangeThread extends Thread {
         this.serverList = serverList;
     }
 
+    /**
+     * Return true if thread is running, false otherwise
+     * @return true if thread is running, false otherwise
+     */
     public boolean isRunning() {
         return running;
     }
 
+    /**
+     * Terminate ExchangeThread
+     */
     public void terminate() {
         this.running = false;
         this.interrupt();
@@ -29,6 +36,9 @@ public class ExchangeThread extends Thread {
 
     private boolean running = false;
 
+    /**
+     * Perform an exchange request to all servers in serverList
+     */
     private void exchange() {
         Logging.logInfo("send exchange request to servers: " + serverList);
         Set<EzServer> allServers = new HashSet<>();

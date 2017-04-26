@@ -52,7 +52,7 @@ public class Resource {
     public Resource(String name, String description, String[] tags, String uri, String channel, String owner, String ezserver, Long resourceSize) {
         this.name = name;
         this.description = description;
-        this.tags = tags != null ? tags: new String[0];
+        this.tags = tags;
         this.uri = uri;
         this.channel = channel;
         this.owner = owner;
