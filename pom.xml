@@ -52,13 +52,6 @@
   </build>
 
   <dependencies>
-    <!-- for unit tests -->
-    <dependency>
-      <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter-engine</artifactId>
-      <version>5.0.0-M3</version>
-    </dependency>
-
     <!-- command line arguments parsing -->
     <!-- https://mvnrepository.com/artifact/commons-cli/commons-cli -->
     <dependency>
@@ -72,6 +65,13 @@
       <groupId>com.google.code.gson</groupId>
       <artifactId>gson</artifactId>
       <version>2.8.0</version>
+    </dependency>
+
+    <!-- for unit tests -->
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-api</artifactId>
+      <version>RELEASE</version>
     </dependency>
 
   </dependencies>

@@ -182,18 +182,16 @@ public class ServiceThread extends Thread {
             }
             respondResultSize(1);
 
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            // TODO throw exception
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
+        } catch (FileNotFoundException|URISyntaxException e) {
+            // behaviour undefined in spec, chose to report an error here
+            throw new ServerException("cannot fetch resource");
         }
     }
 
     private void exchange(EzServer[] servers) throws ServerException, IOException {
         Logging.logInfo("handle exchange request");
         Logging.logInfo("request server list: " + Arrays.toString(servers));
-        if (!((servers) instanceof EzServer[])) {
+        if (servers == null) {
             throw new ServerException("missing server list");
         } else {
             for (EzServer server : servers) {
@@ -246,11 +244,15 @@ public class ServiceThread extends Thread {
             // record this connection time
             lastConnectionTime.put(clientAddress, new Date());
 
+            // set timeout
+            socket.setSoTimeout(Static.DEFAULT_TIMEOUT);
+
             // read json from socket
             String reqJson = Static.readJsonUTF(inputStream);
             Logging.logFine("RECEIVED: " + reqJson);
             JsonParser parser = new JsonParser();
 
+            // parse json to JsonObject
             JsonObject obj;
             try {
                 obj = parser.parse(reqJson).getAsJsonObject();
@@ -263,6 +265,7 @@ public class ServiceThread extends Thread {
                 throw new ServerException("invalid command");
             }
 
+            // handle each case
             String command = obj.get("command").getAsString();
             if (command.equals("PUBLISH")) {
                 Resource resource = Resource.parseAndNormalise(obj.get("resource"));
@@ -272,34 +275,40 @@ public class ServiceThread extends Thread {
                 remove(resource);
             } else if (command.equals("SHARE")) {
                 String secret = obj.get("secret").getAsString();
-                Logging.logFine(obj);
                 Resource resource = Resource.parseAndNormalise(obj.get("resource"));
                 share(secret, resource);
             } else if (command.equals("QUERY")) {
-                Logging.logFine(reqJson);
                 boolean relay = obj.get("relay").getAsBoolean();
                 Resource resourceTemplate = Resource.fromJsonElem(obj.get("resourceTemplate"));
                 query(resourceTemplate, relay);
             } else if (command.equals("FETCH")) {
-                Logging.logFine(obj.get("resourceTemplate"));
                 Resource resourceTemplate = Resource.fromJsonElem(obj.get("resourceTemplate"));
                 fetch(resourceTemplate);
             } else if (command.equals("EXCHANGE")) {
-                Logging.logFine(obj);
                 exchange(parseExchange(obj));
             } else {
                 throw new ServerException("invalid command");
             }
+        } catch (SocketTimeoutException e) {
+            Logging.logInfo("Timeout communicating with client, disconnecting...");
         } catch (IOException e) {
-            e.printStackTrace();
+            Logging.logInfo("Unknown network error with client, disconnecting...");
         } catch (ServerException e) {
             try {
+                Logging.logInfo("Error with client request: " + e.getMessage());
+                Logging.logInfo("Disconnecting from client...");
                 Static.sendJsonUTF(outputStream, e.toJson());
             } catch (IOException e1) {
-                e1.printStackTrace();
+                Logging.logInfo("Unknown network error with client, disconnecting...");
             }
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            Logging.logInfo("InterruptedException waiting for connection interval to pass, disconnecting...");
+        } finally {
+            try {
+                socket.close();
+            } catch (IOException e) {
+                Logging.logInfo("Unknown network error closing connection with client");
+            }
         }
     }
 }

@@ -15,7 +15,7 @@ public class Static {
     public static Gson GSON_WITH_NULL = new GsonBuilder().serializeNulls().create();
     public static final int DEFAULT_EXCHANGE_INTERVAL = 1000 * 60 * 10;
     public static final int DEFAULT_CONNECTION_INTERVAL = 1000;
-    public static final int DEFAULT_TIMEOUT = 1000 * 30;
+    public static final int DEFAULT_TIMEOUT = 1000 * 10;
 
     // TODO more?
 

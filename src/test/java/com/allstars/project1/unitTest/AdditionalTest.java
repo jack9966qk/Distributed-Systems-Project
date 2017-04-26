@@ -87,31 +87,50 @@ public class AdditionalTest {
         }
 
         private void testOne(String expectedRequestJson, String expectedResponseJson) throws Exception {
-            // create a dummy server to check request from client
-            ServerSocket dummyServerSocket;
-            synchronized (this) {
-                dummyServerSocket = new ServerSocket(3780);
-                notifyAll();
-            }
-            Socket client = dummyServerSocket.accept();
-            DataInputStream stream = new DataInputStream(client.getInputStream());
-            String request = stream.readUTF();
-            assertJsonEquivalent(request, expectedRequestJson);
-            dummyServerSocket.close();
+            Socket client = null;
+            ServerSocket dummyServerSocket = null;
+            try {
+                // create a dummy server to check request from client
+                synchronized (this) {
+                    dummyServerSocket = new ServerSocket(3780);
+                    notifyAll();
+                }
+                client = dummyServerSocket.accept();
+                DataInputStream stream = new DataInputStream(client.getInputStream());
+                String request = stream.readUTF();
+                assertJsonEquivalent(request, expectedRequestJson);
+                dummyServerSocket.close();
 
-            this.serverThread.start();
-            Server.waitUntilReady();
+                if (expectedResponseJson == null) {
+                    // no need to test server response
+                    System.out.println("skip response check");
+                    new DataOutputStream(client.getOutputStream()).writeUTF("{ \"response\": \"success\" }");
+                    client.close();
+                    return;
+                }
 
-            // get response from our server
-            String serverRes = getResponse("localhost", 3780, request);
-            assertJsonEquivalent(serverRes, expectedResponseJson);
-            new DataOutputStream(client.getOutputStream()).writeUTF(serverRes);
+                this.serverThread.start();
+                Server.waitUntilReady();
 
-            if (testWithSunrise) {
-                // get response from sunrise
-                String sunriseRes = getResponse("sunrise.cis.unimelb.edu.au", 3780, request);
-                System.err.println(sunriseRes);
-                assertJsonEquivalent(sunriseRes, expectedResponseJson);
+                // get response from our server
+                String serverRes = getResponse("localhost", 3780, request);
+                assertJsonEquivalent(serverRes, expectedResponseJson);
+                new DataOutputStream(client.getOutputStream()).writeUTF(serverRes);
+
+                if (testWithSunrise) {
+                    // get response from sunrise
+                    String sunriseRes = getResponse("sunrise.cis.unimelb.edu.au", 3780, request);
+                    System.err.println(sunriseRes);
+                    assertJsonEquivalent(sunriseRes, expectedResponseJson);
+                }
+            } catch (Exception e) {
+                if (client != null) {
+                    client.close();
+                }
+                if (dummyServerSocket != null) {
+                    dummyServerSocket.close();
+                }
+                throw e;
             }
         }
 
@@ -120,11 +139,11 @@ public class AdditionalTest {
                 for (TestCase testCase: testCases) {
                     testOne(testCase.getExpectedRequestJson(), testCase.getExpectedResponseJson());
                 }
-                Server.stop();
-            } catch (Exception e) {
-                if (!e.getMessage().equals("assert failed")) {
-                    e.printStackTrace();
+                if (Server.isRunning()) {
+                    Server.stop();
                 }
+            } catch (Exception e) {
+                e.printStackTrace();
                 successful = false;
                 if (Server.isRunning()) {
                     Server.stop();
@@ -133,7 +152,13 @@ public class AdditionalTest {
         }
     }
 
-    private void testWith(String[] serverArgs, List<TestCase> testCases, boolean testWithSunrise) throws InterruptedException {
+    private void testWith(String[] serverArgs, String[] clientArgs, String expectedRequestJson, String expectedResponseJson, boolean testWithSunrise) throws InterruptedException {
+        List<TestCase> testCases = new ArrayList<>();
+        testCases.add(new TestCase(clientArgs, expectedRequestJson, expectedResponseJson));
+        testMultipleWith(serverArgs, testCases, testWithSunrise);
+    }
+
+    private void testMultipleWith(String[] serverArgs, List<TestCase> testCases, boolean testWithSunrise) throws InterruptedException {
         Verifier verifier = new Verifier(serverArgs, testCases, testWithSunrise);
         System.out.println("verifier initialised");
         verifier.start();
@@ -179,7 +204,54 @@ public class AdditionalTest {
     }
 
     @Test
+    void testClientRequestJson() throws InterruptedException {
+        // Everything specified
+        testWith(
+                "-port 3780 -debug".split(" "),
+                "-host localhost -port 3780 -publish -name Leo -description \"bastard\" -owner Jack -channel LeosChannel -uri http://leo.com -tags leo,ntr -debug".split(" "),
+                "{\n" +
+                        "   \"command\":\"PUBLISH\",\n" +
+                        "   \"resource\":{\n" +
+                        "      \"name\":\"Leo\",\n" +
+                        "      \"description\":\"bastard\",\n" +
+                        "      \"tags\":[\n" +
+                        "         \"leo\",\n" +
+                        "         \"ntr\"\n" +
+                        "      ],\n" +
+                        "      \"owner\":\"Jack\",\n" +
+                        "      \"uri\":\"http://leo.com\",\n" +
+                        "      \"channel\":\"LeosChannel\",\n" +
+                        "      \"ezserver\":null\n" +
+                        "   }\n" +
+                        "}",
+                null,
+                false
+        );
+
+        // Nothing about resource specified
+        testWith(
+                "-port 3780 -debug".split(" "),
+                "-host localhost -port 3780 -publish -debug".split(" "),
+                "{\n" +
+                        "   \"command\":\"PUBLISH\",\n" +
+                        "   \"resource\":{\n" +
+                        "      \"name\":\"\",\n" +
+                        "      \"description\":\"\",\n" +
+                        "      \"tags\":[],\n" +
+                        "      \"owner\":\"\",\n" +
+                        "      \"uri\":\"\",\n" +
+                        "      \"channel\":\"\",\n" +
+                        "      \"ezserver\":null\n" +
+                        "   }\n" +
+                        "}",
+                null,
+                false
+        );
+    }
+
+    @Test
     void testPublish() throws InterruptedException {
+        // A normal resource
         List<TestCase> testCases = new ArrayList<>();
         testCases.add(new TestCase(
                 "-host localhost -port 3780 -publish -name Leo -owner Jack -channel LeosChannel -uri http://leo.com -tags leo,ntr -debug".split(" "),
@@ -200,28 +272,9 @@ public class AdditionalTest {
                         "}",
                 "{\"response\":\"success\"}"
         ));
-        testWith("-port 3780 -debug".split(" "), testCases, false);
+        testMultipleWith("-port 3780 -debug".split(" "), testCases, false);
 
-
-//        testCases = new ArrayList<>();
-//        testCases.add(new TestCase(
-//                "-host localhost -port 3780 -publish -name Leo -owner Jack -channel LeosChannel -uri http://leo.com -tags -debug".split(" "),
-//                "{\n" +
-//                        "   \"command\":\"PUBLISH\",\n" +
-//                        "   \"resource\":{\n" +
-//                        "      \"name\":\"Leo\",\n" +
-//                        "      \"tags\":[],\n" +
-//                        "      \"owner\":\"Jack\",\n" +
-//                        "      \"description\":\"\",\n" +
-//                        "      \"uri\":\"http://leo.com\",\n" +
-//                        "      \"channel\":\"LeosChannel\",\n" +
-//                        "      \"ezserver\":null\n" +
-//                        "   }\n" +
-//                        "}",
-//                "{\"response\":\"success\"}"
-//        ));
-//        testWith("-port 3780 -debug".split(" "), testCases, false);
-//
+        // no tags specified
         testCases = new ArrayList<>();
         testCases.add(new TestCase(
                 "-host localhost -port 3780 -publish -name Leo -owner Jack -channel LeosChannel -uri http://leo.com -debug".split(" "),
@@ -239,7 +292,10 @@ public class AdditionalTest {
                         "}",
                 "{\"response\":\"success\"}"
         ));
-        testWith("-port 3780 -debug".split(" "), testCases, false);
+        testMultipleWith("-port 3780 -debug".split(" "), testCases, false);
+
+
+        // nothing about resource specified
     }
 
     @Test

@@ -37,7 +37,6 @@ public class Server {
         ServerSocket listenSocket = null;
         try {
             // for sending exchange request to other servers
-            // TODO finish this and enable
             ExchangeThread exchangeThread = new ExchangeThread(exchangeInterval, serverList);
             exchangeThread.start();
 
