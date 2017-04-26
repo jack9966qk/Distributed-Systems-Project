@@ -3,6 +3,7 @@ package com.allstars.project1;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.Socket;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -12,6 +13,7 @@ import java.util.Set;
 public class ExchangeThread extends Thread {
     private int interval;
     private Set<EzServer> serverList;
+    private Date lastExchangeTime;
 
     public ExchangeThread(int interval, Set<EzServer> serverList) {
         this.interval = interval;
@@ -73,15 +75,19 @@ public class ExchangeThread extends Thread {
         running = true;
 
         while (running) {
-            try {
-                sleep(interval);
-            } catch (InterruptedException e) {
-                if (!this.running) {
-                    return;
+            if (lastExchangeTime != null) {
+                long timeSinceLastExchange = new Date().getTime() - lastExchangeTime.getTime();
+                long timeToWait = Math.max(0, interval - timeSinceLastExchange);
+                try {
+                    sleep(timeToWait);
+                } catch (InterruptedException e) {
+                    if (running) {
+                        e.printStackTrace();
+                    }
                 }
-                e.printStackTrace();
             }
 
+            lastExchangeTime = new Date();
             exchange();
         }
 

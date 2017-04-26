@@ -18,7 +18,13 @@ public class Client {
      * @return true if success, false otherwise
      */
     private static boolean handleResponse(String response) {
-        JsonObject resObj = new JsonParser().parse(response).getAsJsonObject();
+        JsonObject resObj = null;
+        try {
+            resObj = new JsonParser().parse(response).getAsJsonObject();
+        } catch (Exception e) {
+            Logging.logInfo("cannot parse result as json");
+            return false;
+        }
         if (resObj.get("response").getAsString().equals("success")) {
             Logging.logInfo("command successful");
             return true;
@@ -51,7 +57,13 @@ public class Client {
      * @return true if reported number matches expected, false otherwise
      */
     private static boolean handleSizeResponse(String response, int expectedSize) {
-        JsonObject resObj = new JsonParser().parse(response).getAsJsonObject();
+        JsonObject resObj = null;
+        try {
+            resObj = new JsonParser().parse(response).getAsJsonObject();
+        } catch (Exception e) {
+            Logging.logInfo("cannot parse result as json");
+            return false;
+        }
         return handleSizeResponse(resObj, expectedSize);
     }
 
