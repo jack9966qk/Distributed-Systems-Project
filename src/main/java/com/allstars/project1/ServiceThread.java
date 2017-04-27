@@ -205,8 +205,9 @@ public class ServiceThread extends Thread {
     }
 
     private void fetch(Resource template) throws ServerException, IOException {
-        // checkTemplate(template);
-
+        if(!isFile(template.getUri())){
+        	 throw new ServerException("cannot fetch resource");
+        }
         List<Resource> results = new ArrayList<>(Server.resourceStorage.searchWithTemplate(template));
         if (results.size() == 0) {
             // 0 result
