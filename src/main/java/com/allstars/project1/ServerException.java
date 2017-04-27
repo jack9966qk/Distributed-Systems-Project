@@ -22,11 +22,6 @@ public class ServerException extends Exception {
         this.errorMessage = errorMessage;
     }
 
-    @Override
-    public String getMessage() {
-        return errorMessage;
-    }
-    
     /**
      *
      * @return

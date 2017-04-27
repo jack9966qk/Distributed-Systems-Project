@@ -169,7 +169,20 @@ public class Resource {
 
     public static Resource parseAndNormalise(JsonElement elem) {
         Resource r = fromJsonElem(elem);
-        return r == null ? null : r.normalised();
+        if (r == null) {
+            return null;
+        } else {
+            Resource normalised = r.normalised();
+            if (normalised.getUri() != null &&
+                    normalised.getChannel() != null &&
+                    normalised.getDescription() != null &&
+                    normalised.getName() != null &&
+                    normalised.getOwner() != null) {
+                return normalised;
+            } else {
+                return null;
+            }
+        }
     }
 
     static String normaliseStr(String s) {
