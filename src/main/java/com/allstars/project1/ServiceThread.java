@@ -55,17 +55,17 @@ public class ServiceThread extends Thread {
         return Resource.fromJsonElem(obj.get("resourceTemplate"));
       
    }
-    private String parsesecrect(JsonObject obj) throws ServerException {
+    private String parseSecrect(JsonObject obj) throws ServerException {
    try{ 
-	   if(!obj.has("secerct")){
-       	 throw new ServerException("missing resource or secret");
+	   if(!obj.has("secret")){
+       	 throw new ServerException("missing resource and/or secret");
          } else{ return obj.get("secret").getAsString();
          }
        }catch(Exception e){
     	   throw new ServerException("missing resouorce or secert");
        }  
    }
-    private Boolean parserelay(JsonObject obj) throws ServerException {
+    private Boolean parseRelay(JsonObject obj) throws ServerException {
     	   try{ 
     		   if(!obj.has("relay")){
     	       	 throw new ServerException("missing resourceTemplate");
@@ -154,7 +154,6 @@ public class ServiceThread extends Thread {
     }
 
     private void share(String secret, Resource resource) throws ServerException, IOException {
-
         if (secret == null||resource==null) {
             throw new ServerException("missing resource and/or secret");
         }
@@ -346,9 +345,9 @@ public class ServiceThread extends Thread {
             } else if (command.equals("REMOVE")) {
                 remove(parseResource(obj));
             } else if (command.equals("SHARE")) {
-                share(parsesecrect(obj), parseResource(obj));
+                share(parseSecrect(obj), parseResource(obj));
             } else if (command.equals("QUERY")) {
-                query(parseTemplate(obj), parserelay(obj));
+                query(parseTemplate(obj), parseRelay(obj));
             } else if (command.equals("FETCH")) {
                 fetch(parseTemplate(obj));
             } else if (command.equals("EXCHANGE")) {
