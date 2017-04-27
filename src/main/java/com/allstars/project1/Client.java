@@ -80,6 +80,7 @@ public class Client {
         return jsonObject.toString();
     }
 
+
     /**
      * Make json from arguments
      * @param command the command
