@@ -151,7 +151,6 @@ public class Client {
     public static void publish(Socket socket, Resource resource) throws IOException {
         DataInputStream in = new DataInputStream(socket.getInputStream());
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-
         // send request
         Static.sendJsonUTF(out, makeJsonFrom("PUBLISH", resource));
 
@@ -248,7 +247,7 @@ public class Client {
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
 
         // send request
-        Static.sendJsonUTF(out, makeJsonFrom("FETCH", template, true));
+        Static.sendJsonUTF(out, makeJsonFrom("FETCH",template, true));
 
         // wait for response
         String response = Static.readJsonUTF(in);
