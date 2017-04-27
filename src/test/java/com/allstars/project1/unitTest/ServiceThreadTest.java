@@ -127,7 +127,6 @@ class ServiceThreadTest {
             }
 
             return resObj.get("errorMessage").toString();
-
         }
 
         boolean getResponse() {
@@ -164,6 +163,9 @@ class ServiceThreadTest {
 
         ArrayList<String> queryCommandSuccess = new ArrayList<String>();
         ArrayList<String> queryCommandFail = new ArrayList<String>();
+
+        ArrayList<String> fetchCommandSuccess = new ArrayList<String>();
+        ArrayList<String> fetchCommandFail = new ArrayList<String>();
 
         // publish resource UOM
         commandSuccess.add("{'command': 'PUBLISH', " +
@@ -351,8 +353,8 @@ class ServiceThreadTest {
                 "'owner': '', " +
                 "'ezserver': null}}");
 
-        // fetch the resource UOM with correct URI and CHANNEL
-        commandSuccess.add("{'command': 'FETCH', " +
+        // fetch the resource UOM with incorrect URI and CHANNEL
+        fetchCommandFail.add("{'command': 'FETCH', " +
                 "'resourceTemplate': {" +
                 "'name': '', " +
                 "'tags': [], " +
@@ -362,18 +364,8 @@ class ServiceThreadTest {
                 "'owner': '', " +
                 "'ezserver': null}}");
 
-        // fetch the resource UOM with incorrect URI and correct CHANNEL
-        commandFail.add("{'command': 'FETCH', " +
-                "'resourceTemplate': {'name': '', " +
-                "'tags': [], " +
-                "'description': '', " +
-                "'uri': 'http:\\/\\/www.uniuseless.edu.au', " +
-                "'channel': 'Web', " +
-                "'owner': '', " +
-                "'ezserver': null}}");
-
         // fetch the resource UOM with correct URI and empty CHANNEL
-        commandFail.add("{'command': 'FETCH', " +
+        fetchCommandFail.add("{'command': 'FETCH', " +
                 "'resourceTemplate': {'name': '', " +
                 "'tags': [], " +
                 "'description': '', " +
@@ -383,7 +375,7 @@ class ServiceThreadTest {
                 "'ezserver': null}}");
 
         // fetch the resource UOM with empty URI
-        commandFail.add("{'command': 'FETCH', " +
+        fetchCommandFail.add("{'command': 'FETCH', " +
                 "'resourceTemplate': {'name': '', " +
                 "'tags': [], " +
                 "'description': '', " +
@@ -393,12 +385,12 @@ class ServiceThreadTest {
                 "'ezserver': null}}");
 
         // fetch the resource UOM with empty CHANNEL
-        commandFail.add("{'command': 'FETCH', " +
+        fetchCommandFail.add("{'command': 'FETCH', " +
                 "'resourceTemplate': {'name': '', " +
                 "'tags': [], " +
                 "'description': '', " +
                 "'uri': 'http:\\/\\/www.unimelb.edu.au', " +
-                "'channel': ''" +
+                "'channel': '', " +
                 "'owner': '', " +
                 "'ezserver': null}}");
 
@@ -572,6 +564,32 @@ class ServiceThreadTest {
             System.out.println("Query fail cases:");
 
             for (String s : queryCommandFail) {
+                DummyClient c = new DummyClient();
+                server.dummyServerAccept();
+                System.out.println(s);
+                c.sendRequest(s);
+
+                boolean success = c.getQueryResponse();
+                //assert the respond to be success
+                Assertions.assertFalse(success);
+            }
+
+            System.out.println("Fetch success cases:");
+
+            for (String s : fetchCommandSuccess) {
+                DummyClient c = new DummyClient();
+                server.dummyServerAccept();
+                System.out.println(s);
+                c.sendRequest(s);
+
+                boolean success = c.getQueryResponse();
+                //assert the respond to be success
+                Assertions.assertTrue(success);
+            }
+
+            System.out.println("Fetch fail cases:");
+
+            for (String s : fetchCommandFail) {
                 DummyClient c = new DummyClient();
                 server.dummyServerAccept();
                 System.out.println(s);
