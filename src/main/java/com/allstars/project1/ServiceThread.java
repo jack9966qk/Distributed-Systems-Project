@@ -220,8 +220,12 @@ public class ServiceThread extends Thread {
 
         if (relay) {
             for (EzServer server : serverList) {
-                Socket socket = Client.connectToServer(server.hostname, server.port, Static.DEFAULT_TIMEOUT);
-                results.addAll(Client.query(socket, false, template));
+                try {
+                    Socket socket = Client.connectToServer(server.hostname, server.port, Static.DEFAULT_TIMEOUT);
+                    results.addAll(Client.query(socket, false, template));
+                } catch (Exception e) {
+                    Logging.logInfo("Error making query to server " + server + ". Skip to next server");
+                }
             }
         }
 
