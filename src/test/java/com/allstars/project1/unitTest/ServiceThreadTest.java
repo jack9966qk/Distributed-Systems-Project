@@ -516,22 +516,10 @@ class ServiceThreadTest {
                 "'owner': 'Leo', " +
                 "'ezserver': null}}");
 
-          // 
-//        // remove resource UOM again [the resourceKey is (Leo, Web, http:\/\/www.unimelb.edu.au)]
-//        commandSuccess.add("{'command': 'REMOVE', " +
-//                "'resource': {" +
-//                "'name': '', " +
-//                "'tags': [], " +
-//                "'description': '', " +
-//                "'uri': 'http:\\/\\/www.unimelb.edu.au', " +
-//                "'channel': 'Web', " +
-//                "'owner': 'Leo', " +
-//                "'ezserver': null}}");
-
 
         try {
 
-            System.out.println("Sucessed cases:");
+            System.out.println("Respond success cases:");
 
             for (String s : commandSuccess) {
                 DummyClient c = new DummyClient();
@@ -544,7 +532,7 @@ class ServiceThreadTest {
                 Assertions.assertTrue(success);
             }
 
-            System.out.println("Failed cases:");
+            System.out.println("Respond fail cases:");
 
             for (String s : commandFail) {
                 DummyClient c = new DummyClient();
