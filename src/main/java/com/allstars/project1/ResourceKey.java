@@ -10,10 +10,10 @@ public class ResourceKey {
     private String uri;
 
     /**
-     *
-     * @param owner
-     * @param channel
-     * @param uri
+     * Create a new resource key
+     * @param owner owner of resource
+     * @param channel channel of resource
+     * @param uri uri of resource
      */
     public ResourceKey(String owner, String channel, String uri) {
         this.owner = owner;
