@@ -44,10 +44,11 @@ public class ServiceThread extends Thread {
         }
     }
 
-    private void checkResource(Resource resource) throws ServerException {
+    private boolean checkResource(Resource resource) throws ServerException {
         if (resource == null) {
-            throw new ServerException("missing resource");
+            return false;
         }
+        return true;
         // "invalid resource" was added to JsonParser.
     }
 
@@ -284,7 +285,7 @@ public class ServiceThread extends Thread {
                 obj = parser.parse(reqJson).getAsJsonObject();
             } catch (Exception e) {
                // throw new ServerException("cannot parse request as json");
-                throw new ServerException("invalid resource");
+                throw new ServerException("missing or incorrect type for command");
             }
 
             // determine command type
