@@ -17,6 +17,11 @@ public class ServerException extends Exception {
     public ServerException(String errorMessage) {
         this.errorMessage = errorMessage;
     }
+
+    @Override
+    public String getMessage() {
+        return errorMessage;
+    }
     
     /**
      *

@@ -44,11 +44,10 @@ public class ServiceThread extends Thread {
         }
     }
 
-    private boolean checkResource(Resource resource) throws ServerException {
+    private void checkResource(Resource resource) throws ServerException {
         if (resource == null) {
-            return false;
+            throw new ServerException("missing resource");
         }
-        return true;
         // "invalid resource" was added to JsonParser.
     }
 
@@ -60,11 +59,11 @@ public class ServiceThread extends Thread {
 
         if (resource.getOwner().length() == 1 && resource.getOwner().toCharArray()[0] == '*') {// * owner
             return false;
-        } else if (resource.getUri().isEmpty()) {//uri is empty
+        } else if (resource.getUri().isEmpty()||resource.getUri()==null) {//uri is empty or not given
             return false;
         } else if (!URI.create(resource.getUri()).isAbsolute()) { //not an absolute uri
             return false;
-        } else if (resourceStorage.getUriSet().contains(resource.getUri())) { // duplicate uri
+        } else if (resourceStorage.hasResourceWith(resource.getChannel(),resource.getUri())) { // duplicate uri in a given channel
             return false;
         }
         return true;
@@ -105,6 +104,7 @@ public class ServiceThread extends Thread {
     private void publish(Resource resource) throws ServerException, IOException {
         checkResource(resource);
         // check whether the uri is a file scheme
+
         if (isFile(resource.getUri())) {
             throw new ServerException("cannot publish resource");
         }
@@ -132,8 +132,8 @@ public class ServiceThread extends Thread {
     }
 
     private void share(String secret, Resource resource) throws ServerException, IOException {
-        checkResource(resource);
-        if (secret == null) {
+
+        if (secret == null||resource==null) {
             throw new ServerException("missing resource and/or secret");
         }
         if (!secret.equals(this.secret)) {
@@ -256,8 +256,10 @@ public class ServiceThread extends Thread {
     public void run() {
         try {
             // wait for rest of connection interval
+
             long waitTime = 0;
             SocketAddress clientAddress = socket.getRemoteSocketAddress();
+
             if (lastConnectionTime.containsKey(clientAddress)) {
                 Date lastTime = lastConnectionTime.get(clientAddress);
                 Date now = new Date();
@@ -266,6 +268,7 @@ public class ServiceThread extends Thread {
                     waitTime = 0;
                 }
             }
+
             sleep(waitTime);
 
             // record this connection time
@@ -275,8 +278,10 @@ public class ServiceThread extends Thread {
             socket.setSoTimeout(Static.DEFAULT_TIMEOUT);
 
             // read json from socket
+
             String reqJson = Static.readJsonUTF(inputStream);
             Logging.logFine("RECEIVED: " + reqJson);
+
             JsonParser parser = new JsonParser();
 
             // parse json to JsonObject

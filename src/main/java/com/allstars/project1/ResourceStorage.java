@@ -51,6 +51,21 @@ public class ResourceStorage {
     }
 
     /**
+     * determine if a resource exists with channel and uri
+     * @param channel channel of resource
+     * @param uri uri of resource
+     * @return true if resource exist, false otherwise
+     */
+    public boolean hasResourceWith(String channel, String uri) {
+        for (Resource r : resources.values()) {
+            if (r.getChannel().equals(channel) && r.getUri().equals(uri)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      *
      * @param r
      * @return
