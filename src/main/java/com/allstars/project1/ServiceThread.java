@@ -34,25 +34,49 @@ public class ServiceThread extends Thread {
         this.server = server;
     }
 
-    private boolean isFile(String uri) {
-        URI u = URI.create(uri);
-        String scheme = u.getScheme();
-        try {
-            return scheme.equalsIgnoreCase("file");
-        } catch (NullPointerException e) {
-            return false; // No scheme was found
-        }
-    }
 
-    private void checkResource(Resource resource) throws ServerException {
-        if (resource == null) {
-            throw new ServerException("missing resource");
-        }
-        // "invalid resource" was added to JsonParser.
-    }
 
+    private Resource parseResource(JsonObject obj) throws ServerException {
+         if(!obj.has("resource")){
+        	 throw new ServerException("missing resource");
+         }else if(!(obj.get("resource").isJsonObject())){
+        	 throw new ServerException("missing resource");
+         }
+        return Resource.fromJsonElem(obj.get("resource"));
+        
+    }
+    private Resource parseTemplate(JsonObject obj) throws ServerException {
+        if(!obj.has("resourceTemplate")){
+       	 throw new ServerException("missing resourceTemplate");
+        } else if(!(obj.get("resourceTemplate").isJsonObject())){
+       	 throw new ServerException("missing resourceTemplate");
+        }  
+        
+        return Resource.fromJsonElem(obj.get("resourceTemplate"));
+      
+   }
+    private String parseSecrect(JsonObject obj) throws ServerException {
+   try{ 
+	   if(!obj.has("secret")){
+       	 throw new ServerException("missing resource and/or secret");
+         } else{ return obj.get("secret").getAsString();
+         }
+       }catch(Exception e){
+    	   throw new ServerException("missing resouorce or secert");
+       }  
+   }
+    private Boolean parseRelay(JsonObject obj) throws ServerException {
+    	   try{ 
+    		   if(!obj.has("relay")){
+    	       	 throw new ServerException("missing resourceTemplate");
+    	         } else{ return obj.get("relay").getAsBoolean();
+    	         }
+    	       }catch(Exception e){
+    	    	   throw new ServerException("missing resourceTemplate");
+    	       } 
+    	   }
+    
     private boolean checkCommand(Resource resource) throws ServerException {
-        checkResource(resource);
         // created a resource only with the primary keys
         Resource r = new Resource(null, null, null, resource.getUri(),
                 resource.getChannel(), resource.getOwner(), null);
@@ -68,25 +92,23 @@ public class ServiceThread extends Thread {
         }
         return true;
     }
-
-     private void checkTemplate(Resource template) throws ServerException {
-        Resource r = new Resource(null, null, null, template.getUri(),
-                template.getChannel(), null, null);
-        if (r.getUri().isEmpty()|r.getChannel().isEmpty()) {   // uri or uri is empty
-            throw new ServerException("missing resourceTemplate");
-        } else if (!isFile(r.getUri())) {      // not a file
-            throw new ServerException("invalid resourceTemplate");
-        } else if (!URI.create(r.getUri()).isAbsolute()) {   // not an absolute uri
-            throw new ServerException("missing resourceTemplate");  
-        } 
-    }  
-
+    
+    
+    private boolean isFile(String uri) {
+        URI u = URI.create(uri);
+        String scheme = u.getScheme();
+        try {
+            return scheme.equalsIgnoreCase("file");
+        } catch (NullPointerException e) {
+            return false; // No scheme was found
+        }
+    }
+    
     private void respondSuccess() throws IOException {
         JsonObject json = new JsonObject();
         json.addProperty("response", "success");
         Static.sendJsonUTF(outputStream, json.toString());
     }
-
     private void respondResource(Resource resource) throws IOException {
         Static.sendJsonUTF(outputStream, resource.toJson());
     }
@@ -102,7 +124,7 @@ public class ServiceThread extends Thread {
     }
 
     private void publish(Resource resource) throws ServerException, IOException {
-        checkResource(resource);
+        // checkResource(resource);
         // check whether the uri is a file scheme
 
         if (isFile(resource.getUri())) {
@@ -122,7 +144,7 @@ public class ServiceThread extends Thread {
     }
 
     private void remove(Resource resource) throws ServerException, IOException {
-        checkResource(resource);
+        // checkResource(resource);
         if (resourceStorage.containsKey(resource)) {
             resourceStorage.remove(resource);
             respondSuccess();
@@ -132,7 +154,6 @@ public class ServiceThread extends Thread {
     }
 
     private void share(String secret, Resource resource) throws ServerException, IOException {
-
         if (secret == null||resource==null) {
             throw new ServerException("missing resource and/or secret");
         }
@@ -156,7 +177,9 @@ public class ServiceThread extends Thread {
             }
         }
     }
-
+    
+  
+    
     private void query(Resource template, boolean relay) throws ServerException, IOException {
         Set<Resource> results = resourceStorage.searchWithTemplate(template).stream().map(
                 r -> r.ezServerAdded(server) // add EzServer info for all result from itself
@@ -181,7 +204,7 @@ public class ServiceThread extends Thread {
     }
 
     private void fetch(Resource template) throws ServerException, IOException {
-        checkTemplate(template);
+        // checkTemplate(template);
 
         List<Resource> results = new ArrayList<>(Server.resourceStorage.searchWithTemplate(template));
         if (results.size() == 0) {
@@ -318,27 +341,15 @@ public class ServiceThread extends Thread {
 
             // determine command type and handle each case
             if (command.equals("PUBLISH")) {
-                Resource resource = Resource.parseAndNormalise(obj.get("resource"));
-                publish(resource);
+                publish(parseResource(obj));
             } else if (command.equals("REMOVE")) {
-                Resource resource = Resource.parseAndNormalise(obj.get("resource"));
-                remove(resource);
+                remove(parseResource(obj));
             } else if (command.equals("SHARE")) {
-                String secret;
-                try{
-                    secret = obj.get("secret").getAsString();
-                } catch (UnsupportedOperationException e) {
-                    secret = null;
-                }
-                Resource resource = Resource.parseAndNormalise(obj.get("resource"));
-                share(secret, resource);
+                share(parseSecrect(obj), parseResource(obj));
             } else if (command.equals("QUERY")) {
-                boolean relay = obj.get("relay").getAsBoolean();
-                Resource resourceTemplate = Resource.fromJsonElem(obj.get("resourceTemplate"));
-                query(resourceTemplate, relay);
+                query(parseTemplate(obj), parseRelay(obj));
             } else if (command.equals("FETCH")) {
-                Resource resourceTemplate = Resource.fromJsonElem(obj.get("resourceTemplate"));
-                fetch(resourceTemplate);
+                fetch(parseTemplate(obj));
             } else if (command.equals("EXCHANGE")) {
                 exchange(parseExchange(obj));
             } else {
