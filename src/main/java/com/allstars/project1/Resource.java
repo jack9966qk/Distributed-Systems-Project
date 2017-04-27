@@ -7,37 +7,69 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- *
+ * Resource in EzShare, can point to a remote uri or a local file.
  */
 public class Resource {
+    /**
+     *
+     * @return
+     */
     public String getName() {
         return name;
     }
 
+    /**
+     *
+     * @return
+     */
     public String getDescription() {
         return description;
     }
 
+    /**
+     *
+     * @return
+     */
     public String[] getTags() {
         return tags;
     }
 
+    /**
+     *
+     * @return
+     */
     public String getUri() {
         return uri;
     }
 
+    /**
+     *
+     * @return
+     */
     public String getChannel() {
         return channel;
     }
 
+    /**
+     *
+     * @return
+     */
     public String getOwner() {
         return owner;
     }
 
+    /**
+     *
+     * @return
+     */
     public String getEzserver() {
         return ezserver;
     }
 
+    /**
+     *
+     * @return
+     */
     public Long getResourceSize() {
         return resourceSize;
     }
@@ -51,6 +83,17 @@ public class Resource {
     private String ezserver = null;
     private Long resourceSize = null;
 
+    /**
+     *
+     * @param name
+     * @param description
+     * @param tags
+     * @param uri
+     * @param channel
+     * @param owner
+     * @param ezserver
+     * @param resourceSize
+     */
     public Resource(String name, String description, String[] tags, String uri, String channel, String owner, String ezserver, Long resourceSize) {
         this.name = name;
         this.description = description;
@@ -62,6 +105,16 @@ public class Resource {
         this.resourceSize = resourceSize;
     }
 
+    /**
+     *
+     * @param name
+     * @param description
+     * @param tags
+     * @param uri
+     * @param channel
+     * @param owner
+     * @param ezserver
+     */
     public Resource(String name, String description, String[] tags, String uri, String channel, String owner, String ezserver) {
         // TODO normalise strings
         this.name = name;
@@ -73,6 +126,11 @@ public class Resource {
         this.ezserver = ezserver;
     }
 
+    /**
+     *
+     * @param ezServer
+     * @return
+     */
     public Resource ezServerAdded(EzServer ezServer) {
         return new Resource(
                 this.name,
@@ -86,6 +144,11 @@ public class Resource {
         );
     }
 
+    /**
+     *
+     * @param size
+     * @return
+     */
     public Resource sizeAdded(long size) {
         return new Resource(
                 this.name,
@@ -99,6 +162,10 @@ public class Resource {
         );
     }
 
+    /**
+     *
+     * @return
+     */
     public Resource ownerHidden() {
         return new Resource(
                 this.name,
@@ -112,10 +179,20 @@ public class Resource {
         );
     }
 
+    /**
+     *
+     * @param strings
+     * @return
+     */
     static List<String> stringsToLower(String[] strings) {
         return Arrays.stream(strings).map(t -> t.toLowerCase()).collect(Collectors.toList());
     }
 
+    /**
+     *
+     * @param template
+     * @return
+     */
     public boolean matchesTemplate(Resource template) {
         if (!this.channel.equals(template.channel)) {
             return false;
@@ -142,31 +219,63 @@ public class Resource {
         }
     }
 
+    /**
+     *
+     * @return
+     */
     public ResourceKey getKey() {
         return new ResourceKey(owner, channel, uri);
     }
 
+    /**
+     *
+     * @return
+     */
     public String toJson() {
         return Static.GSON.toJson(this);
     }
 
+    /**
+     *
+     * @return
+     */
     public JsonElement toJsonElement() {
         return Static.GSON.toJsonTree(this);
     }
 
+    /**
+     *
+     * @param json
+     * @return
+     */
     public static Resource fromJson(String json) {
         return Static.GSON.fromJson(json, Resource.class);
     }
 
+    /**
+     *
+     * @param elem
+     * @return
+     */
     public static Resource fromJsonElem(JsonElement elem) {
         return Static.GSON.fromJson(elem, Resource.class);
     }
 
+    /**
+     *
+     * @param json
+     * @return
+     */
     public static Resource parseAndNormalise(String json) {
         Resource r = fromJson(json);
         return r.normalised();
     }
 
+    /**
+     *
+     * @param elem
+     * @return
+     */
     public static Resource parseAndNormalise(JsonElement elem) {
         Resource r = fromJsonElem(elem);
         if (r == null) {
@@ -185,6 +294,11 @@ public class Resource {
         }
     }
 
+    /**
+     *
+     * @param s
+     * @return
+     */
     static String normaliseStr(String s) {
         return s.replace("\0", "").trim();
     }
@@ -210,8 +324,6 @@ public class Resource {
         return new Resource(name, description, tags, uri, channel, owner, ezServer);
     }
 
-    // =========EQUALS AND HASHCODE AUTOMATICALLY IMPLEMENTED BY INTELLIJ IDEA=======
-    // may need to be changed in the future
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
