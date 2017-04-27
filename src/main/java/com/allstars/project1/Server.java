@@ -165,7 +165,9 @@ public class Server {
             // start the server
             startServer(connectionIntervalLimit, exchangeInterval, secret, host, port);
         } catch (IOException e) {
-            Logging.logInfo("Unknown IOException in Server main thread");
+            Logging.logInfo("Unknown IOException in Server main thread, exiting...");
+        } catch (Exception e) {
+            Logging.logInfo("Unknown Exception in Server main thread, exiting...");
         }
     }
 }

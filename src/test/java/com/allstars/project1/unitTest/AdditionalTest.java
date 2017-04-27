@@ -13,9 +13,7 @@ import java.io.IOException;
 import java.net.BindException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by Jack on 25/4/2017.
@@ -76,11 +74,7 @@ public class AdditionalTest {
             this.testWithSunrise = testWithSunrise;
         }
 
-        private String getResponse(String host, int port, String request) throws IOException {
-            Socket s = new Socket(host, port);
-            new DataOutputStream(s.getOutputStream()).writeUTF(request);
-            return new DataInputStream(s.getInputStream()).readUTF();
-        }
+
 
         public synchronized void waitForDummyServerToBeReady(int timeout) throws InterruptedException {
             wait(timeout);
@@ -158,10 +152,17 @@ public class AdditionalTest {
         }
     }
 
+    String getResponse(String host, int port, String request) throws IOException {
+        Socket s = new Socket(host, port);
+        new DataOutputStream(s.getOutputStream()).writeUTF(request);
+        return new DataInputStream(s.getInputStream()).readUTF();
+    }
+
     class ServerVerifier extends Thread {
 
         String requestJson;
         String expectedResponseJson;
+        Set<String> expectedResourcesJson;
         boolean testWithSunrise = false;
 
         boolean successful = false;
@@ -172,14 +173,63 @@ public class AdditionalTest {
             this.testWithSunrise = testWithSunrise;
         }
 
+        public ServerVerifier(String requestJson, String expectedResponseJson, Set<String> expectedResourcesJson, boolean testWithSunrise) {
+            this.requestJson = requestJson;
+            this.expectedResponseJson = expectedResponseJson;
+            this.testWithSunrise = testWithSunrise;
+            this.expectedResourcesJson = expectedResourcesJson;
+        }
+
         @Override
         public void run() {
-            new ServerThread("-port 9999".split(" ")).start();
+            new ServerThread("-port 9999 -secret abcd".split(" ")).start();
             try {
                 Server.waitUntilReady();
                 Socket socket = new Socket("localhost", 9999);
                 new DataOutputStream(socket.getOutputStream()).writeUTF(requestJson);
                 assertJsonEquivalent(new DataInputStream(socket.getInputStream()).readUTF(), expectedResponseJson);
+
+                // check resources
+                if (expectedResourcesJson != null) {
+                    List<String> receivedResources = new ArrayList<>();
+                    String receivedResultSize = null;
+                    DataInputStream inStream = new DataInputStream(socket.getInputStream());
+                    while (true) {
+                        String str = inStream.readUTF();
+                        if (str.contains("resultSize")) {
+                            receivedResultSize = str;
+                            break;
+                        } else {
+                            receivedResources.add(str);
+                        }
+                    }
+
+                    JsonObject resultSizeObj = new JsonParser().parse(receivedResultSize).getAsJsonObject();
+
+                    if (resultSizeObj.get("resultSize").getAsInt() != receivedResources.size()) {
+                        throw new Exception("size does not match");
+                    }
+
+                    for (String receivedResource : receivedResources) {
+                        boolean ok = false;
+                        for (String expectedResource : expectedResourcesJson) {
+                            if (areEquivalentJson(receivedResource, expectedResource)) {
+                                ok = true;
+                                break;
+                            }
+                        }
+                        if (!ok) {
+                            throw new Exception("resources do not match");
+                        }
+                    }
+                }
+
+                // check with Sunrise
+                if (testWithSunrise) {
+                    String sunriseResponse = getResponse("sunrise.cis.unimelb.edu.au", 3780, requestJson);
+                    assertJsonEquivalent(expectedResponseJson, sunriseResponse);
+                }
+
                 successful = true;
             } catch (Exception e) {
                 successful = false;
@@ -232,17 +282,21 @@ public class AdditionalTest {
         }
     }
 
-    private void assertJsonEquivalent(String actual, String expected) throws Exception {
+    private boolean areEquivalentJson(String json1, String json2) {
         JsonParser parser = new JsonParser();
-        JsonObject obj1 = parser.parse(actual).getAsJsonObject();
-        JsonObject obj2 = parser.parse(expected).getAsJsonObject();
+        JsonObject obj1 = parser.parse(json1).getAsJsonObject();
+        JsonObject obj2 = parser.parse(json2).getAsJsonObject();
         removeAllNullFields(obj1);
         removeAllNullFields(obj2);
-        if (!obj1.equals(obj2)) {
+        return obj1.equals(obj2);
+    }
+
+    private void assertJsonEquivalent(String actual, String expected) throws Exception {
+        if (!areEquivalentJson(actual, expected)) {
             System.err.println("ACTUAL>>>>>>>>>>>");
-            System.err.println(obj1);
+            System.err.println(actual);
             System.err.println("=================");
-            System.err.println(obj2);
+            System.err.println(expected);
             System.err.println("EXPECTED<<<<<<<<<");
             throw new Exception("assert failed");
         }
@@ -406,11 +460,44 @@ public class AdditionalTest {
     }
 
     @Test
-    void testInvalidRequests() throws InterruptedException {
+    void testInvalidRequestsGeneric() throws InterruptedException {
+        // command invalid/unknown
+        new ServerVerifier("{\"command\": \"pUbLiSh\"}",
+                "{ \"response\" : \"error\", \"errorMessage\" : \"invalid command\" }",
+                false).test();
+
+        new ServerVerifier("{\"command\": \"XXXXXX\"}",
+                "{ \"response\" : \"error\", \"errorMessage\" : \"invalid command\" }",
+                false).test();
+
+        // command missing or incorrect type
+        new ServerVerifier("{}",
+                "{ \"response\" : \"error\", " +
+                        "\"errorMessage\" : \"missing or incorrect type for command\" }",
+                false).test();
+
+        new ServerVerifier("{\"command\": []}",
+                "{ \"response\" : \"error\", " +
+                        "\"errorMessage\" : \"missing or incorrect type for command\" }",
+                false).test();
+    }
+
+    @Test
+    void testInvalidRequestsPublish() throws InterruptedException {
+        // no resource
         new ServerVerifier("{\"command\": \"PUBLISH\"}",
                 "{ \"response\" : \"error\", \"errorMessage\" : \"missing resource\" }",
                 false).test();
 
+        // incorrect type
+        new ServerVerifier("{\"command\": \"PUBLISH\", \"resource\": []}",
+                "{ \"response\" : \"error\", \"errorMessage\" : \"missing resource\" }",
+                false).test();
+    }
+
+    @Test
+    void testFetch() throws InterruptedException {
+        // fetch something that does not exist, expect success with resultSize 0
         new ServerVerifier("{\n" +
                 "    \"command\": \"FETCH\",\n" +
                 "    \"resourceTemplate\": {\n" +
@@ -423,27 +510,161 @@ public class AdditionalTest {
                 "        \"ezserver\": null\n" +
                 "    }\n" +
                 "}",
-                "{ \"response\" : \"error\", \"errorMessage\" : \"cannot fetch resource\" }",
+                "{ \"response\" : \"success\" }",
+                new HashSet<String>(),
                 false).test();
     }
 
     @Test
-    void testShare() {
+    void testInvalidRequestsShare() throws InterruptedException {
+        // cannot share resource
+        // uri not present
+        new ServerVerifier("{\n" +
+                "    \"command\": \"SHARE\",\n" +
+                "    \"secret\": \"abcd\",\n" +
+                "    \"resource\": {\n" +
+                "        \"name\": \"EZShare JAR\",\n" +
+                "        \"tags\": [\n" +
+                "            \"jar\"\n" +
+                "        ],\n" +
+                "        \"description\": \"The jar file for EZShare. Use with caution.\",\n" +
+                "        \"channel\": \"my_private_channel\",\n" +
+                "        \"owner\": \"aaron010\",\n" +
+                "        \"ezserver\": null\n" +
+                "    }\n" +
+                "}",
+                "{ \"response\" : \"error\", \"errorMessage\" : \"cannot share resource\" }",
+                false).test();
 
+        // uri not file scheme
+        new ServerVerifier("{\n" +
+                "    \"command\": \"SHARE\",\n" +
+                "    \"secret\": \"abcd\",\n" +
+                "    \"resource\": {\n" +
+                "        \"name\": \"EZShare JAR\",\n" +
+                "        \"tags\": [\n" +
+                "            \"jar\"\n" +
+                "        ],\n" +
+                "        \"description\": \"The jar file for EZShare. Use with caution.\"," +
+                "        \"uri\": \"ftp:\\/\\/\\/home\\/aaron\\/EZShare\\/ezshare.jar\"," +
+                "        \"channel\": \"my_private_channel\",\n" +
+                "        \"owner\": \"aaron010\",\n" +
+                "        \"ezserver\": null\n" +
+                "    }\n" +
+                "}",
+                "{ \"response\" : \"error\", \"errorMessage\" : \"cannot share resource\" }",
+                false).test();
+
+        // file does not exist
+        new ServerVerifier("{\n" +
+                "    \"command\": \"SHARE\",\n" +
+                "    \"secret\": \"abcd\",\n" +
+                "    \"resource\": {\n" +
+                "        \"name\": \"EZShare JAR\",\n" +
+                "        \"tags\": [\n" +
+                "            \"jar\"\n" +
+                "        ],\n" +
+                "        \"description\": \"The jar file for EZShare. Use with caution.\"," +
+                "        \"uri\": \"file:\\/\\/\\/\\/home\\/aaron\\/EZShare\\/ezshare.jar\"," +
+                "        \"channel\": \"my_private_channel\",\n" +
+                "        \"owner\": \"aaron010\",\n" +
+                "        \"ezserver\": null\n" +
+                "    }\n" +
+                "}",
+                "{ \"response\" : \"error\", \"errorMessage\" : \"cannot share resource\" }",
+                false).test();
+
+        // resource contained incorrect information that could not be recovered from
+        // TODO
+
+        // incorrect secret
+        new ServerVerifier("{\n" +
+                "    \"command\": \"SHARE\",\n" +
+                "    \"secret\": \"aaaaaaaaaaaaaa\",\n" +
+                "    \"resource\": {\n" +
+                "        \"name\": \"EZShare JAR\",\n" +
+                "        \"tags\": [\n" +
+                "            \"jar\"\n" +
+                "        ],\n" +
+                "        \"description\": \"The jar file for EZShare. Use with caution.\",\n" +
+                "        \"uri\": \"file:\\/\\/\\/\\/home\\/aaron\\/EZShare\\/ezshare.jar\",\n" +
+                "        \"channel\": \"my_private_channel\",\n" +
+                "        \"owner\": \"aaron010\",\n" +
+                "        \"ezserver\": null\n" +
+                "    }\n" +
+                "}",
+                "{ \"response\" : \"error\", \"errorMessage\" : \"incorrect secret\" }",
+                false).test();
+
+//        // resource field not given or not the correct type
+        // no resource
+        new ServerVerifier("{\"command\": \"REMOVE\"}",
+                "{ \"response\" : \"error\", \"errorMessage\" : \"missing resource\" }",
+                false).test();
+//
+//        // incorrect type
+//        new ServerVerifier("{\"command\": \"REMOVE\", \"resource\": []}",
+//                "{ \"response\" : \"error\", \"errorMessage\" : \"missing resource\" }",
+//                false).test();
     }
 
     @Test
-    void testRemove() {
+    void testInvalidRequestsRemove() throws InterruptedException {
+        // resource did not exist: tested in testPublishRemove()
 
+        // resource contained incorrect information that could not be recovered from
+        // TODO
+
+        // resource field not given or not the correct type
+        // no resource
+        new ServerVerifier("{\"command\": \"REMOVE\"}",
+                "{ \"response\" : \"error\", \"errorMessage\" : \"missing resource\" }",
+                false).test();
+
+//        // incorrect type
+//        new ServerVerifier("{\"command\": \"REMOVE\", \"resource\": []}",
+//                "{ \"response\" : \"error\", \"errorMessage\" : \"missing resource\" }",
+//                false).test();
     }
 
     @Test
-    void testQuery() {
+    void testInvalidRequestsQuery() throws InterruptedException {
+        // resourceTemplate field not given or not the correct type
+        // no resourceTemplate
+        new ServerVerifier("{\"command\": \"QUERY\"}",
+                "{ \"response\" : \"error\", \"errorMessage\" : \"missing resource\" }",
+                false).test();
 
+        // incorrect type
+        new ServerVerifier("{\"command\": \"QUERY\", \"resourceTemplate\": []}",
+                "{ \"response\" : \"error\", \"errorMessage\" : \"missing resource\" }",
+                false).test();
     }
 
     @Test
-    void testExchange() {
+    void testInvalidRequestsFetch() throws InterruptedException {
+        // resourceTemplate field not given or not the correct type
+        // no resourceTemplate
+        new ServerVerifier("{\"command\": \"FETCH\"}",
+                "{ \"response\" : \"error\", \"errorMessage\" : \"missing resource\" }",
+                false).test();
 
+        // incorrect type
+        new ServerVerifier("{\"command\": \"FETCH\", \"resourceTemplate\": []}",
+                "{ \"response\" : \"error\", \"errorMessage\" : \"missing resource\" }",
+                false).test();
+    }
+
+    @Test
+    void testInvalidRequestsExchange() throws InterruptedException {
+        // missing serverList
+        new ServerVerifier("{\"command\": \"EXCHANGE\"}",
+                "{ \"response\" : \"error\", \"errorMessage\" : \"missing or invalid server list\" }",
+                false).test();
+
+        // incorrect type
+        new ServerVerifier("{\"command\": \"EXCHANGE\", \"serverList\": {}}",
+                "{ \"response\" : \"error\", \"errorMessage\" : \"missing or invalid server list\" }",
+                false).test();
     }
 }

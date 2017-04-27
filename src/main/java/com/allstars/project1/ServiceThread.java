@@ -235,16 +235,25 @@ public class ServiceThread extends Thread {
     private EzServer[] parseExchange(JsonObject obj) throws ServerException {
         // check if contains serverList
         if (!obj.has("serverList")) {
-            throw new ServerException("missing server list");
+            throw new ServerException("missing or invalid server list");
         }
 
         // parse servers, check if all servers are valid
         List<EzServer> servers = new ArrayList<>();
-        JsonArray elems = obj.getAsJsonArray("serverList");
+
+        JsonArray elems;
+        try {
+            elems = obj.getAsJsonArray("serverList");
+        } catch (ClassCastException e) {
+            // not JSON array
+            throw new ServerException("missing or invalid server list");
+        }
+
         for (JsonElement elem : elems) {
             EzServer server = EzServer.fromJson(elem.getAsJsonObject());
             if (server == null) {
-                throw new ServerException("invalid server record");
+                // invalid server record
+                throw new ServerException("missing or invalid server list");
             } else {
                 servers.add(server);
             }
@@ -289,17 +298,25 @@ public class ServiceThread extends Thread {
             try {
                 obj = parser.parse(reqJson).getAsJsonObject();
             } catch (Exception e) {
-               // throw new ServerException("cannot parse request as json");
+                // cannot parse request as json
                 throw new ServerException("missing or incorrect type for command");
             }
 
-            // determine command type
+            // check command exist as a string
             if (!obj.has("command")) {
-                throw new ServerException("invalid command");
+                throw new ServerException("missing or incorrect type for command");
             }
 
-            // handle each case
-            String command = obj.get("command").getAsString();
+            String command;
+            try {
+                command = obj.get("command").getAsString();
+            } catch (IllegalStateException e) {
+                // not a string
+                throw new ServerException("missing or incorrect type for command");
+            }
+
+
+            // determine command type and handle each case
             if (command.equals("PUBLISH")) {
                 Resource resource = Resource.parseAndNormalise(obj.get("resource"));
                 publish(resource);
@@ -333,7 +350,7 @@ public class ServiceThread extends Thread {
             Logging.logInfo("Unknown network error with client, disconnecting...");
         } catch (ServerException e) {
             try {
-                Logging.logInfo("Error with client request: " + e.getMessage());
+                Logging.logInfo("Invalid client request: " + e.getErrorMessage());
                 Logging.logInfo("Disconnecting from client...");
                 Static.sendJsonUTF(outputStream, e.toJson());
             } catch (IOException e1) {
@@ -341,11 +358,14 @@ public class ServiceThread extends Thread {
             }
         } catch (InterruptedException e) {
             Logging.logInfo("InterruptedException waiting for connection interval to pass, disconnecting...");
+        } catch (Exception e) {
+            e.printStackTrace();
+            Logging.logInfo("Unknown exception in ServiceThread, disconnecting...");
         } finally {
             try {
                 socket.close();
             } catch (IOException e) {
-                Logging.logInfo("Unknown network error closing connection with client");
+                Logging.logInfo("Network error closing connection with client");
             }
         }
     }
