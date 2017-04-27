@@ -10,12 +10,12 @@ import java.net.Socket;
 /**
  * Created by Zheping on 2017/4/22.
  */
-public class ServerThread extends Thread {
+public class DummyServerThread extends Thread {
 
     private DataInputStream inputStream;
     private DataOutputStream outputStream;
 
-    public ServerThread(Socket socket) {
+    public DummyServerThread(Socket socket) {
 
         try {
             this.inputStream = new DataInputStream(socket.getInputStream());

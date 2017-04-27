@@ -164,9 +164,6 @@ class ServiceThreadTest {
         ArrayList<String> queryCommandSuccess = new ArrayList<String>();
         ArrayList<String> queryCommandFail = new ArrayList<String>();
 
-        ArrayList<String> fetchCommandSuccess = new ArrayList<String>();
-        ArrayList<String> fetchCommandFail = new ArrayList<String>();
-
         // publish resource UOM
         commandSuccess.add("{'command': 'PUBLISH', " +
                 "'resource': {" +
@@ -354,7 +351,7 @@ class ServiceThreadTest {
                 "'ezserver': null}}");
 
         // fetch the resource UOM with incorrect URI and CHANNEL
-        fetchCommandFail.add("{'command': 'FETCH', " +
+        queryCommandFail.add("{'command': 'FETCH', " +
                 "'resourceTemplate': {" +
                 "'name': '', " +
                 "'tags': [], " +
@@ -365,7 +362,7 @@ class ServiceThreadTest {
                 "'ezserver': null}}");
 
         // fetch the resource UOM with correct URI and empty CHANNEL
-        fetchCommandFail.add("{'command': 'FETCH', " +
+        queryCommandFail.add("{'command': 'FETCH', " +
                 "'resourceTemplate': {'name': '', " +
                 "'tags': [], " +
                 "'description': '', " +
@@ -375,7 +372,7 @@ class ServiceThreadTest {
                 "'ezserver': null}}");
 
         // fetch the resource UOM with empty URI
-        fetchCommandFail.add("{'command': 'FETCH', " +
+        queryCommandFail.add("{'command': 'FETCH', " +
                 "'resourceTemplate': {'name': '', " +
                 "'tags': [], " +
                 "'description': '', " +
@@ -385,7 +382,7 @@ class ServiceThreadTest {
                 "'ezserver': null}}");
 
         // fetch the resource UOM with empty CHANNEL
-        fetchCommandFail.add("{'command': 'FETCH', " +
+        queryCommandFail.add("{'command': 'FETCH', " +
                 "'resourceTemplate': {'name': '', " +
                 "'tags': [], " +
                 "'description': '', " +
@@ -548,7 +545,7 @@ class ServiceThreadTest {
                 Assertions.assertFalse(fail);
             }
 
-            System.out.println("Query success cases:");
+            System.out.println("Query and Fetch success cases:");
 
             for (String s : queryCommandSuccess) {
                 DummyClient c = new DummyClient();
@@ -561,35 +558,9 @@ class ServiceThreadTest {
                 Assertions.assertTrue(success);
             }
 
-            System.out.println("Query fail cases:");
+            System.out.println("Query and Fetch fail cases:");
 
             for (String s : queryCommandFail) {
-                DummyClient c = new DummyClient();
-                server.dummyServerAccept();
-                System.out.println(s);
-                c.sendRequest(s);
-
-                boolean success = c.getQueryResponse();
-                //assert the respond to be success
-                Assertions.assertFalse(success);
-            }
-
-            System.out.println("Fetch success cases:");
-
-            for (String s : fetchCommandSuccess) {
-                DummyClient c = new DummyClient();
-                server.dummyServerAccept();
-                System.out.println(s);
-                c.sendRequest(s);
-
-                boolean success = c.getQueryResponse();
-                //assert the respond to be success
-                Assertions.assertTrue(success);
-            }
-
-            System.out.println("Fetch fail cases:");
-
-            for (String s : fetchCommandFail) {
                 DummyClient c = new DummyClient();
                 server.dummyServerAccept();
                 System.out.println(s);
