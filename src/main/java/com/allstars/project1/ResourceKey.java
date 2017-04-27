@@ -1,6 +1,7 @@
 package com.allstars.project1;
 
 /**
+ * Primary key of resource, which is a (owner, channel, uri) 3-tuple
  * Created by Jack on 28/3/2017.
  */
 public class ResourceKey {
@@ -8,6 +9,12 @@ public class ResourceKey {
     private String channel;
     private String uri;
 
+    /**
+     *
+     * @param owner
+     * @param channel
+     * @param uri
+     */
     public ResourceKey(String owner, String channel, String uri) {
         this.owner = owner;
         this.channel = channel;

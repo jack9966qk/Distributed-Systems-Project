@@ -18,20 +18,42 @@ public class Static {
     public static final int DEFAULT_CONNECTION_INTERVAL = 1000;
     public static final int DEFAULT_TIMEOUT = 1000 * 10;
 
+    /**
+     *
+     * @param str
+     * @return
+     */
     private static String addEscChar(String str) {
         return str.replace("/", "\\/");
     }
 
+    /**
+     *
+     * @param str
+     * @return
+     */
     private static String removeEscChar(String str) {
         return str.replace("\\/", "/");
     }
 
+    /**
+     *
+     * @param out
+     * @param str
+     * @throws IOException
+     */
     public static void sendJsonUTF(DataOutputStream out, String str) throws IOException {
         String escaped = addEscChar(str);
         out.writeUTF(escaped);
         Logging.logFine("SENT: " + escaped);
     }
 
+    /**
+     * 
+     * @param in
+     * @return
+     * @throws IOException
+     */
     public static String readJsonUTF(DataInputStream in) throws IOException {
         String str = in.readUTF();
         Logging.logFine("RECEIVED: " + str);
