@@ -302,199 +302,6 @@ public class AdditionalTest {
         }
     }
 
-    @BeforeAll
-    static void setUp() {
-
-    }
-
-    @Test
-    void testClientRequestJson() throws InterruptedException {
-        // Everything specified
-        testWith(
-                "-port 3780 -debug".split(" "),
-                "-host localhost -port 3780 -publish -name Leo -description \"bastard\" -owner Jack -channel LeosChannel -uri http://leo.com -tags leo,ntr -debug".split(" "),
-                "{\n" +
-                        "   \"command\":\"PUBLISH\",\n" +
-                        "   \"resource\":{\n" +
-                        "      \"name\":\"Leo\",\n" +
-                        "      \"description\":\"bastard\",\n" +
-                        "      \"tags\":[\n" +
-                        "         \"leo\",\n" +
-                        "         \"ntr\"\n" +
-                        "      ],\n" +
-                        "      \"owner\":\"Jack\",\n" +
-                        "      \"uri\":\"http://leo.com\",\n" +
-                        "      \"channel\":\"LeosChannel\",\n" +
-                        "      \"ezserver\":null\n" +
-                        "   }\n" +
-                        "}",
-                null,
-                false
-        );
-
-        // Nothing about resource specified
-        testWith(
-                "-port 3780 -debug".split(" "),
-                "-host localhost -port 3780 -publish -debug".split(" "),
-                "{\n" +
-                        "   \"command\":\"PUBLISH\",\n" +
-                        "   \"resource\":{\n" +
-                        "      \"name\":\"\",\n" +
-                        "      \"description\":\"\",\n" +
-                        "      \"tags\":[],\n" +
-                        "      \"owner\":\"\",\n" +
-                        "      \"uri\":\"\",\n" +
-                        "      \"channel\":\"\",\n" +
-                        "      \"ezserver\":null\n" +
-                        "   }\n" +
-                        "}",
-                null,
-                false
-        );
-    }
-
-    @Test
-    void testPublishRemove() throws InterruptedException {
-        List<TestCase> testCases = new ArrayList<>();
-        // add a resource
-        testCases.add(new TestCase(
-                "-host localhost -port 3780 -publish -name Leo -owner Jack -channel LeosChannel -uri http://leo.com -tags leo,ntr -debug".split(" "),
-                "{\n" +
-                        "   \"command\":\"PUBLISH\",\n" +
-                        "   \"resource\":{\n" +
-                        "      \"name\":\"Leo\",\n" +
-                        "      \"tags\":[\n" +
-                        "         \"leo\",\n" +
-                        "         \"ntr\"\n" +
-                        "      ],\n" +
-                        "      \"owner\":\"Jack\",\n" +
-                        "      \"description\":\"\",\n" +
-                        "      \"uri\":\"http://leo.com\",\n" +
-                        "      \"channel\":\"LeosChannel\",\n" +
-                        "      \"ezserver\":null\n" +
-                        "   }\n" +
-                        "}",
-                "{\"response\":\"success\"}"
-        ));
-        // add it one more time, should get the same result
-        testCases.add(new TestCase(
-                "-host localhost -port 3780 -publish -name Leo -owner Jack -channel LeosChannel -uri http://leo.com -tags leo,ntr -debug".split(" "),
-                "{\n" +
-                        "   \"command\":\"PUBLISH\",\n" +
-                        "   \"resource\":{\n" +
-                        "      \"name\":\"Leo\",\n" +
-                        "      \"tags\":[\n" +
-                        "         \"leo\",\n" +
-                        "         \"ntr\"\n" +
-                        "      ],\n" +
-                        "      \"owner\":\"Jack\",\n" +
-                        "      \"description\":\"\",\n" +
-                        "      \"uri\":\"http://leo.com\",\n" +
-                        "      \"channel\":\"LeosChannel\",\n" +
-                        "      \"ezserver\":null\n" +
-                        "   }\n" +
-                        "}",
-                "{\"response\":\"success\"}"
-        ));
-        // remove the resource added
-        testCases.add(new TestCase(
-                "-host localhost -port 3780 -remove -name Leo -owner Jack -channel LeosChannel -uri http://leo.com -tags leo,ntr -debug".split(" "),
-                "{\n" +
-                        "   \"command\":\"REMOVE\",\n" +
-                        "   \"resource\":{\n" +
-                        "      \"name\":\"Leo\",\n" +
-                        "      \"tags\":[\n" +
-                        "         \"leo\",\n" +
-                        "         \"ntr\"\n" +
-                        "      ],\n" +
-                        "      \"owner\":\"Jack\",\n" +
-                        "      \"description\":\"\",\n" +
-                        "      \"uri\":\"http://leo.com\",\n" +
-                        "      \"channel\":\"LeosChannel\",\n" +
-                        "      \"ezserver\":null\n" +
-                        "   }\n" +
-                        "}",
-                "{\"response\":\"success\"}"
-        ));
-        // try remove again, should fail since resource no longer exists
-        testCases.add(new TestCase(
-                "-host localhost -port 3780 -remove -name Leo -owner Jack -channel LeosChannel -uri http://leo.com -tags leo,ntr -debug".split(" "),
-                "{\n" +
-                        "   \"command\":\"REMOVE\",\n" +
-                        "   \"resource\":{\n" +
-                        "      \"name\":\"Leo\",\n" +
-                        "      \"tags\":[\n" +
-                        "         \"leo\",\n" +
-                        "         \"ntr\"\n" +
-                        "      ],\n" +
-                        "      \"owner\":\"Jack\",\n" +
-                        "      \"description\":\"\",\n" +
-                        "      \"uri\":\"http://leo.com\",\n" +
-                        "      \"channel\":\"LeosChannel\",\n" +
-                        "      \"ezserver\":null\n" +
-                        "   }\n" +
-                        "}",
-                "{ \"response\" : \"error\", \"errorMessage\" : \"cannot remove resource\" }"
-        ));
-        testMultipleWith("-port 3780 -debug".split(" "), testCases, false);
-
-        // no tags specified
-        testCases = new ArrayList<>();
-        testCases.add(new TestCase(
-                "-host localhost -port 3780 -publish -name Leo -owner Jack -channel LeosChannel -uri http://leo.com -debug".split(" "),
-                "{\n" +
-                        "   \"command\":\"PUBLISH\",\n" +
-                        "   \"resource\":{\n" +
-                        "      \"name\":\"Leo\",\n" +
-                        "      \"tags\":[],\n" +
-                        "      \"owner\":\"Jack\",\n" +
-                        "      \"description\":\"\",\n" +
-                        "      \"uri\":\"http://leo.com\",\n" +
-                        "      \"channel\":\"LeosChannel\",\n" +
-                        "      \"ezserver\":null\n" +
-                        "   }\n" +
-                        "}",
-                "{\"response\":\"success\"}"
-        ));
-        testMultipleWith("-port 3780 -debug".split(" "), testCases, false);
-    }
-
-    @Test
-    void testInvalidRequestsGeneric() throws InterruptedException {
-        // command invalid/unknown
-        new ServerVerifier("{\"command\": \"pUbLiSh\"}",
-                "{ \"response\" : \"error\", \"errorMessage\" : \"invalid command\" }",
-                false).test();
-
-        new ServerVerifier("{\"command\": \"XXXXXX\"}",
-                "{ \"response\" : \"error\", \"errorMessage\" : \"invalid command\" }",
-                false).test();
-
-        // command missing or incorrect type
-        new ServerVerifier("{}",
-                "{ \"response\" : \"error\", " +
-                        "\"errorMessage\" : \"missing or incorrect type for command\" }",
-                false).test();
-
-        new ServerVerifier("{\"command\": []}",
-                "{ \"response\" : \"error\", " +
-                        "\"errorMessage\" : \"missing or incorrect type for command\" }",
-                false).test();
-    }
-
-    @Test
-    void testInvalidRequestsPublish() throws InterruptedException {
-        // no resource
-        new ServerVerifier("{\"command\": \"PUBLISH\"}",
-                "{ \"response\" : \"error\", \"errorMessage\" : \"missing resource\" }",
-                false).test();
-
-        // incorrect type
-        new ServerVerifier("{\"command\": \"PUBLISH\", \"resource\": []}",
-                "{ \"response\" : \"error\", \"errorMessage\" : \"missing resource\" }",
-                false).test();
-    }
-
     @Test
     void testFetch() throws InterruptedException {
         // fetch something that does not exist, expect success with resultSize 0
@@ -575,7 +382,24 @@ public class AdditionalTest {
                 false).test();
 
         // resource contained incorrect information that could not be recovered from
-        // TODO
+        // name field type
+        new ServerVerifier("{\n" +
+                "    \"command\": \"SHARE\",\n" +
+                "    \"secret\": \"abcd\",\n" +
+                "    \"resource\": {\n" +
+                "        \"name\": [],\n" +
+                "        \"tags\": [\n" +
+                "            \"jar\"\n" +
+                "        ],\n" +
+                "        \"description\": \"The jar file for EZShare. Use with caution.\",\n" +
+                "        \"uri\": \"file:\\/\\/\\/\\/home\\/aaron\\/EZShare\\/ezshare.jar\",\n" +
+                "        \"channel\": \"my_private_channel\",\n" +
+                "        \"owner\": \"aaron010\",\n" +
+                "        \"ezserver\": null\n" +
+                "    }\n" +
+                "}",
+                "{ \"response\" : \"error\", \"errorMessage\" : \"invalid resource\" }",
+                false).test();
 
         // incorrect secret
         new ServerVerifier("{\n" +
@@ -601,11 +425,11 @@ public class AdditionalTest {
         new ServerVerifier("{\"command\": \"REMOVE\"}",
                 "{ \"response\" : \"error\", \"errorMessage\" : \"missing resource\" }",
                 false).test();
-//
-//        // incorrect type
-//        new ServerVerifier("{\"command\": \"REMOVE\", \"resource\": []}",
-//                "{ \"response\" : \"error\", \"errorMessage\" : \"missing resource\" }",
-//                false).test();
+
+        // incorrect type
+        new ServerVerifier("{\"command\": \"REMOVE\", \"resource\": []}",
+                "{ \"response\" : \"error\", \"errorMessage\" : \"missing resource\" }",
+                false).test();
     }
 
     @Test
@@ -621,10 +445,10 @@ public class AdditionalTest {
                 "{ \"response\" : \"error\", \"errorMessage\" : \"missing resource\" }",
                 false).test();
 
-//        // incorrect type
-//        new ServerVerifier("{\"command\": \"REMOVE\", \"resource\": []}",
-//                "{ \"response\" : \"error\", \"errorMessage\" : \"missing resource\" }",
-//                false).test();
+        // incorrect type
+        new ServerVerifier("{\"command\": \"REMOVE\", \"resource\": []}",
+                "{ \"response\" : \"error\", \"errorMessage\" : \"missing resource\" }",
+                false).test();
     }
 
     @Test
@@ -632,12 +456,12 @@ public class AdditionalTest {
         // resourceTemplate field not given or not the correct type
         // no resourceTemplate
         new ServerVerifier("{\"command\": \"QUERY\"}",
-                "{ \"response\" : \"error\", \"errorMessage\" : \"missing resource\" }",
+                "{ \"response\" : \"error\", \"errorMessage\" : \"missing resourceTemplate\" }",
                 false).test();
 
         // incorrect type
         new ServerVerifier("{\"command\": \"QUERY\", \"resourceTemplate\": []}",
-                "{ \"response\" : \"error\", \"errorMessage\" : \"missing resource\" }",
+                "{ \"response\" : \"error\", \"errorMessage\" : \"missing resourceTemplate\" }",
                 false).test();
     }
 
@@ -646,12 +470,12 @@ public class AdditionalTest {
         // resourceTemplate field not given or not the correct type
         // no resourceTemplate
         new ServerVerifier("{\"command\": \"FETCH\"}",
-                "{ \"response\" : \"error\", \"errorMessage\" : \"missing resource\" }",
+                "{ \"response\" : \"error\", \"errorMessage\" : \"missing resourceTemplate\" }",
                 false).test();
 
         // incorrect type
         new ServerVerifier("{\"command\": \"FETCH\", \"resourceTemplate\": []}",
-                "{ \"response\" : \"error\", \"errorMessage\" : \"missing resource\" }",
+                "{ \"response\" : \"error\", \"errorMessage\" : \"missing resourceTemplate\" }",
                 false).test();
     }
 
@@ -667,4 +491,5 @@ public class AdditionalTest {
                 "{ \"response\" : \"error\", \"errorMessage\" : \"missing or invalid server list\" }",
                 false).test();
     }
+
 }
