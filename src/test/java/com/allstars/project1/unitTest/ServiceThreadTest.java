@@ -69,8 +69,8 @@ class ServiceThreadTest {
     class DummyClient {
 
         Socket socket;
-        DataInputStream in;
-        DataOutputStream out;
+        public DataInputStream in;
+        public DataOutputStream out;
 
         DummyClient () {
 
@@ -96,8 +96,6 @@ class ServiceThreadTest {
 
         boolean getQueryResponse() {
 
-            String response;
-
             try {
                 JsonObject jsonObj = new JsonParser().parse(Static.readJsonUTF(in)).getAsJsonObject();
 
@@ -117,6 +115,19 @@ class ServiceThreadTest {
             }
 
             return true;
+        }
+
+        String getErrorMessage() {
+
+            JsonObject resObj = null;
+            try {
+                resObj = new JsonParser().parse(Static.readJsonUTF(in)).getAsJsonObject();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            return resObj.get("errorMessage").toString();
+
         }
 
         boolean getResponse() {
@@ -342,7 +353,8 @@ class ServiceThreadTest {
 
         // fetch the resource UOM with correct URI and CHANNEL
         commandSuccess.add("{'command': 'FETCH', " +
-                "'resourceTemplate': {'name': '', " +
+                "'resourceTemplate': {" +
+                "'name': '', " +
                 "'tags': [], " +
                 "'description': '', " +
                 "'uri': 'http:\\/\\/www.unimelb.edu.au', " +
