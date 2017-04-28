@@ -29,7 +29,7 @@ public class ServiceThread extends Thread {
      * @param secret the secret password from the Server
      * @param resourceStorage the resource storage for the Server
      * @param serverList a list of Servers that this Server has acknowledges
-     * @param server an instance of the server itself
+     * @param server an instance of the EzServer itself
      * @throws IOException
      */
     public ServiceThread(Map<SocketAddress, Date> lastConnectionTime, Socket clientSocket, String secret, ResourceStorage resourceStorage, Set<EzServer> serverList, EzServer server)
@@ -45,10 +45,10 @@ public class ServiceThread extends Thread {
     }
 
     /**
-     *
-     * @param obj
-     * @param field
-     * @return
+     * Check whether the context in a JSON field is String
+     * @param obj the JSON object contains the target field
+     * @param field the target field needs to be verified
+     * @return true if it can be converted to String, otherwise return false
      */
     private boolean fieldIsString(JsonObject obj, String field) {
         try {
@@ -60,9 +60,9 @@ public class ServiceThread extends Thread {
     }
 
     /**
-     *
-     * @param obj
-     * @return
+     * Parse any resource (JSON object) that contains non-String resource field to null
+     * @param obj the JSON form resource needs to be parsed
+     * @return null if any resource field is non-String
      */
     private Resource parseResourceObj(JsonObject obj) {
         final String[] fields = { "owner", "channel", "name", "uri", "description" };
@@ -78,122 +78,146 @@ public class ServiceThread extends Thread {
     }
 
     /**
-     *
-     * @param obj
-     * @return
+     * Parse the resource field in the JSON requests send by clients
+     * @param obj the JSON form request needs to be parsed
+     * @return the resource after parsed
      * @throws ServerException
      */
     private Resource parseResource(JsonObject obj) throws ServerException {
+
+        // check if the request has resource field, otherwise throw a "missing resource" exception
         if (!obj.has("resource")) {
             throw new ServerException("missing resource");
+        // check if the resource field is in JSON format, otherwise throw a "missing resource" exception
         } else if (!(obj.get("resource").isJsonObject())) {
             throw new ServerException("missing resource");
         }
-        Resource r = parseResourceObj(obj.get("resource").getAsJsonObject());
-        if (r == null) {
+
+        // retrieve and parse the resource field as a JSON object
+        Resource resource = parseResourceObj(obj.get("resource").getAsJsonObject());
+
+        // check if the resource is valid, otherwise throw a "invalid resource" exception
+        if (resource == null) {
             throw new ServerException("invalid resource");
         }
 
-        return r;
+        return resource;
     }
 
     /**
-     *
-     * @param obj
-     * @return
+     * Parse any resource template field in the JSON requests send by clients
+     * @param obj the JSON form request needs to be parsed
+     * @return the resource template after parsed
      * @throws ServerException
      */
     private Resource parseTemplate(JsonObject obj) throws ServerException {
+
+        // check if the request has resource template field, otherwise throw a "missing resourceTemplate" exception
         if (!obj.has("resourceTemplate")) {
             throw new ServerException("missing resourceTemplate");
+        // check if the resource template field is in JSON format, otherwise throw a "missing resourceTemplate exception
         } else if (!(obj.get("resourceTemplate").isJsonObject())) {
             throw new ServerException("missing resourceTemplate");
         }
 
-        Resource r = parseResourceObj(obj.get("resourceTemplate").getAsJsonObject());
-        if (r == null) {
-            throw new ServerException("invalid resource");
+        // retrieve and parse the resource template field as a JSON object
+        Resource resource = parseResourceObj(obj.get("resourceTemplate").getAsJsonObject());
+
+        // check if the resource template is valid, otherwise throw a "invalid resourceTemplate" exception
+        if (resource == null) {
+            throw new ServerException("invalid resourceTemplate");
         }
 
-        return r;
+        return resource;
     }
 
     /**
-     *
-     * @param obj
-     * @return
+     * Parse the secret field in the JSON requests send by clients
+     * @param obj the JSON form request needs to be parsed
+     * @return the secret after parsed
      * @throws ServerException
      */
     private String parseSecret(JsonObject obj) throws ServerException {
+
         try {
+            // check if the request has secret field, otherwise throw a "missing resource and/or secret" exception
             if (!obj.has("secret")) {
                 throw new ServerException("missing resource and/or secret");
             } else {
                 return obj.get("secret").getAsString();
             }
+
         } catch (IllegalStateException e) {
+            // TODO throw a "missing resource or secret" exception when secret field cannot be get as String
             throw new ServerException("missing resource or secret");
         }
     }
 
     /**
-     *
-     * @param obj
-     * @return
+     * Parse the relay field in the JSON requests send by clients
+     * @param obj the JOSN form request needs to be parsed
+     * @return true if the relay in request is true
      * @throws ServerException
      */
     private Boolean parseRelay(JsonObject obj) throws ServerException {
+
         try {
+            // check if the request has relay field, otherwise throw a "missing resourceTemplate" exception
             if (!obj.has("relay")) {
                 throw new ServerException("missing resourceTemplate");
             } else {
                 return obj.get("relay").getAsBoolean();
             }
+
         } catch (IllegalStateException e) {
+            // TODO throw a "missing resourceTemplate" exception when relay field cannot be get as boolean
             throw new ServerException("missing resourceTemplate");
         }
     }
 
     /**
-     *
-     * @param resource
-     * @return
+     * Check the owner and uri of a resource is valid
+     * @param resource the resource needs to be checked
+     * @return true if all conditions are satisfied, otherwise return false
      * @throws ServerException
      */
     private boolean checkCommand(Resource resource) throws ServerException {
-        // created a resource only with the primary keys
-        Resource r = new Resource(null, null, null, resource.getUri(),
-                resource.getChannel(), resource.getOwner(), null);
 
-        if (resource.getOwner().length() == 1 && resource.getOwner().toCharArray()[0] == '*') {// * owner
+        // check if the uri is empty or not given
+        if (resource.getOwner() == null || resource.getOwner().isEmpty()) {
             return false;
-        } else if (resource.getUri().isEmpty() || resource.getUri() == null) {//uri is empty or not given
+        // check if the owner is '*'
+        } else if (resource.getOwner().equals('*')) {
             return false;
-        } else if (!URI.create(resource.getUri()).isAbsolute()) { //not an absolute uri
+        // check if the uri is not an absolute uri
+        } else if (!URI.create(resource.getUri()).isAbsolute()) {
             return false;
-        } else if (resourceStorage.hasResourceWith(resource.getChannel(), resource.getUri())) { // duplicate uri in a given channel
+        // check if there is any duplicate uri in the same channel
+        } else if (resourceStorage.hasResourceWith(resource.getChannel(), resource.getUri())) {
             return false;
         }
         return true;
     }
 
     /**
-     *
-     * @param uri
-     * @return
+     * Check whether a given uri is a file
+     * @param uri the uri needs to be checked
+     * @return true if the uri is a file, otherwise return false
      */
     private boolean isFile(String uri) {
+
         URI u = URI.create(uri);
         String scheme = u.getScheme();
         try {
             return scheme.equalsIgnoreCase("file");
         } catch (NullPointerException e) {
-            return false; // No scheme was found
+            // No scheme is found
+            return false;
         }
     }
 
     /**
-     *
+     * Send a success response as JSON format to the client
      * @throws IOException
      */
     private void respondSuccess() throws IOException {
@@ -203,8 +227,8 @@ public class ServiceThread extends Thread {
     }
 
     /**
-     *
-     * @param resource
+     * Send the required resource as JSON format to the client
+     * @param resource the resource that is required by the client
      * @throws IOException
      */
     private void respondResource(Resource resource) throws IOException {
@@ -212,9 +236,9 @@ public class ServiceThread extends Thread {
     }
 
     /**
-     *
-     * @param resource
-     * @param size
+     * TODO Send the required resource in specified size
+     * @param resource the resource that is required by the client
+     * @param size the specified size
      * @throws IOException
      */
     private void respondResource(Resource resource, long size) throws IOException {
@@ -222,8 +246,8 @@ public class ServiceThread extends Thread {
     }
 
     /**
-     *
-     * @param size
+     * Send the result size as JSON format to the client
+     * @param size the result size
      * @throws IOException
      */
     private void respondResultSize(int size) throws IOException {
@@ -233,39 +257,50 @@ public class ServiceThread extends Thread {
     }
 
     /**
-     *
-     * @param resource
+     * Publish a given resource on the server
+     * @param resource the given resource needs to be published
      * @throws ServerException
      * @throws IOException
      */
     private void publish(Resource resource) throws ServerException, IOException {
+
+        // TODO what is checkResource here???????
         // checkResource(resource);
         // check whether the uri is a file scheme
 
+        // check if the uri of the given resource is a file, if so, throw a "cannot publish resource" exception
         if (isFile(resource.getUri())) {
             throw new ServerException("cannot publish resource");
         }
-        if (resourceStorage.containsKey(resource)) {// check whether it is an update
+        // check if there is resource with same primary key on the Server
+        if (resourceStorage.containsKey(resource)) {
+            // remove the previous resource existed and add the new one to the Server
             resourceStorage.remove(resource);
             resourceStorage.add(resource);
         } else {
+            // check if the resource is valid, otherwise throw a "cannot publish resource" exception
             if (checkCommand(resource)) {
                 resourceStorage.add(resource);
             } else {
                 throw new ServerException("cannot publish resource");
             }
         }
+        // respond success to the client if with no exception
         respondSuccess();
     }
 
     /**
-     *
-     * @param resource
+     * Remove a given resource on the Server
+     * @param resource the given resource
      * @throws ServerException
      * @throws IOException
      */
     private void remove(Resource resource) throws ServerException, IOException {
+
+        // TODO ??????
         // checkResource(resource);
+
+        // check if the given resource exists on the Server, otherwise throw a "cannot remove resource" exception
         if (resourceStorage.containsKey(resource)) {
             resourceStorage.remove(resource);
             respondSuccess();
@@ -275,28 +310,34 @@ public class ServiceThread extends Thread {
     }
 
     /**
-     *
-     * @param secret
-     * @param resource
+     * Share a given resource (a file) on the Server
+     * @param secret the secret specified by the Server
+     * @param resource the given resource
      * @throws ServerException
      * @throws IOException
      */
     private void share(String secret, Resource resource) throws ServerException, IOException {
+
         if (secret == null || resource == null) {
             throw new ServerException("missing resource and/or secret");
         }
+
         if (!secret.equals(this.secret)) {
             throw new ServerException("incorrect secret");
         } else {
-            File f;
-            f = new File(resource.getUri());
-            if (f.isFile()) {
-                if (!f.exists()) {
+            File file;
+            file = new File(resource.getUri());
+
+            if (file.isFile()) {
+                if (!file.exists()) {
                     throw new ServerException("cannot share resource");
                 }
-                if (checkCommand(resource)) {
+
+                // TODO checkCommand(resource) == true, cannot share the resource???
+                if (!checkCommand(resource)) {
                     throw new ServerException("cannot share resource");
                 }
+
                 Logging.logFine("add to resource");
                 resourceStorage.add(resource);
                 respondSuccess();
@@ -307,13 +348,14 @@ public class ServiceThread extends Thread {
     }
 
     /**
-     *
-     * @param template
-     * @param relay
+     * Query a list of resources that matches the given resource template
+     * @param template the given resource template
+     * @param relay whether forwarding the query command to other servers known by this Server
      * @throws ServerException
      * @throws IOException
      */
     private void query(Resource template, boolean relay) throws ServerException, IOException {
+
         Set<Resource> results = resourceStorage.searchWithTemplate(template).stream().map(
                 r -> r.ezServerAdded(server) // add EzServer info for all result from itself
         ).collect(Collectors.toSet());
@@ -334,9 +376,11 @@ public class ServiceThread extends Thread {
         }
 
         respondSuccess();
+
         for (Resource resource : results) {
             respondResource(resource.ownerHidden()); // hide owner information
         }
+
         respondResultSize(results.size());
     }
 
