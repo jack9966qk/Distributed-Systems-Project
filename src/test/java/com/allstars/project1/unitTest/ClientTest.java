@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Arrays;
@@ -37,7 +36,7 @@ class ClientTest {
             clientSocket = serviceSocket.accept();
             System.out.println("Received connection: " + 1);
 
-            ServerThread service = new ServerThread(clientSocket);
+            DummyServerThread service = new DummyServerThread(clientSocket);
             service.start();
 
         } catch (IOException e) {
@@ -128,51 +127,6 @@ class ClientTest {
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    @Disabled
-    @Test
-    void query() {
-
-        try {
-            for (Resource r : resourceSet) {
-                socket = Client.connectToServer(HOST, PORT, Static.DEFAULT_TIMEOUT);
-                serverAccept();
-                //Client.query(socket, false, r);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Disabled
-    @Test
-    void fetch() {
-
-        try {
-            for (Resource r : resourceSet) {
-                socket = Client.connectToServer(HOST, PORT, Static.DEFAULT_TIMEOUT);
-                serverAccept();
-                //Client.fetch(socket, r);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Disabled
-    @Test
-    void exchange() {
-        EzServer[] servers = {new EzServer(HOST, 2333)};
-
-        try {
-            socket = Client.connectToServer(HOST, PORT, Static.DEFAULT_TIMEOUT);
-            serverAccept();
-            //Client.exchange(socket, servers);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
     }
 
 

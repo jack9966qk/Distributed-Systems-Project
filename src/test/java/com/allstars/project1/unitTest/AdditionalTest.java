@@ -491,5 +491,4 @@ public class AdditionalTest {
                 "{ \"response\" : \"error\", \"errorMessage\" : \"missing or invalid server list\" }",
                 false).test();
     }
-
 }

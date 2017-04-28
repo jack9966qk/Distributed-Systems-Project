@@ -127,7 +127,6 @@ class ServiceThreadTest {
             }
 
             return resObj.get("errorMessage").toString();
-
         }
 
         boolean getResponse() {
@@ -351,8 +350,8 @@ class ServiceThreadTest {
                 "'owner': '', " +
                 "'ezserver': null}}");
 
-        // fetch the resource UOM with correct URI and CHANNEL
-        commandSuccess.add("{'command': 'FETCH', " +
+        // fetch the resource UOM with incorrect URI and CHANNEL
+        queryCommandFail.add("{'command': 'FETCH', " +
                 "'resourceTemplate': {" +
                 "'name': '', " +
                 "'tags': [], " +
@@ -362,18 +361,8 @@ class ServiceThreadTest {
                 "'owner': '', " +
                 "'ezserver': null}}");
 
-        // fetch the resource UOM with incorrect URI and correct CHANNEL
-        commandFail.add("{'command': 'FETCH', " +
-                "'resourceTemplate': {'name': '', " +
-                "'tags': [], " +
-                "'description': '', " +
-                "'uri': 'http:\\/\\/www.uniuseless.edu.au', " +
-                "'channel': 'Web', " +
-                "'owner': '', " +
-                "'ezserver': null}}");
-
         // fetch the resource UOM with correct URI and empty CHANNEL
-        commandFail.add("{'command': 'FETCH', " +
+        queryCommandFail.add("{'command': 'FETCH', " +
                 "'resourceTemplate': {'name': '', " +
                 "'tags': [], " +
                 "'description': '', " +
@@ -383,7 +372,7 @@ class ServiceThreadTest {
                 "'ezserver': null}}");
 
         // fetch the resource UOM with empty URI
-        commandFail.add("{'command': 'FETCH', " +
+        queryCommandFail.add("{'command': 'FETCH', " +
                 "'resourceTemplate': {'name': '', " +
                 "'tags': [], " +
                 "'description': '', " +
@@ -393,12 +382,12 @@ class ServiceThreadTest {
                 "'ezserver': null}}");
 
         // fetch the resource UOM with empty CHANNEL
-        commandFail.add("{'command': 'FETCH', " +
+        queryCommandFail.add("{'command': 'FETCH', " +
                 "'resourceTemplate': {'name': '', " +
                 "'tags': [], " +
                 "'description': '', " +
                 "'uri': 'http:\\/\\/www.unimelb.edu.au', " +
-                "'channel': ''" +
+                "'channel': '', " +
                 "'owner': '', " +
                 "'ezserver': null}}");
 
@@ -556,7 +545,7 @@ class ServiceThreadTest {
                 Assertions.assertFalse(fail);
             }
 
-            System.out.println("Query success cases:");
+            System.out.println("Query and Fetch success cases:");
 
             for (String s : queryCommandSuccess) {
                 DummyClient c = new DummyClient();
@@ -569,7 +558,7 @@ class ServiceThreadTest {
                 Assertions.assertTrue(success);
             }
 
-            System.out.println("Query fail cases:");
+            System.out.println("Query and Fetch fail cases:");
 
             for (String s : queryCommandFail) {
                 DummyClient c = new DummyClient();
