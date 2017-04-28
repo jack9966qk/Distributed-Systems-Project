@@ -246,7 +246,7 @@ public class AdditionalTest {
 
         public synchronized void test() throws InterruptedException {
             this.start();
-            wait(1000 * 10);
+            wait(waitTime);
             Assertions.assertTrue(this.successful);
         }
     }
@@ -264,7 +264,7 @@ public class AdditionalTest {
         verifier.start();
 
         for (TestCase testCase : testCases){
-            verifier.waitForDummyServerToBeReady(1000 * 3);
+            verifier.waitForDummyServerToBeReady(waitTime);
             Client.main(testCase.getClientArgs());
         }
         verifier.join(waitTime);
@@ -420,7 +420,7 @@ public class AdditionalTest {
                 "{ \"response\" : \"error\", \"errorMessage\" : \"incorrect secret\" }",
                 false).test();
 
-//        // resource field not given or not the correct type
+        // resource field not given or not the correct type
         // no resource
         new ServerVerifier("{\"command\": \"REMOVE\"}",
                 "{ \"response\" : \"error\", \"errorMessage\" : \"missing resource\" }",
