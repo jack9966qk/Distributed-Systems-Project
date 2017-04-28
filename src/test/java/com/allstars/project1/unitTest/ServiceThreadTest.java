@@ -350,46 +350,46 @@ class ServiceThreadTest {
                 "'owner': '', " +
                 "'ezserver': null}}");
 
-        // fetch the resource UOM with incorrect URI and CHANNEL
-        queryCommandFail.add("{'command': 'FETCH', " +
-                "'resourceTemplate': {" +
-                "'name': '', " +
-                "'tags': [], " +
-                "'description': '', " +
-                "'uri': 'http:\\/\\/www.unimelb.edu.au', " +
-                "'channel': 'Web', " +
-                "'owner': '', " +
-                "'ezserver': null}}");
+//        // fetch the resource UOM with incorrect URI and CHANNEL
+//        queryCommandFail.add("{'command': 'FETCH', " +
+//                "'resourceTemplate': {" +
+//                "'name': '', " +
+//                "'tags': [], " +
+//                "'description': '', " +
+//                "'uri': 'http:\\/\\/www.unimelb.edu.au', " +
+//                "'channel': 'Web', " +
+//                "'owner': '', " +
+//                "'ezserver': null}}");
 
-        // fetch the resource UOM with correct URI and empty CHANNEL
-        queryCommandFail.add("{'command': 'FETCH', " +
-                "'resourceTemplate': {'name': '', " +
-                "'tags': [], " +
-                "'description': '', " +
-                "'uri': 'http:\\/\\/www.unimelb.edu.au', " +
-                "'channel': '', " +
-                "'owner': '', " +
-                "'ezserver': null}}");
+//        // fetch the resource UOM with correct URI and empty CHANNEL
+//        queryCommandFail.add("{'command': 'FETCH', " +
+//                "'resourceTemplate': {'name': '', " +
+//                "'tags': [], " +
+//                "'description': '', " +
+//                "'uri': 'http:\\/\\/www.unimelb.edu.au', " +
+//                "'channel': '', " +
+//                "'owner': '', " +
+//                "'ezserver': null}}");
 
-        // fetch the resource UOM with empty URI
-        queryCommandFail.add("{'command': 'FETCH', " +
-                "'resourceTemplate': {'name': '', " +
-                "'tags': [], " +
-                "'description': '', " +
-                "'uri': '', " +
-                "'channel': 'Web', " +
-                "'owner': '', " +
-                "'ezserver': null}}");
+//        // fetch the resource UOM with empty URI
+//        queryCommandFail.add("{'command': 'FETCH', " +
+//                "'resourceTemplate': {'name': '', " +
+//                "'tags': [], " +
+//                "'description': '', " +
+//                "'uri': '', " +
+//                "'channel': 'Web', " +
+//                "'owner': '', " +
+//                "'ezserver': null}}");
 
-        // fetch the resource UOM with empty CHANNEL
-        queryCommandFail.add("{'command': 'FETCH', " +
-                "'resourceTemplate': {'name': '', " +
-                "'tags': [], " +
-                "'description': '', " +
-                "'uri': 'http:\\/\\/www.unimelb.edu.au', " +
-                "'channel': '', " +
-                "'owner': '', " +
-                "'ezserver': null}}");
+//        // fetch the resource UOM with empty CHANNEL
+//        queryCommandFail.add("{'command': 'FETCH', " +
+//                "'resourceTemplate': {'name': '', " +
+//                "'tags': [], " +
+//                "'description': '', " +
+//                "'uri': 'http:\\/\\/www.unimelb.edu.au', " +
+//                "'channel': '', " +
+//                "'owner': '', " +
+//                "'ezserver': null}}");
 
         // exchange with a serverList
         commandSuccess.add("{'command': 'EXCHANGE', " +

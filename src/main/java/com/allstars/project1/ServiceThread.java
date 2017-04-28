@@ -391,6 +391,7 @@ public class ServiceThread extends Thread {
      * @throws IOException
      */
     private void fetch(Resource template) throws ServerException, IOException {
+
         if(!isFile(template.getUri())){
         	 throw new ServerException("cannot fetch resource");
         }
