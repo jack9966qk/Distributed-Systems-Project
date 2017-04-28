@@ -129,51 +129,6 @@ class ClientTest {
         }
     }
 
-    @Disabled
-    @Test
-    void query() {
-
-        try {
-            for (Resource r : resourceSet) {
-                socket = Client.connectToServer(HOST, PORT, Static.DEFAULT_TIMEOUT);
-                serverAccept();
-                //Client.query(socket, false, r);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Disabled
-    @Test
-    void fetch() {
-
-        try {
-            for (Resource r : resourceSet) {
-                socket = Client.connectToServer(HOST, PORT, Static.DEFAULT_TIMEOUT);
-                serverAccept();
-                //Client.fetch(socket, r);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Disabled
-    @Test
-    void exchange() {
-        EzServer[] servers = {new EzServer(HOST, 2333)};
-
-        try {
-            socket = Client.connectToServer(HOST, PORT, Static.DEFAULT_TIMEOUT);
-            serverAccept();
-            //Client.exchange(socket, servers);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-    }
-
 
     @Test
     void makeResourceFromCmd() {

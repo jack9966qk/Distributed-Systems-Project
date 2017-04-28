@@ -10,7 +10,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Created by Jack on 24/3/2017.
+ * EzShare Service Thread Implementation.
  */
 public class ServiceThread extends Thread {
     private DataInputStream inputStream;
@@ -22,6 +22,16 @@ public class ServiceThread extends Thread {
     private Map<SocketAddress, Date> lastConnectionTime;
     private EzServer server;
 
+    /**
+     * Constructor for ServiceThread
+     * @param lastConnectionTime the Hashmap contains all connection time (Date) from different clients
+     * @param clientSocket the client socket connects to this thread
+     * @param secret the secret password from the Server
+     * @param resourceStorage the resource storage for the Server
+     * @param serverList a list of Servers that this Server has acknowledges
+     * @param server an instance of the server itself
+     * @throws IOException
+     */
     public ServiceThread(Map<SocketAddress, Date> lastConnectionTime, Socket clientSocket, String secret, ResourceStorage resourceStorage, Set<EzServer> serverList, EzServer server)
             throws IOException {
         this.socket = clientSocket;
@@ -34,6 +44,12 @@ public class ServiceThread extends Thread {
         this.server = server;
     }
 
+    /**
+     *
+     * @param obj
+     * @param field
+     * @return
+     */
     private boolean fieldIsString(JsonObject obj, String field) {
         try {
             obj.get(field).getAsString();
@@ -43,6 +59,11 @@ public class ServiceThread extends Thread {
         }
     }
 
+    /**
+     *
+     * @param obj
+     * @return
+     */
     private Resource parseResourceObj(JsonObject obj) {
         final String[] fields = { "owner", "channel", "name", "uri", "description" };
         for (String field : fields) {
@@ -56,6 +77,12 @@ public class ServiceThread extends Thread {
         return Resource.parseAndNormalise(obj);
     }
 
+    /**
+     *
+     * @param obj
+     * @return
+     * @throws ServerException
+     */
     private Resource parseResource(JsonObject obj) throws ServerException {
         if (!obj.has("resource")) {
             throw new ServerException("missing resource");
@@ -70,6 +97,12 @@ public class ServiceThread extends Thread {
         return r;
     }
 
+    /**
+     *
+     * @param obj
+     * @return
+     * @throws ServerException
+     */
     private Resource parseTemplate(JsonObject obj) throws ServerException {
         if (!obj.has("resourceTemplate")) {
             throw new ServerException("missing resourceTemplate");
@@ -85,6 +118,12 @@ public class ServiceThread extends Thread {
         return r;
     }
 
+    /**
+     *
+     * @param obj
+     * @return
+     * @throws ServerException
+     */
     private String parseSecret(JsonObject obj) throws ServerException {
         try {
             if (!obj.has("secret")) {
@@ -97,6 +136,12 @@ public class ServiceThread extends Thread {
         }
     }
 
+    /**
+     *
+     * @param obj
+     * @return
+     * @throws ServerException
+     */
     private Boolean parseRelay(JsonObject obj) throws ServerException {
         try {
             if (!obj.has("relay")) {
@@ -109,6 +154,12 @@ public class ServiceThread extends Thread {
         }
     }
 
+    /**
+     *
+     * @param resource
+     * @return
+     * @throws ServerException
+     */
     private boolean checkCommand(Resource resource) throws ServerException {
         // created a resource only with the primary keys
         Resource r = new Resource(null, null, null, resource.getUri(),
@@ -126,7 +177,11 @@ public class ServiceThread extends Thread {
         return true;
     }
 
-
+    /**
+     *
+     * @param uri
+     * @return
+     */
     private boolean isFile(String uri) {
         URI u = URI.create(uri);
         String scheme = u.getScheme();
@@ -137,26 +192,52 @@ public class ServiceThread extends Thread {
         }
     }
 
+    /**
+     *
+     * @throws IOException
+     */
     private void respondSuccess() throws IOException {
         JsonObject json = new JsonObject();
         json.addProperty("response", "success");
         Static.sendJsonUTF(outputStream, json.toString());
     }
 
+    /**
+     *
+     * @param resource
+     * @throws IOException
+     */
     private void respondResource(Resource resource) throws IOException {
         Static.sendJsonUTF(outputStream, resource.toJson());
     }
 
+    /**
+     *
+     * @param resource
+     * @param size
+     * @throws IOException
+     */
     private void respondResource(Resource resource, long size) throws IOException {
         Static.sendJsonUTF(outputStream, resource.sizeAdded(size).toJson());
     }
 
+    /**
+     *
+     * @param size
+     * @throws IOException
+     */
     private void respondResultSize(int size) throws IOException {
         JsonObject json = new JsonObject();
         json.addProperty("resultSize", size);
         Static.sendJsonUTF(outputStream, json.toString());
     }
 
+    /**
+     *
+     * @param resource
+     * @throws ServerException
+     * @throws IOException
+     */
     private void publish(Resource resource) throws ServerException, IOException {
         // checkResource(resource);
         // check whether the uri is a file scheme
@@ -177,6 +258,12 @@ public class ServiceThread extends Thread {
         respondSuccess();
     }
 
+    /**
+     *
+     * @param resource
+     * @throws ServerException
+     * @throws IOException
+     */
     private void remove(Resource resource) throws ServerException, IOException {
         // checkResource(resource);
         if (resourceStorage.containsKey(resource)) {
@@ -187,6 +274,13 @@ public class ServiceThread extends Thread {
         }
     }
 
+    /**
+     *
+     * @param secret
+     * @param resource
+     * @throws ServerException
+     * @throws IOException
+     */
     private void share(String secret, Resource resource) throws ServerException, IOException {
         if (secret == null || resource == null) {
             throw new ServerException("missing resource and/or secret");
@@ -212,7 +306,13 @@ public class ServiceThread extends Thread {
         }
     }
 
-
+    /**
+     *
+     * @param template
+     * @param relay
+     * @throws ServerException
+     * @throws IOException
+     */
     private void query(Resource template, boolean relay) throws ServerException, IOException {
         Set<Resource> results = resourceStorage.searchWithTemplate(template).stream().map(
                 r -> r.ezServerAdded(server) // add EzServer info for all result from itself
@@ -240,6 +340,12 @@ public class ServiceThread extends Thread {
         respondResultSize(results.size());
     }
 
+    /**
+     *
+     * @param template
+     * @throws ServerException
+     * @throws IOException
+     */
     private void fetch(Resource template) throws ServerException, IOException {
         // checkTemplate(template);
 
@@ -275,6 +381,12 @@ public class ServiceThread extends Thread {
         }
     }
 
+    /**
+     *
+     * @param servers
+     * @throws ServerException
+     * @throws IOException
+     */
     private void exchange(EzServer[] servers) throws ServerException, IOException {
         Logging.logInfo("handle exchange request");
         Logging.logInfo("request server list: " + Arrays.toString(servers));
@@ -292,6 +404,12 @@ public class ServiceThread extends Thread {
         }
     }
 
+    /**
+     *
+     * @param obj
+     * @return
+     * @throws ServerException
+     */
     private EzServer[] parseExchange(JsonObject obj) throws ServerException {
         // check if contains serverList
         if (!obj.has("serverList")) {
@@ -321,6 +439,9 @@ public class ServiceThread extends Thread {
         return servers.toArray(new EzServer[servers.size()]);
     }
 
+    /**
+     * Running the Service Thread to catch any request from the client
+     */
     @Override
     public void run() {
         try {

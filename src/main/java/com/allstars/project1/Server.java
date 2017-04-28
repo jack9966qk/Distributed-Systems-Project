@@ -44,11 +44,11 @@ public class Server {
 
     /**
      * Setup server, open socket, start listening to connections
-     * @param connectionIntervalLimit
-     * @param exchangeInterval
-     * @param secret
-     * @param host
-     * @param port
+     * @param connectionIntervalLimit the time interval between each new connection from clients
+     * @param exchangeInterval the time interval between each auto-exchange
+     * @param secret the secret password from the Server
+     * @param host the host address for the server
+     * @param port the port number for the server
      * @throws IOException
      */
     public static void startServer(int connectionIntervalLimit, int exchangeInterval, String secret, String host, int port) throws IOException {
@@ -88,7 +88,7 @@ public class Server {
 
     /**
      * Get command line options
-     * @param args
+     * @param args command line arguments
      * @return
      * @throws ParseException
      */
