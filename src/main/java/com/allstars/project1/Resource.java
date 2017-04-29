@@ -1,6 +1,7 @@
 package com.allstars.project1;
 
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 
 import java.util.Arrays;
 import java.util.List;
@@ -116,7 +117,6 @@ public class Resource {
      * @param ezserver
      */
     public Resource(String name, String description, String[] tags, String uri, String channel, String owner, String ezserver) {
-        // TODO normalise strings
         this.name = name;
         this.description = description;
         this.tags = tags != null ? tags: new String[0];
@@ -185,7 +185,7 @@ public class Resource {
      * @return
      */
     static List<String> stringsToLower(String[] strings) {
-        return Arrays.stream(strings).map(t -> t.toLowerCase()).collect(Collectors.toList());
+        return Arrays.stream(strings).map(String::toLowerCase).collect(Collectors.toList());
     }
 
     /**

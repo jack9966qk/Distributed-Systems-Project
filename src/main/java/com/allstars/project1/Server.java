@@ -128,7 +128,9 @@ public class Server {
 
         // set debug
         Logging.setEnablePrint(cmd.hasOption("debug"));
-        Logging.logInfo("setting debug on");
+        if (cmd.hasOption("debug")) {
+            Logging.logInfo("setting debug on");
+        }
 
         // determine secret
         String secret = null;
@@ -141,6 +143,7 @@ public class Server {
             secret = cmd.getOptionValue("secret");
         }
 
+        Logging.logInfo("Server secret: " + secret);
 
         try {
             // determine host and port
@@ -164,6 +167,8 @@ public class Server {
 
             // start the server
             startServer(connectionIntervalLimit, exchangeInterval, secret, host, port);
+        } catch(BindException e) {
+            Logging.logInfo("Port already taken, exiting...");
         } catch (IOException e) {
             Logging.logInfo("Unknown IOException in Server main thread, exiting...");
         } catch (Exception e) {

@@ -24,6 +24,7 @@ public class ExchangeThread extends Thread {
     public ExchangeThread(int interval, Set<EzServer> serverList) {
         this.interval = interval;
         this.serverList = serverList;
+        lastExchangeTime = new Date();
     }
 
     /**

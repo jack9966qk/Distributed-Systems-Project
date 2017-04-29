@@ -14,6 +14,7 @@ import org.apache.commons.cli.*;
 public class Client {
     /**
      * Handle response from server
+     *
      * @param response response from server
      * @return true if success, false otherwise
      */
@@ -36,12 +37,14 @@ public class Client {
 
     /**
      * Handle resultSize response from server
-     * @param responseObj response from server as JSONObject
+     *
+     * @param responseObj  response from server as JSONObject
      * @param expectedSize expected number of resources received
      * @return true if reported number matches expected, false otherwise
      */
     private static boolean handleSizeResponse(JsonObject responseObj, int expectedSize) {
         int size = responseObj.get("resultSize").getAsInt();
+        Logging.logInfo("number of results received: " + expectedSize);
         if (size != expectedSize) {
             Logging.logInfo("WARNING: number of results received different to reported number from server");
             return false;
@@ -52,7 +55,8 @@ public class Client {
 
     /**
      * Handle resultSize response from server
-     * @param response response from server
+     *
+     * @param response     response from server
      * @param expectedSize expected number of resources received
      * @return true if reported number matches expected, false otherwise
      */
@@ -69,7 +73,8 @@ public class Client {
 
     /**
      * Make json from arguments
-     * @param command the command
+     *
+     * @param command  the command
      * @param resource the resource
      * @return json with arguments as fields
      */
@@ -83,8 +88,9 @@ public class Client {
 
     /**
      * Make json from arguments
-     * @param command the command
-     * @param resource the resource
+     *
+     * @param command    the command
+     * @param resource   the resource
      * @param isTemplate true if resource is template, false otherwise
      * @return json with arguments as fields
      */
@@ -101,8 +107,9 @@ public class Client {
 
     /**
      * Make json from arguments
-     * @param command the command
-     * @param secret the secret
+     *
+     * @param command  the command
+     * @param secret   the secret
      * @param resource the resource
      * @return json with arguments as fields
      */
@@ -116,8 +123,9 @@ public class Client {
 
     /**
      * Make json from arguments
-     * @param command the command
-     * @param relay true if need relay, false otherwise
+     *
+     * @param command  the command
+     * @param relay    true if need relay, false otherwise
      * @param resource the resource
      * @return json with arguments as fields
      */
@@ -131,7 +139,8 @@ public class Client {
 
     /**
      * Make json from arguments
-     * @param command the command
+     *
+     * @param command    the command
      * @param serverList an array of EzServer to send in exchange
      * @return json with arguments as fields
      */
@@ -144,7 +153,8 @@ public class Client {
 
     /**
      * Make publish request
-     * @param socket socket used to communicate with server
+     *
+     * @param socket   socket used to communicate with server
      * @param resource resource to be published
      * @throws IOException any network error
      */
@@ -162,7 +172,8 @@ public class Client {
 
     /**
      * Make remove request
-     * @param socket socket used to communicate with server
+     *
+     * @param socket   socket used to communicate with server
      * @param resource resource to be removed
      * @throws IOException any network error
      */
@@ -180,8 +191,9 @@ public class Client {
 
     /**
      * Make share request
-     * @param socket socket used to communicate with server
-     * @param secret secret of server
+     *
+     * @param socket   socket used to communicate with server
+     * @param secret   secret of server
      * @param resource resource to be published
      * @throws IOException any network error
      */
@@ -199,8 +211,9 @@ public class Client {
 
     /**
      * Make query request
-     * @param socket socket used to communicate with server
-     * @param relay true if need relay, false otherwise
+     *
+     * @param socket   socket used to communicate with server
+     * @param relay    true if need relay, false otherwise
      * @param template resource template used for searching
      * @return query result as set of resources
      * @throws IOException any network error
@@ -218,6 +231,7 @@ public class Client {
         String response = Static.readJsonUTF(in);
         boolean success = handleResponse(response);
         if (success) {
+            Logging.logInfo("Results:");
             JsonObject jsonObj = new JsonParser().parse(Static.readJsonUTF(in)).getAsJsonObject();
             int numReceived = 0;
             while (!jsonObj.has("resultSize")) {
@@ -237,7 +251,8 @@ public class Client {
 
     /**
      * Make fetch request
-     * @param socket socket used to communicate with server
+     *
+     * @param socket   socket used to communicate with server
      * @param template resource template used for searching
      * @throws IOException any network error
      */
@@ -253,39 +268,52 @@ public class Client {
         // wait for response
         String response = Static.readJsonUTF(in);
         boolean success = handleResponse(response);
+        if (!success) {
+            return;
+        }
+
+        // if resultSize gets reported early
+        String nextResponse = Static.readJsonUTF(in);
+        JsonParser parser = new JsonParser();
+        JsonObject jsonObject = parser.parse(nextResponse).getAsJsonObject();
+        if (jsonObject.has("resultSize")) {
+            handleSizeResponse(jsonObject, 1);
+            return;
+        }
+
+        // read resource info
         Logging.logFine("read resource");
-        Resource resource = Resource.fromJson(Static.readJsonUTF(in));
+        Resource resource = Resource.fromJson(nextResponse);
         Logging.logFine(resource.getName());
 
-        // got resource, start reading bytes of file
-        Logging.logFine("read file");
-        long totalSize = resource.getResourceSize();
-        Logging.logFine(totalSize);
-        long sizeRead = 0;
-        if (success) {
-            String path = resource.getUri();
-            String filename = path.substring(path.lastIndexOf('/') + 1);
-            URI uri = null;
-            try {
-                uri = new URI("./" + filename);
-            } catch (URISyntaxException e) {
-                e.printStackTrace();
-            }
-            FileOutputStream fileOutputStream = new FileOutputStream(new File(uri.getPath()));
-
-            byte[] bytes = new byte[16*1024];
-
-            int toRead = (int) Math.min(totalSize - sizeRead, 16 * 1024);
-
-            int count;
-            while (toRead > 0 && (count = in.read(bytes, 0, toRead)) > 0) {
-                sizeRead += count;
-                fileOutputStream.write(bytes, 0, count);
-                toRead = (int) Math.min(totalSize - sizeRead, 16 * 1024);
-            }
-            Logging.logFine("read file complete");
-            fileOutputStream.close();
+        // create file
+        String path = resource.getUri();
+        String filename = path.substring(path.lastIndexOf('/') + 1);
+        URI uri = null;
+        try {
+            uri = new URI("./" + filename);
+        } catch (URISyntaxException e) {
+            Logging.logInfo("Error creating local file: " + filename);
+            return;
         }
+        FileOutputStream fileOutputStream = new FileOutputStream(new File(uri.getPath()));
+
+
+        // start reading bytes of file
+        Logging.logFine("downloading file...");
+        long totalSize = resource.getResourceSize();
+        long sizeRead = 0;
+        byte[] bytes = new byte[Static.FILE_READ_WRITE_CHUNK_SIZE];
+        int toRead = (int) Math.min(totalSize - sizeRead, Static.FILE_READ_WRITE_CHUNK_SIZE);
+
+        int count;
+        while (toRead > 0 && (count = in.read(bytes, 0, toRead)) > 0) {
+            sizeRead += count;
+            fileOutputStream.write(bytes, 0, count);
+            toRead = (int) Math.min(totalSize - sizeRead, Static.FILE_READ_WRITE_CHUNK_SIZE);
+        }
+        Logging.logFine("download complete");
+        fileOutputStream.close();
 
         // check number of resources to be 1 (as specified)
         String sizeResponse = Static.readJsonUTF(in);
@@ -294,7 +322,8 @@ public class Client {
 
     /**
      * Make exchange request
-     * @param socket socket used to communicate with server
+     *
+     * @param socket  socket used to communicate with server
      * @param servers array of known EzServers to be sent
      * @throws IOException any network error
      */
@@ -315,6 +344,7 @@ public class Client {
 
     /**
      * Parse command line arguments
+     *
      * @param args arguments passed from main function
      * @return CommandLine object as parse result
      * @throws ParseException error in parsing
@@ -346,6 +376,7 @@ public class Client {
 
     /**
      * Construct a resource object from command line arguments
+     *
      * @param cmd CommandLine object containing arguments
      * @return a new resource object from arguments
      */
@@ -364,8 +395,9 @@ public class Client {
 
     /**
      * Establish connection to a server
-     * @param host host of server
-     * @param port port of server
+     *
+     * @param host    host of server
+     * @param port    port of server
      * @param timeout timeout in milliseconds for all operations with the server
      * @return Socket of the server
      * @throws IOException any network error
@@ -380,6 +412,7 @@ public class Client {
 
     /**
      * The main function for client
+     *
      * @param args command line arguments
      */
     public static void main(String[] args) {
@@ -408,7 +441,9 @@ public class Client {
 
         // set debug
         Logging.setEnablePrint(cmd.hasOption("debug"));
-        Logging.logInfo("setting debug on");
+        if (cmd.hasOption("debug")) {
+            Logging.logInfo("setting debug on");
+        }
 
         // connect to server
         Socket socket = null;
@@ -443,6 +478,12 @@ public class Client {
             Logging.logInfo("Timeout communicating with server, please check connections and try again.");
         } catch (IOException e) {
             Logging.logInfo("Unknown connection error, please check connections and try again.");
+        } finally {
+            try {
+                socket.close();
+            } catch (IOException e) {
+                Logging.logInfo("Network error closing socket to server");
+            }
         }
     }
 }
