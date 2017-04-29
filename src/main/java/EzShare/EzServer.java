@@ -1,10 +1,10 @@
-package com.allstars.project1;
+package EzShare;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 /**
- * EzServer object, represnt an EzShare server
+ * EzShare object, represnt an EzShare server
  * Created by Jack on 24/3/2017.
  */
 public class EzServer {
@@ -12,7 +12,7 @@ public class EzServer {
     int port;
 
     /**
-     * Construct an EzServer object
+     * Construct an EzShare object
      *
      * @param hostname hostname of server
      * @param port     port of server
@@ -23,10 +23,10 @@ public class EzServer {
     }
 
     /**
-     * Construct EzServer object from string
+     * Construct EzShare object from string
      *
      * @param string string in "host:port" format
-     * @return EzServer constructed
+     * @return EzShare constructed
      */
     static EzServer fromString(String string) {
         String[] parts = string.split(":");
@@ -36,20 +36,20 @@ public class EzServer {
     }
 
     /**
-     * Construct EzServer object from json
+     * Construct EzShare object from json
      *
      * @param json json string
-     * @return EzServer constructed
+     * @return EzShare constructed
      */
     public static EzServer fromJson(String json) {
         return fromJson(new JsonParser().parse(json).getAsJsonObject());
     }
 
     /**
-     * Construct EzServer object from json
+     * Construct EzShare object from json
      *
      * @param jsonObj json object
-     * @return EzServer constructed
+     * @return EzShare constructed
      */
     public static EzServer fromJson(JsonObject jsonObj) {
         if (!jsonObj.has("port") || !jsonObj.has("hostname")) {

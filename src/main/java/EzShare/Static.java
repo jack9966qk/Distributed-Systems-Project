@@ -1,4 +1,4 @@
-package com.allstars.project1;
+package EzShare;
 
 import com.google.gson.Gson;
 
@@ -38,7 +38,7 @@ public class Static {
     }
 
     /**
-     * Send EzServer JSON message
+     * Send EzShare JSON message
      *
      * @param out output stream to send to
      * @param str string of JSON message
@@ -51,7 +51,7 @@ public class Static {
     }
 
     /**
-     * Remove EzServer JSON message
+     * Remove EzShare JSON message
      *
      * @param in input stream to read from
      * @return string of JSON message

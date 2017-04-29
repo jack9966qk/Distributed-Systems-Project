@@ -1,4 +1,4 @@
-package com.allstars.project1;
+package EzShare;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -369,7 +369,7 @@ public class ServiceThread extends Thread {
     private void query(Resource template, boolean relay) throws ServerException, IOException {
         // search for results
         Set<Resource> results = resourceStorage.searchWithTemplate(template).stream().map(
-                r -> r.ezServerAdded(server) // add EzServer info for all result from itself
+                r -> r.ezServerAdded(server) // add EzShare info for all result from itself
         ).collect(Collectors.toSet());
 
         // make relay queries
@@ -478,7 +478,7 @@ public class ServiceThread extends Thread {
      * Parse the serverList field in the JSON requests send by clients
      *
      * @param obj the JSON form request needs to be parsed
-     * @return an array of EzServer
+     * @return an array of EzShare
      * @throws ServerException any error in server list field
      */
     private EzServer[] parseExchange(JsonObject obj) throws ServerException {

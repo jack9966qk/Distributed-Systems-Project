@@ -1,4 +1,4 @@
-package com.allstars.project1;
+package EzShare;
 
 import com.google.gson.JsonElement;
 
@@ -65,9 +65,9 @@ public class Resource {
     }
 
     /**
-     * Get the EzServer
+     * Get the EzShare
      *
-     * @return the EzServer
+     * @return the EzShare
      */
     public String getEzserver() {
         return ezserver;

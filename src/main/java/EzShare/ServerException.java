@@ -1,4 +1,4 @@
-package com.allstars.project1;
+package EzShare;
 
 import java.util.HashMap;
 import java.util.Map;

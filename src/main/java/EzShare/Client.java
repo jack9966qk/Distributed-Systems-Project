@@ -1,4 +1,4 @@
-package com.allstars.project1;
+package EzShare;
 
 import java.io.*;
 import java.net.*;
@@ -141,7 +141,7 @@ public class Client {
      * Make json from arguments
      *
      * @param command    the command
-     * @param serverList an array of EzServer to send in exchange
+     * @param serverList an array of EzShare to send in exchange
      * @return json with arguments as fields
      */
     private static String makeJsonFrom(String command, EzServer[] serverList) {
@@ -468,8 +468,7 @@ public class Client {
             } else if (cmd.hasOption("fetch")) {
                 fetch(socket, resource);
             } else if (cmd.hasOption("exchange")) {
-                EzServer[] servers = Arrays.stream(cmd.getOptionValue("servers")
-                        .split(","))
+                EzServer[] servers = Arrays.stream(cmd.getOptionValue("servers").split(","))
                         .map(EzServer::fromString).toArray(EzServer[]::new);
                 Logging.logInfo(Arrays.toString(servers));
                 exchange(socket, servers);
