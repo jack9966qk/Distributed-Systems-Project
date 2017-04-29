@@ -304,6 +304,7 @@ public class ServiceThread extends Thread {
      * @throws IOException
      */
     private void share(String secret, Resource resource) throws ServerException, IOException {
+
         if (!isFile(resource.getUri())) {
             throw new ServerException("cannot share resource");
         }
@@ -378,11 +379,13 @@ public class ServiceThread extends Thread {
     }
 
     /**
-     * @param template
+     * Fetch a specified resource that matches the given template
+     * @param template the given template
      * @throws ServerException
      * @throws IOException
      */
     private void fetch(Resource template) throws ServerException, IOException {
+
         if (!isFile(template.getUri())) {
             throw new ServerException("cannot fetch resource");
         }
@@ -390,11 +393,12 @@ public class ServiceThread extends Thread {
         // search for resource
         List<Resource> results = new ArrayList<>(Server.resourceStorage.searchWithTemplate(template));
         if (results.size() == 0) {
-            // 0 result
+            // found 0 result
             respondSuccess();
             respondResultSize(0);
             return;
         }
+
         Resource resource = results.get(0);
 
         try {
@@ -424,7 +428,8 @@ public class ServiceThread extends Thread {
     }
 
     /**
-     * @param servers
+     * Exchange information with a given array of EzServers
+     * @param servers a given array of EzServers
      * @throws ServerException
      * @throws IOException
      */
