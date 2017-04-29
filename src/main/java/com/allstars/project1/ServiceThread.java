@@ -47,7 +47,8 @@ public class ServiceThread extends Thread {
 
     /**
      * Check whether the context in a JSON field is String
-     * @param obj the JSON object contains the target field
+     *
+     * @param obj   the JSON object contains the target field
      * @param field the target field needs to be verified
      * @return true if it can be converted to String, otherwise return false
      */
@@ -66,6 +67,7 @@ public class ServiceThread extends Thread {
 
     /**
      * Parse any resource (JSON object) that contains non-String resource field to null
+     *
      * @param obj the JSON form resource needs to be parsed
      * @return null if any resource field is non-String
      */
@@ -82,6 +84,7 @@ public class ServiceThread extends Thread {
 
     /**
      * Parse the resource field in the JSON requests send by clients
+     *
      * @param obj the JSON form request needs to be parsed
      * @return the resource after parsed
      * @throws ServerException any error in the resource
@@ -91,7 +94,7 @@ public class ServiceThread extends Thread {
         // check if the request has resource field, otherwise throw a "missing resource" exception
         if (!obj.has("resource")) {
             throw new ServerException("missing resource");
-        // check if the resource field is in JSON format, otherwise throw a "missing resource" exception
+            // check if the resource field is in JSON format, otherwise throw a "missing resource" exception
         } else if (!(obj.get("resource").isJsonObject())) {
             throw new ServerException("missing resource");
         }
@@ -109,6 +112,7 @@ public class ServiceThread extends Thread {
 
     /**
      * Parse any resource template field in the JSON requests send by clients
+     *
      * @param obj the JSON form request needs to be parsed
      * @return the resource template after parsed
      * @throws ServerException any error in the resource template
@@ -118,7 +122,7 @@ public class ServiceThread extends Thread {
         // check if the request has resource template field, otherwise throw a "missing resourceTemplate" exception
         if (!obj.has("resourceTemplate")) {
             throw new ServerException("missing resourceTemplate");
-        // check if the resource template field is in JSON format, otherwise throw a "missing resourceTemplate exception
+            // check if the resource template field is in JSON format, otherwise throw a "missing resourceTemplate exception
         } else if (!(obj.get("resourceTemplate").isJsonObject())) {
             throw new ServerException("missing resourceTemplate");
         }
@@ -136,6 +140,7 @@ public class ServiceThread extends Thread {
 
     /**
      * Parse the secret field in the JSON requests send by clients
+     *
      * @param obj the JSON form request needs to be parsed
      * @return the secret after parsed
      * @throws ServerException any error in the resource or secret field
@@ -150,12 +155,12 @@ public class ServiceThread extends Thread {
 
     /**
      * Parse the relay field in the JSON requests send by clients
+     *
      * @param obj the JOSN form request needs to be parsed
      * @return true if the relay in request is true
      * @throws ServerException any error in the resource template and relay field
      */
     private Boolean parseRelay(JsonObject obj) throws ServerException {
-
         try {
             // check if the request has relay field, otherwise throw a "missing resourceTemplate" exception
             if (!obj.has("relay")) {
@@ -172,6 +177,7 @@ public class ServiceThread extends Thread {
 
     /**
      * Check if the resource is valid
+     *
      * @param resource the resource needs to be checked
      * @return true if all conditions are satisfied, otherwise return false
      */
@@ -198,6 +204,7 @@ public class ServiceThread extends Thread {
 
     /**
      * Check whether a given uri is a file
+     *
      * @param uri the uri needs to be checked
      * @return true if the uri is a file, otherwise return false
      */
@@ -215,6 +222,7 @@ public class ServiceThread extends Thread {
 
     /**
      * Send a success response as JSON format to the client
+     *
      * @throws IOException Network connection exception
      */
     private void respondSuccess() throws IOException {
@@ -225,6 +233,7 @@ public class ServiceThread extends Thread {
 
     /**
      * Send the required resource as JSON format to the client
+     *
      * @param resource the resource that is required by the client
      * @throws IOException Network connection exception
      */
@@ -234,8 +243,9 @@ public class ServiceThread extends Thread {
 
     /**
      * Send the required resource and its size
+     *
      * @param resource the resource that is required by the client
-     * @param size the size of the resource
+     * @param size     the size of the resource
      * @throws IOException Network connection exception
      */
     private void respondResource(Resource resource, long size) throws IOException {
@@ -244,6 +254,7 @@ public class ServiceThread extends Thread {
 
     /**
      * Send the result size as JSON format to the client
+     *
      * @param size the result size
      * @throws IOException Network connection exception
      */
@@ -255,9 +266,10 @@ public class ServiceThread extends Thread {
 
     /**
      * Publish a given resource on the server
+     *
      * @param resource the given resource needs to be published
      * @throws ServerException any error in the given resource
-     * @throws IOException Network connection exception
+     * @throws IOException     Network connection exception
      */
     private void publish(Resource resource) throws ServerException, IOException {
 
@@ -283,9 +295,10 @@ public class ServiceThread extends Thread {
 
     /**
      * Remove a given resource on the Server
+     *
      * @param resource the given resource
      * @throws ServerException any error in the given resource or no required resource exists
-     * @throws IOException Network connection exception
+     * @throws IOException     Network connection exception
      */
     private void remove(Resource resource) throws ServerException, IOException {
         if (!checkResource(resource)) {
@@ -304,10 +317,11 @@ public class ServiceThread extends Thread {
 
     /**
      * Share a given resource (a file) on the Server
-     * @param secret the secret specified by the Server
+     *
+     * @param secret   the secret specified by the Server
      * @param resource the given resource
      * @throws ServerException any error in resource or secret
-     * @throws IOException Network connection exception
+     * @throws IOException     Network connection exception
      */
     private void share(String secret, Resource resource) throws ServerException, IOException {
 
@@ -326,24 +340,18 @@ public class ServiceThread extends Thread {
         if (!secret.equals(this.secret)) {
             throw new ServerException("incorrect secret");
         } else {
-
             File f = null;
             try {
-
                 f = new File(new URI(resource.getUri()));
-
             } catch (URISyntaxException e) {
                 throw new ServerException("cannot share resource");
             }
             if (f.isFile()) {
-
                 if (!f.exists()) {
                     throw new ServerException("cannot share resource");
                 }
-
                 resourceStorage.add(resource);
                 respondSuccess();
-
             } else {
                 throw new ServerException("cannot share resource");
             }
@@ -352,10 +360,11 @@ public class ServiceThread extends Thread {
 
     /**
      * Query a list of resources that matches the given resource template
+     *
      * @param template the given resource template
-     * @param relay whether forwarding the query command to other servers known by this Server
+     * @param relay    whether forwarding the query command to other servers known by this Server
      * @throws ServerException any error in resource template
-     * @throws IOException Network connection exception
+     * @throws IOException     Network connection exception
      */
     private void query(Resource template, boolean relay) throws ServerException, IOException {
         // search for results
@@ -392,9 +401,10 @@ public class ServiceThread extends Thread {
 
     /**
      * Fetch a specific resource (file) that matches the given template
+     *
      * @param template the given template
      * @throws ServerException any error in resource template
-     * @throws IOException Network connection exception
+     * @throws IOException     Network connection exception
      */
     private void fetch(Resource template) throws ServerException, IOException {
 
@@ -440,9 +450,10 @@ public class ServiceThread extends Thread {
 
     /**
      * Exchange information between this server and other servers in the given list
+     *
      * @param servers the given list of servers
      * @throws ServerException any error in server list
-     * @throws IOException Network connection exception
+     * @throws IOException     Network connection exception
      */
     private void exchange(EzServer[] servers) throws ServerException, IOException {
         Logging.logInfo("handle exchange request");
@@ -465,6 +476,7 @@ public class ServiceThread extends Thread {
 
     /**
      * Parse the serverList field in the JSON requests send by clients
+     *
      * @param obj the JSON form request needs to be parsed
      * @return an array of EzServer
      * @throws ServerException any error in server list field

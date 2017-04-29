@@ -8,6 +8,11 @@ import java.util.Map;
  * Created by Jack on 24/3/2017.
  */
 public class ServerException extends Exception {
+    /**
+     * Get the error message of exception
+     *
+     * @return error message of exception
+     */
     public String getErrorMessage() {
         return errorMessage;
     }
@@ -15,16 +20,18 @@ public class ServerException extends Exception {
     private String errorMessage;
 
     /**
+     * Create a new server exception
      *
-     * @param errorMessage
+     * @param errorMessage error message of the exception
      */
     public ServerException(String errorMessage) {
         this.errorMessage = errorMessage;
     }
 
     /**
+     * Get a JSON representation of the exception
      *
-     * @return
+     * @return JSON representation of the exception
      */
     public String toJson() {
         Map<String, String> map = new HashMap<>();

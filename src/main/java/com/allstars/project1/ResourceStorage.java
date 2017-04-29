@@ -9,12 +9,13 @@ import java.util.stream.Collectors;
  */
 public class ResourceStorage {
 
-    Map<ResourceKey,Resource> resources = Collections.synchronizedMap(new HashMap<>());
+    Map<ResourceKey, Resource> resources = Collections.synchronizedMap(new HashMap<>());
 
     /**
+     * Search for resources using a resource template
      *
-     * @param template
-     * @return
+     * @param template the resource template
+     * @return search results as a set of resources
      */
     public synchronized HashSet<Resource> searchWithTemplate(Resource template) {
         return new HashSet<>(resources.values().stream().filter(
@@ -22,6 +23,13 @@ public class ResourceStorage {
         ).collect(Collectors.toSet()));
     }
 
+    /**
+     * Search for the first resource in the storage with channel name and uri
+     *
+     * @param channel channel of resource
+     * @param uri     uri of resource
+     * @return the first resource that matches channel and uri exactly
+     */
     public synchronized Resource findWith(String channel, String uri) {
         for (Resource r : resources.values()) {
             if (r.getUri().equals(uri) && r.getChannel().equals(channel)) {
@@ -32,16 +40,9 @@ public class ResourceStorage {
     }
 
     /**
+     * Add a resource to storage
      *
-     * @return
-     */
-    public synchronized Set<String> getUriSet() {
-        return new HashSet<>(resources.values().stream().map(Resource::getUri).collect(Collectors.toSet()));
-    }
-
-    /**
-     *
-     * @param resource
+     * @param resource resource to add
      */
     public synchronized void add(Resource resource) {
         resources.put(resource.getKey(), resource);
@@ -50,6 +51,7 @@ public class ResourceStorage {
     }
 
     /**
+     * Remove a resource from storage
      *
      * @param resource
      */
@@ -60,12 +62,13 @@ public class ResourceStorage {
     }
 
     /**
-     * determine if a resource exists with channel and uri
+     * Determine if a resource exists with channel and uri
+     *
      * @param channel channel of resource
-     * @param uri uri of resource
+     * @param uri     uri of resource
      * @return true if resource exist, false otherwise
      */
-    public boolean hasResourceWith(String channel, String uri) {
+    public synchronized boolean hasResourceWith(String channel, String uri) {
         for (Resource r : resources.values()) {
             if (r.getChannel().equals(channel) && r.getUri().equals(uri)) {
                 return true;
@@ -75,11 +78,12 @@ public class ResourceStorage {
     }
 
     /**
+     * Determine if storage has a resource with primary key
      *
-     * @param r
-     * @return
+     * @param r resource key
+     * @return true if such resource exists, false otherwise
      */
-    public synchronized boolean containsKey(Resource r){
+    public synchronized boolean containsKey(Resource r) {
         return resources.containsKey(r.getKey());
     }
 

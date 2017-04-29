@@ -13,8 +13,9 @@ public class EzServer {
 
     /**
      * Construct an EzServer object
+     *
      * @param hostname hostname of server
-     * @param port port of server
+     * @param port     port of server
      */
     public EzServer(String hostname, int port) {
         this.hostname = hostname;
@@ -23,6 +24,7 @@ public class EzServer {
 
     /**
      * Construct EzServer object from string
+     *
      * @param string string in "host:port" format
      * @return EzServer constructed
      */
@@ -35,6 +37,7 @@ public class EzServer {
 
     /**
      * Construct EzServer object from json
+     *
      * @param json json string
      * @return EzServer constructed
      */
@@ -44,6 +47,7 @@ public class EzServer {
 
     /**
      * Construct EzServer object from json
+     *
      * @param jsonObj json object
      * @return EzServer constructed
      */

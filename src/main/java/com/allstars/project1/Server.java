@@ -9,7 +9,7 @@ import java.util.*;
 import org.apache.commons.cli.*;
 
 /**
- * EzShare server implementation,
+ * EzShare server implementation, has a main method to be used through command line
  */
 public class Server {
     public static ResourceStorage resourceStorage = new ResourceStorage();
@@ -34,6 +34,7 @@ public class Server {
 
     /**
      * Block current thread until server is ready for connection (for testing)
+     *
      * @throws InterruptedException Interrupted during sleep
      */
     public static void waitUntilReady() throws InterruptedException {
@@ -44,11 +45,12 @@ public class Server {
 
     /**
      * Setup server, open socket, start listening to connections
+     *
      * @param connectionIntervalLimit the time interval between each new connection from clients
-     * @param exchangeInterval the time interval between each auto-exchange
-     * @param secret the secret password from the Server
-     * @param host the host address for the server
-     * @param port the port number for the server
+     * @param exchangeInterval        the time interval between each auto-exchange
+     * @param secret                  the secret password from the Server
+     * @param host                    the host address for the server
+     * @param port                    the port number for the server
      * @throws IOException
      */
     public static void startServer(int connectionIntervalLimit, int exchangeInterval, String secret, String host, int port) throws IOException {
@@ -69,7 +71,7 @@ public class Server {
                 Socket clientSocket = listenSocket.accept();
                 SocketAddress clientAddress = clientSocket.getRemoteSocketAddress();
                 i++;
-                Logging.logInfo("Received connection " + i );
+                Logging.logInfo("Received connection " + i);
                 // start a new thread handling the client
                 // TODO limitation on total number of threads
                 ServiceThread c = new ServiceThread(lastConnectionTime, clientSocket, secret, resourceStorage, serverList, self);
@@ -88,6 +90,7 @@ public class Server {
 
     /**
      * Get command line options
+     *
      * @param args command line arguments
      * @return
      * @throws ParseException
@@ -113,6 +116,7 @@ public class Server {
 
     /**
      * Main function of Server, used through command line
+     *
      * @param args command line arguments
      */
     public static void main(String[] args) {
@@ -167,7 +171,7 @@ public class Server {
 
             // start the server
             startServer(connectionIntervalLimit, exchangeInterval, secret, host, port);
-        } catch(BindException e) {
+        } catch (BindException e) {
             Logging.logInfo("Port already taken, exiting...");
         } catch (IOException e) {
             Logging.logInfo("Unknown IOException in Server main thread, exiting...");

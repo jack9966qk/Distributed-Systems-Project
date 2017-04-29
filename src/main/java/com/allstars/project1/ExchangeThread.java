@@ -18,7 +18,8 @@ public class ExchangeThread extends Thread {
 
     /**
      * Create a new exchange thread
-     * @param interval time interval between exchange being performed
+     *
+     * @param interval   time interval between exchange being performed
      * @param serverList a reference of list of servers to send exchange
      */
     public ExchangeThread(int interval, Set<EzServer> serverList) {
@@ -29,6 +30,7 @@ public class ExchangeThread extends Thread {
 
     /**
      * Return true if thread is running, false otherwise (mainly for testing)
+     *
      * @return true if thread is running, false otherwise
      */
     public boolean isRunning() {

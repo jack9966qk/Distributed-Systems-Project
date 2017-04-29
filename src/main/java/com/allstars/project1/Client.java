@@ -9,7 +9,7 @@ import com.google.gson.JsonParser;
 import org.apache.commons.cli.*;
 
 /**
- * EzShare client implementation,
+ * EzShare client implementation, has a main method to be used through command line
  */
 public class Client {
     /**

@@ -2,7 +2,6 @@ package com.allstars.project1;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.logging.Logger;
 
 /**
  * Class for logging messages with "info" and "fine" level
@@ -17,6 +16,7 @@ public class Logging {
 
     /**
      * Get prefix of line to be logged
+     *
      * @return prefix of line
      */
     private static String getPrefix() {
@@ -34,6 +34,7 @@ public class Logging {
 
     /**
      * Log a message in "info" level
+     *
      * @param obj object to be logged
      */
     public static void logInfo(Object obj) {
@@ -42,6 +43,7 @@ public class Logging {
 
     /**
      * Log a message in "fine"(debug) level
+     *
      * @param obj object to be logged
      */
     public static void logFine(Object obj) {

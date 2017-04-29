@@ -1,7 +1,6 @@
 package com.allstars.project1;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -13,35 +12,37 @@ import java.io.IOException;
  */
 public class Static {
     public static final Gson GSON = new Gson();
-    public static Gson GSON_WITH_NULL = new GsonBuilder().serializeNulls().create();
     public static final int DEFAULT_EXCHANGE_INTERVAL = 1000 * 60 * 10;
     public static final int DEFAULT_CONNECTION_INTERVAL = 1000;
     public static final int DEFAULT_TIMEOUT = 1000 * 10;
     public static final int FILE_READ_WRITE_CHUNK_SIZE = 16 * 1024;
 
     /**
+     * Escape '/' characters with '\'
      *
-     * @param str
-     * @return
+     * @param str string
+     * @return string with '/' characters escaped
      */
     private static String addEscChar(String str) {
         return str.replace("/", "\\/");
     }
 
     /**
+     * Remove '\' before '/' characters in string
      *
-     * @param str
-     * @return
+     * @param str string
+     * @return string with '\' characters before '/' characters removed
      */
     private static String removeEscChar(String str) {
         return str.replace("\\/", "/");
     }
 
     /**
+     * Send EzServer JSON message
      *
-     * @param out
-     * @param str
-     * @throws IOException
+     * @param out output stream to send to
+     * @param str string of JSON message
+     * @throws IOException any network error
      */
     public static void sendJsonUTF(DataOutputStream out, String str) throws IOException {
         String escaped = addEscChar(str);
@@ -50,10 +51,11 @@ public class Static {
     }
 
     /**
-     * 
-     * @param in
-     * @return
-     * @throws IOException
+     * Remove EzServer JSON message
+     *
+     * @param in input stream to read from
+     * @return string of JSON message
+     * @throws IOException any network error
      */
     public static String readJsonUTF(DataInputStream in) throws IOException {
         String str = in.readUTF();

@@ -1,7 +1,6 @@
 package com.allstars.project1;
 
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 
 import java.util.Arrays;
 import java.util.List;
@@ -13,6 +12,7 @@ import java.util.stream.Collectors;
 public class Resource {
     /**
      * Get the name
+     *
      * @return the name
      */
     public String getName() {
@@ -21,6 +21,7 @@ public class Resource {
 
     /**
      * Get the description
+     *
      * @return the description
      */
     public String getDescription() {
@@ -29,6 +30,7 @@ public class Resource {
 
     /**
      * Get the tags
+     *
      * @return the tags
      */
     public String[] getTags() {
@@ -37,6 +39,7 @@ public class Resource {
 
     /**
      * Get the uri
+     *
      * @return the uri
      */
     public String getUri() {
@@ -45,6 +48,7 @@ public class Resource {
 
     /**
      * Get the channel
+     *
      * @return the channel
      */
     public String getChannel() {
@@ -53,6 +57,7 @@ public class Resource {
 
     /**
      * Get the owner
+     *
      * @return the owner
      */
     public String getOwner() {
@@ -61,6 +66,7 @@ public class Resource {
 
     /**
      * Get the EzServer
+     *
      * @return the EzServer
      */
     public String getEzserver() {
@@ -69,6 +75,7 @@ public class Resource {
 
     /**
      * Get the resource size
+     *
      * @return the resource size
      */
     public Long getResourceSize() {
@@ -86,13 +93,14 @@ public class Resource {
 
     /**
      * Constructor for Resource with all fields
-     * @param name the name of the resource
-     * @param description the description of the resource
-     * @param tags the tags of the resource
-     * @param uri the uri of the resource
-     * @param channel the channel of the resource
-     * @param owner the owner of the resource
-     * @param ezserver the ezserver of the resource
+     *
+     * @param name         the name of the resource
+     * @param description  the description of the resource
+     * @param tags         the tags of the resource
+     * @param uri          the uri of the resource
+     * @param channel      the channel of the resource
+     * @param owner        the owner of the resource
+     * @param ezserver     the ezserver of the resource
      * @param resourceSize the resource size of the resource
      */
     public Resource(String name, String description, String[] tags, String uri, String channel, String owner, String ezserver, Long resourceSize) {
@@ -108,18 +116,19 @@ public class Resource {
 
     /**
      * Constructor for Resource without resource size
-     * @param name the name of the resource
+     *
+     * @param name        the name of the resource
      * @param description the description of the resource
-     * @param tags the tags of the resource
-     * @param uri the uri of the resource
-     * @param channel the channel of the resource
-     * @param owner the owner of the resource
-     * @param ezserver the ezserver of the resource
+     * @param tags        the tags of the resource
+     * @param uri         the uri of the resource
+     * @param channel     the channel of the resource
+     * @param owner       the owner of the resource
+     * @param ezserver    the ezserver of the resource
      */
     public Resource(String name, String description, String[] tags, String uri, String channel, String owner, String ezserver) {
         this.name = name;
         this.description = description;
-        this.tags = tags != null ? tags: new String[0];
+        this.tags = tags != null ? tags : new String[0];
         this.uri = uri;
         this.channel = channel;
         this.owner = owner;
@@ -128,6 +137,7 @@ public class Resource {
 
     /**
      * Creating a new Resource instance with ezServer added, other fields remain the same
+     *
      * @param ezServer the ezServer specified
      * @return new Resource instance with ezServer added, other fields remain the same
      */
@@ -146,6 +156,7 @@ public class Resource {
 
     /**
      * Creating a new Resource instance with resource size added, other fields remain the same
+     *
      * @param size the resource size specified
      * @return new Resource instance with resource size added, other fields remain the same
      */
@@ -164,6 +175,7 @@ public class Resource {
 
     /**
      * Creating a new Resource instance with owner field hidden, other fields remain the same
+     *
      * @return new Resource instance with owner field hidden, other fields remain the same
      */
     public Resource ownerHidden() {
@@ -181,6 +193,7 @@ public class Resource {
 
     /**
      * Change all char in the given String to lowercase letter
+     *
      * @param strings the given String
      * @return new String with all lowercase letters
      */
@@ -190,6 +203,7 @@ public class Resource {
 
     /**
      * Check if this resource matches the given resource tempalte
+     *
      * @param template the given resource template
      * @return true if it matches the given template, otherwise return false
      */
@@ -221,6 +235,7 @@ public class Resource {
 
     /**
      * Creating a resource primary key with owner, channel and uri of this resource
+     *
      * @return resource primary key
      */
     public ResourceKey getKey() {
@@ -229,6 +244,7 @@ public class Resource {
 
     /**
      * Creating a JSON object of this resource
+     *
      * @return JSON object of this resource
      */
     public String toJson() {
@@ -237,6 +253,7 @@ public class Resource {
 
     /**
      * Creating a JSON element of this resource
+     *
      * @return JSON element of this resource
      */
     public JsonElement toJsonElement() {
@@ -245,6 +262,7 @@ public class Resource {
 
     /**
      * Creating a Resource from the given JSON
+     *
      * @param json the given JSON string
      * @return Resource converted from the given JSON
      */
@@ -254,6 +272,7 @@ public class Resource {
 
     /**
      * Creating a Resource from the given JSON element
+     *
      * @param elem the given JSON element
      * @return Resource converted from the given JSON element
      */
@@ -263,6 +282,7 @@ public class Resource {
 
     /**
      * Parse the resource in the given JSON and normalize it
+     *
      * @param json the given JSON
      * @return the parsed and normalized resource
      */
@@ -273,6 +293,7 @@ public class Resource {
 
     /**
      * Parse the resource in the given JSON element and normalize it
+     *
      * @param elem the given JSON element
      * @return the parsed and normalized resource
      */
@@ -295,9 +316,10 @@ public class Resource {
     }
 
     /**
-     * 
-     * @param s
-     * @return
+     * Remove null characters, leading and trailing whitespaces of string
+     *
+     * @param s string
+     * @return normalised string
      */
     static String normaliseStr(String s) {
         return s.replace("\0", "").trim();
@@ -306,6 +328,7 @@ public class Resource {
     /**
      * Fill missing fields with empty string and array,
      * remove "\0" and whitespaces at the start/end
+     *
      * @return normalised resource
      */
     public Resource normalised() {
