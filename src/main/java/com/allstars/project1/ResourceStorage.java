@@ -22,7 +22,14 @@ public class ResourceStorage {
         ).collect(Collectors.toSet()));
     }
 
-
+    public synchronized Resource findWith(String channel, String uri) {
+        for (Resource r : resources.values()) {
+            if (r.getUri().equals(uri) && r.getChannel().equals(channel)) {
+                return r;
+            }
+        }
+        return null;
+    }
 
     /**
      *

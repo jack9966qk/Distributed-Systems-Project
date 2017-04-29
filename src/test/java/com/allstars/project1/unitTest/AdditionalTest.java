@@ -340,7 +340,7 @@ public class AdditionalTest {
                 "        \"ezserver\": null\n" +
                 "    }\n" +
                 "}",
-                "{ \"response\" : \"error\", \"errorMessage\" : \"cannot share resource\" }",
+                "{ \"response\" : \"error\", \"errorMessage\" : \"invalid resource\" }",
                 false).test();
 
         // uri not file scheme
@@ -359,7 +359,7 @@ public class AdditionalTest {
                 "        \"ezserver\": null\n" +
                 "    }\n" +
                 "}",
-                "{ \"response\" : \"error\", \"errorMessage\" : \"cannot share resource\" }",
+                "{ \"response\" : \"error\", \"errorMessage\" : \"invalid resource\" }",
                 false).test();
 
         // file does not exist
