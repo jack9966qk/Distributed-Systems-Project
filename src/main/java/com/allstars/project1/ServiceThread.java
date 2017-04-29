@@ -176,11 +176,11 @@ public class ServiceThread extends Thread {
      * @return true if all conditions are satisfied, otherwise return false
      * @throws ServerException
      */
-    private boolean checkCommand(Resource resource) throws ServerException {
+    private boolean checkResource(Resource resource) throws ServerException {
         if (resource.getUri() == null || resource.getUri().isEmpty()) {
             // check uri is null or not given
             return false;
-        } else if (resource.getUri().equals('*')) {
+        } else if (resource.getUri().equals("*")) {
             // owner is "*"
             return false;
         } else if (!URI.create(resource.getUri()).isAbsolute()) {
@@ -257,6 +257,9 @@ public class ServiceThread extends Thread {
      * @throws IOException
      */
     private void publish(Resource resource) throws ServerException, IOException {
+        if (!checkResource(resource)) {
+            throw new ServerException("invalid resource");
+        }
 
         // check if the uri of the given resource is a file, if so, throw a "cannot publish resource" exception
         if (isFile(resource.getUri())) {
@@ -268,12 +271,7 @@ public class ServiceThread extends Thread {
             resourceStorage.remove(resource);
             resourceStorage.add(resource);
         } else {
-            // check if the resource is valid, otherwise throw a "cannot publish resource" exception
-            if (checkCommand(resource)) {
-                resourceStorage.add(resource);
-            } else {
-                throw new ServerException("cannot publish resource");
-            }
+            resourceStorage.add(resource);
         }
         // respond success to the client if with no exception
         respondSuccess();
@@ -286,6 +284,10 @@ public class ServiceThread extends Thread {
      * @throws IOException
      */
     private void remove(Resource resource) throws ServerException, IOException {
+        if (!checkResource(resource)) {
+            throw new ServerException("invalid resource");
+        }
+
         // check if the given resource exists on the Server, otherwise throw a "cannot remove resource" exception
         if (resourceStorage.containsKey(resource)) {
             resourceStorage.remove(resource);
@@ -304,16 +306,16 @@ public class ServiceThread extends Thread {
      * @throws IOException
      */
     private void share(String secret, Resource resource) throws ServerException, IOException {
-        if (!isFile(resource.getUri())) {
-            throw new ServerException("cannot share resource");
-        }
-
-        if (!checkCommand(resource)) {
-            throw new ServerException("cannot share resource");
+        if (!checkResource(resource)) {
+            throw new ServerException("invalid resource");
         }
 
         if (secret == null || resource == null) {
             throw new ServerException("missing resource and/or secret");
+        }
+
+        if (!isFile(resource.getUri())) {
+            throw new ServerException("invalid resource");
         }
 
         if (!secret.equals(this.secret)) {
@@ -388,14 +390,13 @@ public class ServiceThread extends Thread {
         }
 
         // search for resource
-        List<Resource> results = new ArrayList<>(Server.resourceStorage.searchWithTemplate(template));
-        if (results.size() == 0) {
+        Resource resource = Server.resourceStorage.findWith(template.getChannel(), template.getUri());
+        if (resource == null) {
             // 0 result
             respondSuccess();
             respondResultSize(0);
             return;
         }
-        Resource resource = results.get(0);
 
         try {
             // get file
