@@ -431,7 +431,7 @@ class ServiceThreadTest {
                 "'name': '', " +
                 "'tags': [], " +
                 "'description': '', " +
-                "'uri': 'file:\\/\\/~/Desktop/test.png', " +
+                "'uri': 'file:\\/\\/\\/~/Desktop/test.png', " +
                 "'channel': 'Personal', " +
                 "'owner': 'Leo', " +
                 "'ezserver': null}}");
@@ -455,7 +455,7 @@ class ServiceThreadTest {
                 "'name': '', " +
                 "'tags': [], " +
                 "'description': '', " +
-                "'uri': 'file:\\/\\/~/Desktop/test.png', " +
+                "'uri': 'file:\\/\\/\\/~/Desktop/test.png', " +
                 "'channel': 'Personal', " +
                 "'owner': 'Jack', " +
                 "'ezserver': null}}");
@@ -467,7 +467,7 @@ class ServiceThreadTest {
                 "'name': '', " +
                 "'tags': [], " +
                 "'description': '', " +
-                "'uri': 'file:\\/\\/~/Desktop/test.png', " +
+                "'uri': 'file:\\/\\/\\/~/Desktop/test.png', " +
                 "'channel': 'Personal', " +
                 "'owner': 'Leo', " +
                 "'ezserver': null}}");
@@ -479,7 +479,7 @@ class ServiceThreadTest {
                 "'name': '', " +
                 "'tags': [], " +
                 "'description': '', " +
-                "'uri': 'file:\\/\\/~/Desktop/test1.png', " +
+                "'uri': 'file:\\/\\/\\/~/Desktop/test1.png', " +
                 "'channel': 'Personal', " +
                 "'owner': 'Jack', " +
                 "'ezserver': null}}");

@@ -12,64 +12,64 @@ import java.util.stream.Collectors;
  */
 public class Resource {
     /**
-     *
-     * @return
+     * Get the name
+     * @return the name
      */
     public String getName() {
         return name;
     }
 
     /**
-     *
-     * @return
+     * Get the description
+     * @return the description
      */
     public String getDescription() {
         return description;
     }
 
     /**
-     *
-     * @return
+     * Get the tags
+     * @return the tags
      */
     public String[] getTags() {
         return tags;
     }
 
     /**
-     *
-     * @return
+     * Get the uri
+     * @return the uri
      */
     public String getUri() {
         return uri;
     }
 
     /**
-     *
-     * @return
+     * Get the channel
+     * @return the channel
      */
     public String getChannel() {
         return channel;
     }
 
     /**
-     *
-     * @return
+     * Get the owner
+     * @return the owner
      */
     public String getOwner() {
         return owner;
     }
 
     /**
-     *
-     * @return
+     * Get the EzServer
+     * @return the EzServer
      */
     public String getEzserver() {
         return ezserver;
     }
 
     /**
-     *
-     * @return
+     * Get the resource size
+     * @return the resource size
      */
     public Long getResourceSize() {
         return resourceSize;
@@ -85,15 +85,15 @@ public class Resource {
     private Long resourceSize = null;
 
     /**
-     *
-     * @param name
-     * @param description
-     * @param tags
-     * @param uri
-     * @param channel
-     * @param owner
-     * @param ezserver
-     * @param resourceSize
+     * Constructor for Resource with all fields
+     * @param name the name of the resource
+     * @param description the description of the resource
+     * @param tags the tags of the resource
+     * @param uri the uri of the resource
+     * @param channel the channel of the resource
+     * @param owner the owner of the resource
+     * @param ezserver the ezserver of the resource
+     * @param resourceSize the resource size of the resource
      */
     public Resource(String name, String description, String[] tags, String uri, String channel, String owner, String ezserver, Long resourceSize) {
         this.name = name;
@@ -107,14 +107,14 @@ public class Resource {
     }
 
     /**
-     *
-     * @param name
-     * @param description
-     * @param tags
-     * @param uri
-     * @param channel
-     * @param owner
-     * @param ezserver
+     * Constructor for Resource without resource size
+     * @param name the name of the resource
+     * @param description the description of the resource
+     * @param tags the tags of the resource
+     * @param uri the uri of the resource
+     * @param channel the channel of the resource
+     * @param owner the owner of the resource
+     * @param ezserver the ezserver of the resource
      */
     public Resource(String name, String description, String[] tags, String uri, String channel, String owner, String ezserver) {
         this.name = name;
@@ -127,9 +127,9 @@ public class Resource {
     }
 
     /**
-     *
-     * @param ezServer
-     * @return
+     * Creating a new Resource instance with ezServer added, other fields remain the same
+     * @param ezServer the ezServer specified
+     * @return new Resource instance with ezServer added, other fields remain the same
      */
     public Resource ezServerAdded(EzServer ezServer) {
         return new Resource(
@@ -145,9 +145,9 @@ public class Resource {
     }
 
     /**
-     *
-     * @param size
-     * @return
+     * Creating a new Resource instance with resource size added, other fields remain the same
+     * @param size the resource size specified
+     * @return new Resource instance with resource size added, other fields remain the same
      */
     public Resource sizeAdded(long size) {
         return new Resource(
@@ -163,8 +163,8 @@ public class Resource {
     }
 
     /**
-     *
-     * @return
+     * Creating a new Resource instance with owner field hidden, other fields remain the same
+     * @return new Resource instance with owner field hidden, other fields remain the same
      */
     public Resource ownerHidden() {
         return new Resource(
@@ -180,18 +180,18 @@ public class Resource {
     }
 
     /**
-     *
-     * @param strings
-     * @return
+     * Change all char in the given String to lowercase letter
+     * @param strings the given String
+     * @return new String with all lowercase letters
      */
     static List<String> stringsToLower(String[] strings) {
         return Arrays.stream(strings).map(String::toLowerCase).collect(Collectors.toList());
     }
 
     /**
-     *
-     * @param template
-     * @return
+     * Check if this resource matches the given resource tempalte
+     * @param template the given resource template
+     * @return true if it matches the given template, otherwise return false
      */
     public boolean matchesTemplate(Resource template) {
         if (!this.channel.equals(template.channel)) {
@@ -220,51 +220,51 @@ public class Resource {
     }
 
     /**
-     *
-     * @return
+     * Creating a resource primary key with owner, channel and uri of this resource
+     * @return resource primary key
      */
     public ResourceKey getKey() {
         return new ResourceKey(owner, channel, uri);
     }
 
     /**
-     *
-     * @return
+     * Creating a JSON object of this resource
+     * @return JSON object of this resource
      */
     public String toJson() {
         return Static.GSON.toJson(this);
     }
 
     /**
-     *
-     * @return
+     * Creating a JSON element of this resource
+     * @return JSON element of this resource
      */
     public JsonElement toJsonElement() {
         return Static.GSON.toJsonTree(this);
     }
 
     /**
-     *
-     * @param json
-     * @return
+     * Creating a Resource from the given JSON
+     * @param json the given JSON string
+     * @return Resource converted from the given JSON
      */
     public static Resource fromJson(String json) {
         return Static.GSON.fromJson(json, Resource.class);
     }
 
     /**
-     *
-     * @param elem
-     * @return
+     * Creating a Resource from the given JSON element
+     * @param elem the given JSON element
+     * @return Resource converted from the given JSON element
      */
     public static Resource fromJsonElem(JsonElement elem) {
         return Static.GSON.fromJson(elem, Resource.class);
     }
 
     /**
-     *
-     * @param json
-     * @return
+     * Parse the resource in the given JSON and normalize it
+     * @param json the given JSON
+     * @return the parsed and normalized resource
      */
     public static Resource parseAndNormalise(String json) {
         Resource r = fromJson(json);
@@ -272,9 +272,9 @@ public class Resource {
     }
 
     /**
-     *
-     * @param elem
-     * @return
+     * Parse the resource in the given JSON element and normalize it
+     * @param elem the given JSON element
+     * @return the parsed and normalized resource
      */
     public static Resource parseAndNormalise(JsonElement elem) {
         Resource r = fromJsonElem(elem);
@@ -295,7 +295,7 @@ public class Resource {
     }
 
     /**
-     *
+     * 
      * @param s
      * @return
      */
