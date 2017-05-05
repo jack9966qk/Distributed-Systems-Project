@@ -18,6 +18,15 @@ public class Static {
     public static final int FILE_READ_WRITE_CHUNK_SIZE = 16 * 1024;
 
     /**
+     * Set security related properties so that SSL/TLS related functions can be used
+     */
+    public static void configSecurity() {
+        System.setProperty("javax.net.ssl.keyStore", "selfSigned");
+        System.setProperty("javax.net.ssl.trustStore", "selfSigned");
+        System.setProperty("javax.net.ssl.keyStorePassword", "distributed");
+    }
+
+    /**
      * Escape '/' characters with '\'
      *
      * @param str string
