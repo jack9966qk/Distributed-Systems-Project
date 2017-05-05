@@ -1,4 +1,4 @@
-package com.allstars.project1;
+package EzShare;
 
 /**
  * Primary key of resource, which is a (owner, channel, uri) 3-tuple

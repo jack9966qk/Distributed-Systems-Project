@@ -1,4 +1,4 @@
-package com.allstars.project1;
+package EzShare;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;

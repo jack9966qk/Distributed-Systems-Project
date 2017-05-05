@@ -1,5 +1,9 @@
-package com.allstars.project1.unitTest;
+package EzShare.unitTest;
 
+import EzShare.EzServer;
+import EzShare.ResourceStorage;
+import EzShare.ServiceThread;
+import EzShare.Static;
 import com.allstars.project1.*;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -14,7 +18,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.util.*;
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Created by Zheping on 2017/4/25.

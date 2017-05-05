@@ -1,8 +1,7 @@
-package com.allstars.project1.unitTest;
+package EzShare.unitTest;
 
-import com.allstars.project1.Resource;
+import EzShare.Resource;
 import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.Assertions.*;
 
 import java.util.ArrayList;
 

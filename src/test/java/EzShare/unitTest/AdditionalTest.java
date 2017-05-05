@@ -1,7 +1,7 @@
-package com.allstars.project1.unitTest;
+package EzShare.unitTest;
 
-import com.allstars.project1.Client;
-import com.allstars.project1.Server;
+import EzShare.Client;
+import EzShare.Server;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;

@@ -1,4 +1,4 @@
-package com.allstars.project1.unitTest;
+package EzShare.unitTest;
 
 import com.google.gson.JsonObject;
 

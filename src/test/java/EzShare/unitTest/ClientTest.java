@@ -1,10 +1,9 @@
-package com.allstars.project1.unitTest;
+package EzShare.unitTest;
 
-import com.allstars.project1.Client;
-import com.allstars.project1.EzServer;
-import com.allstars.project1.Resource;
+import EzShare.Client;
+import EzShare.Resource;
 
-import com.allstars.project1.Static;
+import EzShare.Static;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.ParseException;
 import org.junit.jupiter.api.*;

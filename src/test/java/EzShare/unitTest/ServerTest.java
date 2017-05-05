@@ -1,8 +1,7 @@
-package com.allstars.project1.unitTest;
+package EzShare.unitTest;
 
-import com.allstars.project1.Server;
-import com.allstars.project1.Static;
-import org.apache.commons.cli.CommandLine;
+import EzShare.Server;
+import EzShare.Static;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -12,8 +11,6 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Created by Zheping on 2017/4/25.
