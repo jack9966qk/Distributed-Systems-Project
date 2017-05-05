@@ -4,7 +4,6 @@ import EzShare.EzServer;
 import EzShare.ResourceStorage;
 import EzShare.ServiceThread;
 import EzShare.Static;
-import com.allstars.project1.*;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.junit.jupiter.api.Assertions;
