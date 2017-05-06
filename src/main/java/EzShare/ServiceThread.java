@@ -17,7 +17,7 @@ public class ServiceThread extends Thread {
     private DataOutputStream outputStream;
     private String secret;
     private ResourceStorage resourceStorage;
-    private Set<EzServer> serverList;
+    private ServerList serverList;
     private Socket socket;
     private Map<SocketAddress, Date> lastConnectionTime;
     private EzServer server;
@@ -33,7 +33,7 @@ public class ServiceThread extends Thread {
      * @param server             an instance of the server itself
      * @throws IOException Network connection exception
      */
-    public ServiceThread(Map<SocketAddress, Date> lastConnectionTime, Socket clientSocket, String secret, ResourceStorage resourceStorage, Set<EzServer> serverList, EzServer server)
+    public ServiceThread(Map<SocketAddress, Date> lastConnectionTime, Socket clientSocket, String secret, ResourceStorage resourceStorage, ServerList serverList, EzServer server)
             throws IOException {
         this.socket = clientSocket;
         this.lastConnectionTime = lastConnectionTime;
@@ -374,7 +374,7 @@ public class ServiceThread extends Thread {
 
         // make relay queries
         if (relay) {
-            for (EzServer server : serverList) {
+            for (EzServer server : serverList.getServers()) {
                 try {
                     Socket socket = Client.connectToServer(server.hostname, server.port, Static.DEFAULT_TIMEOUT);
                     results.addAll(Client.query(socket, false, template));
@@ -472,6 +472,14 @@ public class ServiceThread extends Thread {
             Logging.logInfo("updated server list: " + this.serverList);
             respondSuccess();
         }
+    }
+
+    private void subscribe(Resource resourceTemplate) {
+        // TODO
+    }
+
+    private void unsubscribe() {
+        // TODO
     }
 
     /**

@@ -1,9 +1,6 @@
 package EzShare.unitTest;
 
-import EzShare.EzServer;
-import EzShare.ResourceStorage;
-import EzShare.ServiceThread;
-import EzShare.Static;
+import EzShare.*;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.junit.jupiter.api.Assertions;
@@ -26,7 +23,7 @@ class ServiceThreadTest {
     private static final String HOST = "localhost";
     private static final int PORT = 2333;
     public static ResourceStorage resourceStorage = new ResourceStorage();
-    public static Set<EzServer> serverList = Collections.synchronizedSet(new HashSet<>());
+    public static ServerList serverList = new ServerList();
     public static HashMap<SocketAddress, Date> lastConnectionTime = new HashMap<>();
 
 

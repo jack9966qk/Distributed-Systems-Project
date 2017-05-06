@@ -13,7 +13,7 @@ import org.apache.commons.cli.*;
  */
 public class Server {
     public static ResourceStorage resourceStorage = new ResourceStorage();
-    public static Set<EzServer> serverList = Collections.synchronizedSet(new HashSet<>());
+    public static ServerList serverList = new ServerList();
     public static HashMap<SocketAddress, Date> lastConnectionTime = new HashMap<>();
     public static EzServer self;
 

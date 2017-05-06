@@ -13,7 +13,7 @@ import java.util.Set;
  */
 public class ExchangeThread extends Thread {
     private int interval;
-    private Set<EzServer> serverList;
+    private ServerList serverList;
     private Date lastExchangeTime;
 
     /**
@@ -22,7 +22,7 @@ public class ExchangeThread extends Thread {
      * @param interval   time interval between exchange being performed
      * @param serverList a reference of list of servers to send exchange
      */
-    public ExchangeThread(int interval, Set<EzServer> serverList) {
+    public ExchangeThread(int interval, ServerList serverList) {
         this.interval = interval;
         this.serverList = serverList;
         lastExchangeTime = new Date();
@@ -53,7 +53,7 @@ public class ExchangeThread extends Thread {
     private void exchange() {
         Logging.logInfo("send exchange request to servers: " + serverList);
         Set<EzServer> allServers = new HashSet<>();
-        allServers.addAll(serverList);
+        allServers.addAll(serverList.getServers());
         allServers.add(Server.self);
         // manually synchronize serverList since it is not thread safe for iteration
         // make a copy to avoid deadlock when requesting self
@@ -61,7 +61,7 @@ public class ExchangeThread extends Thread {
         // http://stackoverflow.com/questions/1775717/explain-synchronization-of-collections-when-iterators-are-used
         HashSet<EzServer> servers = new HashSet<>();
         synchronized (serverList) {
-            servers.addAll(serverList);
+            servers.addAll(serverList.getServers());
         }
         for (EzServer server : servers) {
             Logging.logInfo("sending to " + server);

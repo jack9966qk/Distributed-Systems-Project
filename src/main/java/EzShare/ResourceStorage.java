@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
  */
 public class ResourceStorage {
 
+    List<ResourceStorageListener> listeners = new ArrayList<>();
     Map<ResourceKey, Resource> resources = Collections.synchronizedMap(new HashMap<>());
 
     /**
@@ -46,6 +47,12 @@ public class ResourceStorage {
      */
     public synchronized void add(Resource resource) {
         resources.put(resource.getKey(), resource);
+
+        // TODO check if new resource is different to existing?
+        for (ResourceStorageListener listener: listeners) {
+            listener.onResourceAdded(resource);
+        }
+
         Logging.logFine("Added new resource");
         Logging.logFine(this);
     }
