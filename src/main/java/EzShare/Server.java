@@ -8,6 +8,10 @@ import java.util.*;
 
 import org.apache.commons.cli.*;
 
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLServerSocketFactory;
+
 /**
  * EzShare server implementation, has a main method to be used through command line
  */
@@ -44,7 +48,7 @@ public class Server {
     }
 
     /**
-     * Setup server, open socket, start listening to connections
+     * Setup insecure server, open socket, start listening to connections
      *
      * @param connectionIntervalLimit the time interval between each new connection from clients
      * @param exchangeInterval        the time interval between each auto-exchange
@@ -53,7 +57,8 @@ public class Server {
      * @param port                    the port number for the server
      * @throws IOException
      */
-    public static void startServer(int connectionIntervalLimit, int exchangeInterval, String secret, String host, int port) throws IOException {
+    public static void startServer(int connectionIntervalLimit, int exchangeInterval, String secret, String host
+            , int port) throws IOException {
         self = new EzServer(host, port);
         ServerSocket listenSocket = null;
         try {
@@ -89,6 +94,51 @@ public class Server {
     }
 
     /**
+     * Setup secure server, open socket, start listening to connections
+     *
+     * @param connectionIntervalLimit the time interval between each new connection from clients
+     * @param exchangeInterval        the time interval between each auto-exchange
+     * @param secret                  the secret password from the Server
+     * @param host                    the host address for the server
+     * @param sport                    the port number for the server
+     * @throws IOException
+     */
+    public static void startSServer(int connectionIntervalLimit, int exchangeInterval, String secret, String host
+            , int sport) throws IOException {
+        self = new EzServer(host, sport);
+        SSLServerSocketFactory sslserversocketfactory =
+                (SSLServerSocketFactory)
+                SSLServerSocketFactory.getDefault();
+        SSLServerSocket sslserversocket =
+                (SSLServerSocket)
+                sslserversocketfactory.createServerSocket(sport);
+        try {
+            int i = 0;
+            Logging.logInfo("Server initialisation complete");
+            running = true;
+            while (running) {
+                // wait for new client
+                Logging.logInfo("Server listening for a connection");
+                SSLSocket sslsocket = (SSLSocket) sslserversocket.accept();
+                i++;
+                Logging.logInfo("Received connection " + i);
+                // start a new thread handling the client
+                // TODO limitation on total number of threads
+                ServiceThread c = new ServiceThread(lastConnectionTime, sslsocket, secret, resourceStorage, serverList, self);
+                c.start();
+                Thread.sleep(connectionIntervalLimit);
+            }
+        }catch (InterruptedException e) {
+                if (running) {
+                    e.printStackTrace();
+                } else {
+                    sslserversocket.close();
+                    Logging.logInfo("Server shutting down...");
+                }
+        }
+    }
+
+    /**
      * Get command line options
      *
      * @param args command line arguments
@@ -104,8 +154,10 @@ public class Server {
                 .hasArg().type(Integer.class).build());
         options.addOption(Option.builder("exchangeinterval").desc("exchange interval in seconds")
                 .hasArg().type(Integer.class).build());
+        options.addOption(Option.builder("sport").desc("secure server port, an integer")
+                .hasArg().type(Integer.class).build());
         options.addOption(Option.builder("port").desc("server port, an integer")
-                .required().hasArg().type(Integer.class).build());
+                .hasArg().type(Integer.class).build());
         options.addOption(Option.builder("secret").desc("secret")
                 .hasArg().type(String.class).build());
         options.addOption(Option.builder("debug").desc("print debug information").build());
@@ -148,12 +200,32 @@ public class Server {
         }
 
         Logging.logInfo("Server secret: " + secret);
+        // set default sport value
+        int sport = Static.DEFAULT_SPORT, port = Static.DEFAULT_SPORT;
+        boolean secure = false;
+        try {
+            // determine whether it is a port or sport where sport has higher precedence
+            if (!cmd.hasOption("sport")&&!cmd.hasOption("port")) {
+                throw new IOException();
+            } else if(cmd.hasOption("sport")) {
+                sport = Integer.parseInt(cmd.getOptionValue("sport"));
+                secure = true;
+            } else if(cmd.hasOption("port")) {
+                port = Integer.parseInt(cmd.getOptionValue("port"));
+                secure = false;
+            }
+        } catch (IOException e) {
+            Logging.logInfo("Command line arguments missing or invalid, please try again");
+            return;
+        } catch (Exception e) {
+            Logging.logInfo("Unknown Exception in Server main thread, exiting...");
+        }
 
         try {
-            // determine host and port
+
+            // determine host
             InetAddress address = InetAddress.getLocalHost();
             String host = cmd.getOptionValue("advertisedhostname", address.getHostName());
-            int port = Integer.parseInt(cmd.getOptionValue("port"));
 
             // set intervals
             int connectionIntervalLimit;
@@ -169,8 +241,15 @@ public class Server {
                 exchangeInterval = Static.DEFAULT_EXCHANGE_INTERVAL;
             }
 
+
+
             // start the server
-            startServer(connectionIntervalLimit, exchangeInterval, secret, host, port);
+            if (secure){
+                startServer(connectionIntervalLimit, exchangeInterval, secret, host, sport);
+            }else {
+                startServer(connectionIntervalLimit, exchangeInterval, secret, host, port);
+            }
+
         } catch (BindException e) {
             Logging.logInfo("Port already taken, exiting...");
         } catch (IOException e) {
