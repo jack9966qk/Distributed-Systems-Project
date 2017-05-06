@@ -162,17 +162,14 @@ public class Client {
      * @throws IOException any network error
      */
     public static void publish(Socket socket, Resource resource) throws IOException {
+
         DataInputStream in = new DataInputStream(socket.getInputStream());
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-        System.out.println(socket.getClass());
         // send request
         Static.sendJsonUTF(out, makeJsonFrom("PUBLISH", resource));
-        System.out.println("hewqrewq");
         // wait for response
         String response = Static.readJsonUTF(in);
-        System.out.println("waiting for something");
         handleResponse(response);
-        System.out.println("asdfsadf11231324132sdfasd");
     }
 
     /**
@@ -474,7 +471,7 @@ public class Client {
 
         // connect to insecure server
         Socket socket = null;
-
+        //SSLSocket sslSocket = null;
         if (cmd.hasOption("secure")) {
             try {
                 socket = connectToSServer(host, port, Static.DEFAULT_TIMEOUT);
@@ -482,9 +479,7 @@ public class Client {
                 Logging.logInfo("Failed to connect to server, please check server availability and internet connection.");
                 return;
             }
-            if (!cmd.hasOption("port")) {
-                port  = Static.DEFAULT_SPORT;
-            }
+
         } else {
             try {
                 socket = connectToServer(host, port, Static.DEFAULT_TIMEOUT);
@@ -495,7 +490,6 @@ public class Client {
         }
         // connect to secure server
         // SSLSocket sslSocket = null;
-        System.out.println("sdfasdfasdfadsfadsf");
 
         // figure out command and handle each case
         try {

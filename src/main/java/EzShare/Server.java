@@ -247,7 +247,7 @@ public class Server {
 
             // start the server
             if (secure){
-                startServer(connectionIntervalLimit, exchangeInterval, secret, host, sport);
+                startSServer(connectionIntervalLimit, exchangeInterval, secret, host, sport);
             }else {
                 startServer(connectionIntervalLimit, exchangeInterval, secret, host, port);
             }
