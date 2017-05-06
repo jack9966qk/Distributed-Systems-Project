@@ -4,6 +4,9 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
+
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.apache.commons.cli.*;
@@ -351,7 +354,7 @@ public class Client {
      */
     public static CommandLine getOptions(String[] args) throws ParseException {
         Options options = new Options();
-
+        options.addOption(Option.builder("secure").build());
         options.addOption(Option.builder("channel").hasArg().type(Integer.class).build());
         options.addOption(Option.builder("debug").build());
         options.addOption(Option.builder("description").hasArg().type(String.class).build());
@@ -409,6 +412,13 @@ public class Client {
         Logging.logFine("Connection Established");
         return socket;
     }
+   public static SSLSocket secureconnection(String shost, int sport, int timeout) throws IOException{
+	   SSLSocket sslsocket;
+	   SSLSocketFactory sslsocketfactory =(SSLSocketFactory)SSLSocketFactory.getDefault();
+	   sslsocket =(SSLSocket) sslsocketfactory.createSocket("shost", sport);
+	return sslsocket;
+	   
+   }
 
     /**
      * The main function for client
@@ -416,7 +426,10 @@ public class Client {
      * @param args command line arguments
      */
     public static void main(String[] args) {
-
+        String host=null;
+        Integer port=null;
+        String shost=null;
+        Integer sport=null;
         // command line arguments parsing
         CommandLine cmd = null;
         try {
@@ -425,11 +438,7 @@ public class Client {
             Logging.logInfo("Command line parsing failed, please check if arguments are missing or incorrect.");
             return;
         }
-        String host = cmd.getOptionValue("host");
-        int port = Integer.parseInt(cmd.getOptionValue("port"));
-        Resource resource = makeResourceFromCmd(cmd);
-
-
+    
         if (!cmd.hasOption("publish") &&
                 !cmd.hasOption("remove") &&
                 !cmd.hasOption("share") &&
@@ -444,16 +453,29 @@ public class Client {
         if (cmd.hasOption("debug")) {
             Logging.logInfo("setting debug on");
         }
-
+        Resource resource = makeResourceFromCmd(cmd);
         // connect to server
-        Socket socket = null;
+        Socket socket=null;
+        SSLSocket sslsocket=null;
+        if(cmd.hasOption("secure")){
+        	shost = cmd.getOptionValue("host");
+            sport = Integer.parseInt(cmd.getOptionValue("port"));
+            try {
+                sslsocket = secureconnection(shost, sport, Static.DEFAULT_TIMEOUT);
+            } catch (IOException e) {
+                Logging.logInfo("Failed to connect to server, please check server availability and internet connection.");
+                return;
+            }
+        }else if(!cmd.hasOption("secure")){
+        host = cmd.getOptionValue("host");
+        port = Integer.parseInt(cmd.getOptionValue("port"));
         try {
             socket = connectToServer(host, port, Static.DEFAULT_TIMEOUT);
         } catch (IOException e) {
             Logging.logInfo("Failed to connect to server, please check server availability and internet connection.");
             return;
         }
-
+        }
         // figure out command and handle each case
         try {
             if (cmd.hasOption("publish")) {
