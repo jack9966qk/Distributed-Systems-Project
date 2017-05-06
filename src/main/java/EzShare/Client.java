@@ -4,12 +4,12 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
-import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
-
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.apache.commons.cli.*;
+
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 
 /**
  * EzShare client implementation, has a main method to be used through command line
@@ -164,13 +164,15 @@ public class Client {
     public static void publish(Socket socket, Resource resource) throws IOException {
         DataInputStream in = new DataInputStream(socket.getInputStream());
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-
+        System.out.println(socket.getClass());
         // send request
         Static.sendJsonUTF(out, makeJsonFrom("PUBLISH", resource));
-
+        System.out.println("hewqrewq");
         // wait for response
         String response = Static.readJsonUTF(in);
+        System.out.println("waiting for something");
         handleResponse(response);
+        System.out.println("asdfsadf11231324132sdfasd");
     }
 
     /**
@@ -354,7 +356,7 @@ public class Client {
      */
     public static CommandLine getOptions(String[] args) throws ParseException {
         Options options = new Options();
-        options.addOption(Option.builder("secure").build());
+
         options.addOption(Option.builder("channel").hasArg().type(Integer.class).build());
         options.addOption(Option.builder("debug").build());
         options.addOption(Option.builder("description").hasArg().type(String.class).build());
@@ -372,6 +374,7 @@ public class Client {
         options.addOption(Option.builder("share").build());
         options.addOption(Option.builder("tags").hasArg().type(String.class).build());
         options.addOption(Option.builder("uri").hasArg().type(String.class).build());
+        options.addOption(Option.builder("secure").build());
 
         CommandLineParser parser = new DefaultParser();
         return parser.parse(options, args);
@@ -412,12 +415,25 @@ public class Client {
         Logging.logFine("Connection Established");
         return socket;
     }
-    
-    public static SSLSocket secureconnection(String shost,int sport, int timeout) throws IOException{
-    	SSLSocketFactory sslsocketfactory = (SSLSocketFactory)SSLSocketFactory.getDefault();
-    	SSLSocket sslsocket=(SSLSocket)sslsocketfactory.createSocket(shost, sport);
-    	Logging.logFine("Connection Established");
-    	return sslsocket;
+
+    /**
+     * Establish secure connection to a server
+     *
+     * @param host    host of server
+     * @param port    port of server
+     * @param timeout timeout in milliseconds for all operations with the server
+     * @return Secure socket of the server
+     * @throws IOException any network error
+     */
+    public static SSLSocket connectToSServer(String host, int port, int timeout) throws IOException {
+        SSLSocketFactory sslsocketfactory =
+                (SSLSocketFactory)SSLSocketFactory.getDefault();
+        SSLSocket sslSocket =
+                (SSLSocket)sslsocketfactory.createSocket(host,port) ;
+
+        sslSocket.setSoTimeout(timeout);
+        Logging.logFine("Connection Established");
+        return sslSocket;
     }
 
     /**
@@ -426,10 +442,7 @@ public class Client {
      * @param args command line arguments
      */
     public static void main(String[] args) {
-        String host=null;
-        Integer port=null;
-        String shost=null;
-        Integer sport=null;
+        Static.configSecurity();
         // command line arguments parsing
         CommandLine cmd = null;
         try {
@@ -438,11 +451,12 @@ public class Client {
             Logging.logInfo("Command line parsing failed, please check if arguments are missing or incorrect.");
             return;
         }
-          Resource resource = makeResourceFromCmd(cmd);
+        String host = cmd.getOptionValue("host");
+        int port = Integer.parseInt(cmd.getOptionValue("port"));
+        Resource resource = makeResourceFromCmd(cmd);
 
 
-        if (!cmd.hasOption("secure") &&
-        		!cmd.hasOption("publish") &&
+        if (!cmd.hasOption("publish") &&
                 !cmd.hasOption("remove") &&
                 !cmd.hasOption("share") &&
                 !cmd.hasOption("query") &&
@@ -457,27 +471,32 @@ public class Client {
             Logging.logInfo("setting debug on");
         }
 
-        // connect to server
+
+        // connect to insecure server
         Socket socket = null;
-        SSLSocket sslsocket=null;
-        if(cmd.hasOption("secure")){
-        	shost = cmd.getOptionValue("host");
-            sport = Integer.parseInt(cmd.getOptionValue("port"));
+
+        if (cmd.hasOption("secure")) {
             try {
-                sslsocket = secureconnection(shost, sport, Static.DEFAULT_TIMEOUT);
-                socket=(Socket)sslsocket;
+                socket = connectToSServer(host, port, Static.DEFAULT_TIMEOUT);
             } catch (IOException e) {
                 Logging.logInfo("Failed to connect to server, please check server availability and internet connection.");
                 return;
-            } 
-        }else{
-        try {
-            socket = connectToServer(host, port, Static.DEFAULT_TIMEOUT);
-        } catch (IOException e) {
-            Logging.logInfo("Failed to connect to server, please check server availability and internet connection.");
-            return;
+            }
+            if (!cmd.hasOption("port")) {
+                port  = Static.DEFAULT_SPORT;
+            }
+        } else {
+            try {
+                socket = connectToServer(host, port, Static.DEFAULT_TIMEOUT);
+            } catch (IOException e) {
+                Logging.logInfo("Failed to connect to server, please check server availability and internet connection.");
+                return;
+            }
         }
-        }
+        // connect to secure server
+        // SSLSocket sslSocket = null;
+        System.out.println("sdfasdfasdfadsfadsf");
+
         // figure out command and handle each case
         try {
             if (cmd.hasOption("publish")) {

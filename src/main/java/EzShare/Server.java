@@ -71,6 +71,7 @@ public class Server {
             Logging.logInfo("Server initialisation complete");
             running = true;
             while (running) {
+                //TODO relay and exchange
                 // wait for new client
                 Logging.logInfo("Server listening for a connection");
                 Socket clientSocket = listenSocket.accept();
@@ -173,6 +174,7 @@ public class Server {
      */
     public static void main(String[] args) {
         CommandLine cmd = null;
+        Static.configSecurity();
         try {
             cmd = getOptions(args);
         } catch (ParseException e) {
