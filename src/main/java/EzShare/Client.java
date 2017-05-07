@@ -140,6 +140,38 @@ public class Client {
     /**
      * Make json from arguments
      *
+     * @param command  the command
+     * @param id reference to the subscription request
+     * @param relay    true if need relay, false otherwise
+     * @param resource the resource
+     * @return json with arguments as fields
+     */
+    private static String makeJsonFrom(String command, String id, boolean relay, Resource resource) {
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.addProperty("command", command);
+        jsonObject.addProperty("relay", relay);
+        jsonObject.addProperty("id", id);
+        jsonObject.add("resourceTemplate", resource.toJsonElement());
+        return jsonObject.toString();
+    }
+
+    /**
+     * Make json from arguments
+     *
+     * @param command
+     * @param id
+     * @return
+     */
+    private static String makeJsonFrom(String command, String id) {
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.addProperty("command", command);
+        jsonObject.addProperty("id", id);
+        return jsonObject.toString();
+    }
+
+    /**
+     * Make json from arguments
+     *
      * @param command    the command
      * @param serverList an array of EzServer to send in exchange
      * @return json with arguments as fields
@@ -248,6 +280,45 @@ public class Client {
 
         return resources;
     }
+
+    /**
+     * Make subscribe request
+     *
+     * @param socket
+     * @param id
+     * @param template
+     * @throws IOException
+     */
+    private static void subscribe(Socket socket, String id, boolean relay, Resource template) throws IOException {
+        DataInputStream in = new DataInputStream(socket.getInputStream());
+        DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+
+        // send the subscription request
+        Static.sendJsonUTF(out, makeJsonFrom("SUBSCRIBE", id, relay, template));
+
+        // waiting for response
+        String response = Static.readJsonUTF(in);
+        boolean success = handleResponse(response);
+
+        if (success) {
+            Logging.logInfo("Results:");
+            Scanner keyboard = new Scanner(System.in);
+            System.out.println("Press Enter to unsubscribe.");
+
+            // TODO receive the response resources from servers
+            ClientSubscriptionThread clientListener = new ClientSubscriptionThread(socket, id);
+
+            // stop subscription when user press Enter button
+            // TODO tracking command line input, if it equals "", send unsubscribe to server
+            if (keyboard.hasNextLine()) {
+                Static.sendJsonUTF(out, makeJsonFrom("UNSUBSCRIBE", id));
+                System.out.println("Subscription terminated");
+
+            }
+        }
+        
+    }
+
 
     /**
      * Make fetch request
@@ -369,6 +440,8 @@ public class Client {
         options.addOption(Option.builder("share").build());
         options.addOption(Option.builder("tags").hasArg().type(String.class).build());
         options.addOption(Option.builder("uri").hasArg().type(String.class).build());
+        options.addOption(Option.builder("subscribe").hasArg().type(String.class).build());
+        options.addOption(Option.builder("id").hasArg().type(String.class).build());
 
         CommandLineParser parser = new DefaultParser();
         return parser.parse(options, args);
@@ -435,7 +508,8 @@ public class Client {
                 !cmd.hasOption("share") &&
                 !cmd.hasOption("query") &&
                 !cmd.hasOption("fetch") &&
-                !cmd.hasOption("remove")) {
+                !cmd.hasOption("remove") &&
+                !cmd.hasOption("subscribe")) {
             Logging.logInfo("No command found, please check your input and try again.");
         }
 
@@ -473,6 +547,9 @@ public class Client {
                         .map(EzServer::fromString).toArray(EzServer[]::new);
                 Logging.logInfo(Arrays.toString(servers));
                 exchange(socket, servers);
+            } else if (cmd.hasOption("subscribe")) {
+                String id = cmd.getOptionValue("id");
+                subscribe(socket, id, true, resource);
             }
         } catch (SocketTimeoutException e) {
             Logging.logInfo("Timeout communicating with server, please check connections and try again.");
