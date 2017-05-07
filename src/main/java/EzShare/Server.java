@@ -16,7 +16,6 @@ public class Server {
     public static ServerList serverList = new ServerList();
     public static HashMap<SocketAddress, Date> lastConnectionTime = new HashMap<>();
     public static EzServer self;
-    public static Map<String, SubscriptionThread> subscriptionThreads = new HashMap<>();
 
     private static boolean running = false;
     private static Thread mainThread;

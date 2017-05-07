@@ -439,7 +439,7 @@ public class ServiceThread extends Thread {
         if (relay) {
             for (EzServer server : serverList.getServers()) {
                 try {
-                    Socket socket = Client.connectToServer(server.hostname, server.port, Static.DEFAULT_TIMEOUT);
+                    Socket socket = Client.connectToServer(server.getHostname(), server.getPort(), Static.DEFAULT_TIMEOUT);
                     results.addAll(Client.query(socket, false, template));
                 } catch (Exception e) {
                     Logging.logInfo("Error making query to server " + server + ". Skip to next server");
@@ -537,9 +537,17 @@ public class ServiceThread extends Thread {
         }
     }
 
-    private void subscribe(Resource resourceTemplate, String id) throws IOException {
+    private void subscribe(Resource resourceTemplate, String id, boolean relay) throws IOException {
         SubscriptionThread thread = new SubscriptionThread(socket, resourceTemplate);
         SubscriptionThread.addThread(thread, id);
+
+        if (relay) {
+            for (EzServer server : serverList.getServers()) {
+                Socket socket = new Socket(server.getHostname(), server.getPort());
+                Subscription.addRelaySubscriptionThread(resourceTemplate, socket);
+            }
+        }
+
         respondSuccess(id);
     }
 
@@ -612,7 +620,7 @@ public class ServiceThread extends Thread {
             } else if (command.equals("EXCHANGE")) {
                 exchange(parseExchange(obj));
             } else if (command.equals("SUBSCRIBE")) {
-                subscribe(parseTemplate(obj), parseId(obj));
+                subscribe(parseTemplate(obj), parseId(obj), parseRelay(obj));
             } else if (command.equals("UNSUBSCRIBE")) {
                 unsubscribe(parseId(obj));
             } else {
