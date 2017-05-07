@@ -16,6 +16,17 @@ public class SubscriptionThread extends Thread implements ResourceStorageListene
     Resource template;
     Queue<Resource> toSend = new LinkedList<>();
 
+    public static void addThread(SubscriptionThread thread, String id) {
+        Server.subscriptionThreads.put(id, thread);
+        thread.start();
+    }
+
+    public static void removeThread(String id) {
+        SubscriptionThread thread = Server.subscriptionThreads.get(id);
+        thread.interrupt();
+        Server.subscriptionThreads.remove(id);
+    }
+
     public SubscriptionThread(Socket client, Resource template) {
         this.client = client;
         this.template = template;
@@ -67,7 +78,9 @@ public class SubscriptionThread extends Thread implements ResourceStorageListene
         } catch (IOException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            if (running) {
+                e.printStackTrace();
+            }
         } finally {
             try {
                 client.close();
