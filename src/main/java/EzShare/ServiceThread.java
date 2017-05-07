@@ -175,6 +175,56 @@ public class ServiceThread extends Thread {
         }
     }
 
+    private String parseId(JsonObject obj) throws ServerException {
+        try {
+            // check if the request has id field, otherwise throw a "missing id" exception
+            if (!obj.has("id")) {
+                throw new ServerException("missing id");
+            } else {
+                return obj.get("id").getAsString();
+            }
+
+        } catch (IllegalStateException e) {
+            // throw a "invalid id" exception when id field cannot be get as string
+            throw new ServerException("invalid id");
+        }
+    }
+
+    /**
+     * Parse the serverList field in the JSON requests send by clients
+     *
+     * @param obj the JSON form request needs to be parsed
+     * @return an array of EzServer
+     * @throws ServerException any error in server list field
+     */
+    private EzServer[] parseExchange(JsonObject obj) throws ServerException {
+        // check if contains serverList
+        if (!obj.has("serverList")) {
+            throw new ServerException("missing or invalid server list");
+        }
+
+        List<EzServer> servers = new ArrayList<>();
+        JsonArray elems;
+        // parse servers
+        try {
+            elems = obj.getAsJsonArray("serverList");
+        } catch (ClassCastException e) {
+            // not JSON array
+            throw new ServerException("missing or invalid server list");
+        }
+        // check if all servers are valid
+        for (JsonElement elem : elems) {
+            EzServer server = EzServer.fromJson(elem.getAsJsonObject());
+            if (server == null) {
+                // invalid server record
+                throw new ServerException("missing or invalid server list");
+            } else {
+                servers.add(server);
+            }
+        }
+        return servers.toArray(new EzServer[servers.size()]);
+    }
+
     /**
      * Check if the resource is valid
      *
@@ -228,6 +278,19 @@ public class ServiceThread extends Thread {
     private void respondSuccess() throws IOException {
         JsonObject json = new JsonObject();
         json.addProperty("response", "success");
+        Static.sendJsonUTF(outputStream, json.toString());
+    }
+
+    /**
+     * Send a success response with id as JSON format to the client
+     *
+     * @param id id to be included in the response
+     * @throws IOException Network connection exception
+     */
+    private void respondSuccess(String id) throws IOException {
+        JsonObject json = new JsonObject();
+        json.addProperty("response", "success");
+        json.addProperty("id", id);
         Static.sendJsonUTF(outputStream, json.toString());
     }
 
@@ -474,48 +537,17 @@ public class ServiceThread extends Thread {
         }
     }
 
-    private void subscribe(Resource resourceTemplate) {
-        // TODO
+    private void subscribe(Resource resourceTemplate, String id) throws IOException {
+        SubscriptionThread thread = new SubscriptionThread(socket, resourceTemplate);
+        SubscriptionThread.addThread(thread, id);
+        respondSuccess(id);
     }
 
-    private void unsubscribe() {
-        // TODO
+    private void unsubscribe(String id) {
+        SubscriptionThread.removeThread(id);
+        // TODO respond
     }
 
-    /**
-     * Parse the serverList field in the JSON requests send by clients
-     *
-     * @param obj the JSON form request needs to be parsed
-     * @return an array of EzServer
-     * @throws ServerException any error in server list field
-     */
-    private EzServer[] parseExchange(JsonObject obj) throws ServerException {
-        // check if contains serverList
-        if (!obj.has("serverList")) {
-            throw new ServerException("missing or invalid server list");
-        }
-
-        List<EzServer> servers = new ArrayList<>();
-        JsonArray elems;
-        // parse servers
-        try {
-            elems = obj.getAsJsonArray("serverList");
-        } catch (ClassCastException e) {
-            // not JSON array
-            throw new ServerException("missing or invalid server list");
-        }
-        // check if all servers are valid
-        for (JsonElement elem : elems) {
-            EzServer server = EzServer.fromJson(elem.getAsJsonObject());
-            if (server == null) {
-                // invalid server record
-                throw new ServerException("missing or invalid server list");
-            } else {
-                servers.add(server);
-            }
-        }
-        return servers.toArray(new EzServer[servers.size()]);
-    }
 
     /**
      * Running the Service Thread to catch any request from the client
@@ -579,6 +611,10 @@ public class ServiceThread extends Thread {
                 fetch(parseTemplate(obj));
             } else if (command.equals("EXCHANGE")) {
                 exchange(parseExchange(obj));
+            } else if (command.equals("SUBSCRIBE")) {
+                subscribe(parseTemplate(obj), parseId(obj));
+            } else if (command.equals("UNSUBSCRIBE")) {
+                unsubscribe(parseId(obj));
             } else {
                 throw new ServerException("invalid command");
             }
@@ -603,7 +639,6 @@ public class ServiceThread extends Thread {
             e.printStackTrace();
             Logging.logInfo("Unknown exception in ServiceThread, disconnecting...");
         } finally {
-
             try {
                 socket.close();
             } catch (IOException e) {
