@@ -308,16 +308,16 @@ public class Client {
             Scanner keyboard = new Scanner(System.in);
             System.out.println("Press Enter to unsubscribe.");
 
-            // TODO receive the response resources from servers
+            // Creating a new listening thread for Client to listen any subscription updates
             ClientSubscriptionThread clientListener = new ClientSubscriptionThread(socket, id);
             clientListener.start();
 
             // stop subscription when user press Enter button
-            // TODO tracking command line input, if there is an Enter, send unsubscribe to server
             if (keyboard.hasNextLine()) {
                 Static.sendJsonUTF(out, makeJsonFrom("UNSUBSCRIBE", id));
+                //TODO
                 System.out.println("Subscription terminated");
-
+                clientListener.terminate();
             }
         }
         

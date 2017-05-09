@@ -43,7 +43,6 @@ public class ClientSubscriptionThread extends Thread {
                 System.out.println(response);
                 Resource resource = Resource.fromJson(response);
 
-
                 // for server doing relay: send potential match to each subscription threads
                 for (SubscriptionThread thread : Subscription.subscriptionThreads.values()) {
                     thread.onResourceArrived(resource);
