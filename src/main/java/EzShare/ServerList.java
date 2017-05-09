@@ -1,13 +1,13 @@
 package EzShare;
 
+import java.io.IOException;
+import java.net.Socket;
 import java.util.*;
 
 /**
  * Created by Jack on 6/5/2017.
  */
 public class ServerList {
-    List<ServerListListener> listeners = new ArrayList<>();
-
     public Set<EzServer> getServers() {
         return servers;
     }
@@ -22,9 +22,12 @@ public class ServerList {
         return servers.size();
     }
 
-    public boolean add(EzServer ezServer) {
-        for (ServerListListener listener: listeners) {
-            listener.onEzServerAdded(ezServer);
+    public boolean add(EzServer ezServer) throws IOException {
+        if (!servers.contains(ezServer)) {
+            for (Resource template : Subscription.getSubscriptionTemplates()) {
+                Socket socket = new Socket(ezServer.getHostname(), ezServer.getPort());
+                Subscription.addRelaySubscriptionThread(template, socket);
+            }
         }
         return servers.add(ezServer);
     }

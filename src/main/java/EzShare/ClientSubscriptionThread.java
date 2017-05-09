@@ -1,8 +1,5 @@
 package EzShare;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -45,6 +42,12 @@ public class ClientSubscriptionThread extends Thread {
                 String response = Static.readJsonUTF(in);
                 System.out.println(response);
                 Resource resource = Resource.fromJson(response);
+
+
+                // for server doing relay: send potential match to each subscription threads
+                for (SubscriptionThread thread : Subscription.subscriptionThreads.values()) {
+                    thread.onResourceArrived(resource);
+                }
             }
 
         } catch (IOException e) {

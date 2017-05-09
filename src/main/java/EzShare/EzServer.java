@@ -11,6 +11,15 @@ public class EzServer {
     String hostname;
     int port;
 
+    public String getHostname() {
+        return hostname;
+    }
+
+    public int getPort() {
+        return port;
+    }
+
+
     /**
      * Construct an EzServer object
      *

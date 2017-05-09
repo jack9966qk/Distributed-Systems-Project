@@ -3,33 +3,37 @@ package EzShare;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.Queue;
 
 /**
+ * Server side handler thread for subscriptions, waits for new resources and sends matches to clients
  * Created by Jack on 6/5/2017.
  */
-public class SubscriptionThread extends Thread implements ResourceStorageListener, SubscriptionListener {
+public class SubscriptionThread extends Thread {
     Socket client;
     DataOutputStream outputStream;
     Resource template;
     Queue<Resource> toSend = new LinkedList<>();
 
     public static void addThread(SubscriptionThread thread, String id) {
-        Server.subscriptionThreads.put(id, thread);
+        Subscription.subscriptionThreads.put(id, thread);
         thread.start();
     }
 
     public static void removeThread(String id) {
-        SubscriptionThread thread = Server.subscriptionThreads.get(id);
-        thread.interrupt();
-        Server.subscriptionThreads.remove(id);
+        SubscriptionThread thread = Subscription.subscriptionThreads.get(id);
+        thread.terminate();
+        Subscription.subscriptionThreads.remove(id);
     }
 
     public SubscriptionThread(Socket client, Resource template) {
         this.client = client;
         this.template = template;
+    }
+
+    public Resource getTemplate() {
+        return template;
     }
 
     boolean running;
@@ -43,15 +47,6 @@ public class SubscriptionThread extends Thread implements ResourceStorageListene
         this.interrupt();
     }
 
-    @Override
-    public void onResourceAdded(Resource resource) {
-        synchronized (this) {
-            toSend.add(resource);
-            notifyAll();
-        }
-    }
-
-    @Override
     public void onResourceArrived(Resource resource) {
         synchronized (this) {
             toSend.add(resource);
