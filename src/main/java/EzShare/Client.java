@@ -285,13 +285,16 @@ public class Client {
      * Make subscribe request
      *
      * @param socket
-     * @param id
      * @param template
      * @throws IOException
      */
-    private static void subscribe(Socket socket, String id, boolean relay, Resource template) throws IOException {
+    private static void subscribe(Socket socket, boolean relay, Resource template) throws IOException {
         DataInputStream in = new DataInputStream(socket.getInputStream());
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+
+        //Auto generate id for this subscription
+        IdGenerator idGenerator = IdGenerator.getIdGeneartor();
+        String id = idGenerator.generateId();
 
         // send the subscription request
         Static.sendJsonUTF(out, makeJsonFrom("SUBSCRIBE", id, relay, template));
@@ -307,9 +310,10 @@ public class Client {
 
             // TODO receive the response resources from servers
             ClientSubscriptionThread clientListener = new ClientSubscriptionThread(socket, id);
+            clientListener.start();
 
             // stop subscription when user press Enter button
-            // TODO tracking command line input, if it equals "", send unsubscribe to server
+            // TODO tracking command line input, if there is an Enter, send unsubscribe to server
             if (keyboard.hasNextLine()) {
                 Static.sendJsonUTF(out, makeJsonFrom("UNSUBSCRIBE", id));
                 System.out.println("Subscription terminated");
@@ -441,7 +445,6 @@ public class Client {
         options.addOption(Option.builder("tags").hasArg().type(String.class).build());
         options.addOption(Option.builder("uri").hasArg().type(String.class).build());
         options.addOption(Option.builder("subscribe").hasArg().type(String.class).build());
-        options.addOption(Option.builder("id").hasArg().type(String.class).build());
 
         CommandLineParser parser = new DefaultParser();
         return parser.parse(options, args);
@@ -548,8 +551,7 @@ public class Client {
                 Logging.logInfo(Arrays.toString(servers));
                 exchange(socket, servers);
             } else if (cmd.hasOption("subscribe")) {
-                String id = cmd.getOptionValue("id");
-                subscribe(socket, id, true, resource);
+                subscribe(socket, true, resource);
             }
         } catch (SocketTimeoutException e) {
             Logging.logInfo("Timeout communicating with server, please check connections and try again.");
