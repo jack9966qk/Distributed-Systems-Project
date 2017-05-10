@@ -26,7 +26,8 @@ class ServiceThreadTest {
     private static final String HOST = "localhost";
     private static final int PORT = 2333;
     public static ResourceStorage resourceStorage = new ResourceStorage();
-    public static Set<EzServer> serverList = Collections.synchronizedSet(new HashSet<>());
+    public static Set<EzServer> secureserverList = Collections.synchronizedSet(new HashSet<>());
+    public static Set<EzServer> insecureserverList = Collections.synchronizedSet(new HashSet<>());
     public static HashMap<SocketAddress, Date> lastConnectionTime = new HashMap<>();
 
 
@@ -51,7 +52,7 @@ class ServiceThreadTest {
                 Socket clientSocket = serverSocket.accept();
                 String secret = "JackBigLeg";
 
-                ServiceThread serviceThread = new ServiceThread(lastConnectionTime, clientSocket, secret, resourceStorage, serverList, self);
+                ServiceThread serviceThread = new ServiceThread(lastConnectionTime, clientSocket, secret, resourceStorage, secureserverList, insecureserverList, self);
 
                 serviceThread.start();
                 Thread.sleep(5000);
