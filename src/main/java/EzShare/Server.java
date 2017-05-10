@@ -17,7 +17,8 @@ import javax.net.ssl.SSLServerSocketFactory;
  */
 public class Server {
     public static ResourceStorage resourceStorage = new ResourceStorage();
-    public static Set<EzServer> serverList = Collections.synchronizedSet(new HashSet<>());
+    public static Set<EzServer> secureserverList = Collections.synchronizedSet(new HashSet<>());
+    public static Set<EzServer> insecureserverList = Collections.synchronizedSet(new HashSet<>());
     public static HashMap<SocketAddress, Date> lastConnectionTime = new HashMap<>();
     public static EzServer self;
 
@@ -63,7 +64,7 @@ public class Server {
         ServerSocket listenSocket = null;
         try {
             // for sending exchange request to other servers
-            ExchangeThread exchangeThread = new ExchangeThread(exchangeInterval, serverList);
+            ExchangeThread exchangeThread = new ExchangeThread(exchangeInterval, insecureserverList);
             exchangeThread.start();
 
             listenSocket = new ServerSocket(port);
@@ -80,7 +81,7 @@ public class Server {
                 Logging.logInfo("Received connection " + i);
                 // start a new thread handling the client
                 // TODO limitation on total number of threads
-                ServiceThread c = new ServiceThread(lastConnectionTime, clientSocket, secret, resourceStorage, serverList, self);
+                ServiceThread c = new ServiceThread(lastConnectionTime, clientSocket, secret, resourceStorage,secureserverList,insecureserverList, self);
                 c.start();
                 Thread.sleep(connectionIntervalLimit);
             }
@@ -125,7 +126,7 @@ public class Server {
                 Logging.logInfo("Received connection " + i);
                 // start a new thread handling the client
                 // TODO limitation on total number of threads
-                ServiceThread c = new ServiceThread(lastConnectionTime, sslsocket, secret, resourceStorage, serverList, self);
+                ServiceThread c = new ServiceThread(lastConnectionTime, sslsocket, secret, resourceStorage, secureserverList, insecureserverList, self);
                 c.start();
                 Thread.sleep(connectionIntervalLimit);
             }

@@ -17,7 +17,8 @@ public class ServiceThread extends Thread {
     private DataOutputStream outputStream;
     private String secret;
     private ResourceStorage resourceStorage;
-    private Set<EzServer> serverList;
+    private Set<EzServer> secureserverList;
+    private Set<EzServer> insecureserverList;
     private Socket socket;
     private Map<SocketAddress, Date> lastConnectionTime;
     private EzServer server;
@@ -29,11 +30,12 @@ public class ServiceThread extends Thread {
      * @param clientSocket       the client socket connects to this thread
      * @param secret             the secret password from the Server
      * @param resourceStorage    the resource storage for the Server
-     * @param serverList         a list of Servers that this Server has acknowledges
+     * @param secureserverList         a list of secure Servers that this Server has acknowledges
+     * @param insecureserverList       a list of insecure Servers that this Server has acknowledges
      * @param server             an instance of the server itself
      * @throws IOException Network connection exception
      */
-    public ServiceThread(Map<SocketAddress, Date> lastConnectionTime, Socket clientSocket, String secret, ResourceStorage resourceStorage, Set<EzServer> serverList, EzServer server)
+    public ServiceThread(Map<SocketAddress, Date> lastConnectionTime, Socket clientSocket, String secret, ResourceStorage resourceStorage, Set<EzServer> secureserverList,Set<EzServer> insecureserverList, EzServer server)
             throws IOException {
         this.socket = clientSocket;
         this.lastConnectionTime = lastConnectionTime;
@@ -41,7 +43,8 @@ public class ServiceThread extends Thread {
         this.outputStream = new DataOutputStream(clientSocket.getOutputStream());
         this.secret = secret;
         this.resourceStorage = resourceStorage;
-        this.serverList = serverList;
+        this.secureserverList = secureserverList;
+        this.insecureserverList = insecureserverList;
         this.server = server;
     }
 
@@ -363,15 +366,23 @@ public class ServiceThread extends Thread {
      *
      * @param template the given resource template
      * @param relay    whether forwarding the query command to other servers known by this Server
+     * @param secure   whether it is a secure connection
      * @throws ServerException any error in resource template
      * @throws IOException     Network connection exception
      */
-    private void query(Resource template, boolean relay) throws ServerException, IOException {
-        // search for results
+    private void query(Resource template, boolean relay,boolean secure) throws ServerException, IOException {
+    	// search for results
         Set<Resource> results = resourceStorage.searchWithTemplate(template).stream().map(
                 r -> r.ezServerAdded(server) // add EzServer info for all result from itself
         ).collect(Collectors.toSet());
-
+        Set<EzServer> serverList = null;
+       // determine whether it is a secure connection   
+        if(secure){
+        	serverList=secureserverList;	
+        }else{
+        	serverList=insecureserverList;
+        }
+        
         // make relay queries
         if (relay) {
             for (EzServer server : serverList) {
@@ -452,24 +463,38 @@ public class ServiceThread extends Thread {
      * Exchange information between this server and other servers in the given list
      *
      * @param servers the given list of servers
+     * @param secure   whether it is a secure connection
      * @throws ServerException any error in server list
      * @throws IOException     Network connection exception
      */
-    private void exchange(EzServer[] servers) throws ServerException, IOException {
+    private void exchange(EzServer[] servers,boolean secure) throws ServerException, IOException {
         Logging.logInfo("handle exchange request");
         Logging.logInfo("request server list: " + Arrays.toString(servers));
         if (servers == null) {
             // no servers in the given list
             throw new ServerException("missing server list");
         } else {
+       //determine whether it is a secure connection
+        	if(secure){
             for (EzServer server : servers) {
                 Logging.logFine(server);
                 if (this.server != server) {
                     // if the server in the list is not this server
-                    this.serverList.add(server);
+                    this.secureserverList.add(server);
                 }
             }
-            Logging.logInfo("updated server list: " + this.serverList);
+            Logging.logInfo("updated server list: " + this.secureserverList);
+            respondSuccess();
+        	}else{
+        		for (EzServer server : servers) {
+        	}
+                Logging.logFine(server);
+                if (this.server != server) {
+                    // if the server in the list is not this server
+                    this.insecureserverList.add(server);
+                }
+            }
+            Logging.logInfo("updated server list: " + this.insecureserverList);
             respondSuccess();
         }
     }
@@ -557,8 +582,14 @@ public class ServiceThread extends Thread {
                 throw new ServerException("missing or incorrect type for command");
             }
             String command = obj.get("command").getAsString();
-
-            // determine command type and handle each case
+            // whether it is a secure connection
+            boolean secure=false;
+            if(command.equals("secure")){
+            	secure=true;
+            }else{
+            	secure=false;
+            }
+			// determine command type and handle each case
             if (command.equals("PUBLISH")) {
                 publish(parseResource(obj));
             } else if (command.equals("REMOVE")) {
@@ -566,11 +597,11 @@ public class ServiceThread extends Thread {
             } else if (command.equals("SHARE")) {
                 share(parseSecret(obj), parseResource(obj));
             } else if (command.equals("QUERY")) {
-                query(parseTemplate(obj), parseRelay(obj));
+                query(parseTemplate(obj), parseRelay(obj), secure);
             } else if (command.equals("FETCH")) {
                 fetch(parseTemplate(obj));
             } else if (command.equals("EXCHANGE")) {
-                exchange(parseExchange(obj));
+                exchange(parseExchange(obj), secure);
             } else {
                 throw new ServerException("invalid command");
             }
