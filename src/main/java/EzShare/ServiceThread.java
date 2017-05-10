@@ -538,22 +538,25 @@ public class ServiceThread extends Thread {
     }
 
     private void subscribe(Resource resourceTemplate, String id, boolean relay) throws IOException {
-        SubscriptionThread thread = new SubscriptionThread(socket, resourceTemplate);
-        SubscriptionThread.addThread(thread, id);
-
+        Subscription.addSubscriptionThread(socket, resourceTemplate, id);
         if (relay) {
             for (EzServer server : serverList.getServers()) {
                 Socket socket = new Socket(server.getHostname(), server.getPort());
                 Subscription.addRelaySubscriptionThread(resourceTemplate, socket);
             }
         }
-
         respondSuccess(id);
     }
 
-    private void unsubscribe(String id) {
-        SubscriptionThread.removeThread(id);
-        // TODO respond
+    private void unsubscribe(String id) throws ServerException, IOException {
+        Integer resultSize = Subscription.removeSubscriptionThread(socket, id);
+        if (resultSize == null) {
+            // there are other subscriptions from same client
+            respondSuccess();
+        } else {
+            // all subscription from this client ended, report total result size
+            respondResultSize(resultSize);
+        }
     }
 
 

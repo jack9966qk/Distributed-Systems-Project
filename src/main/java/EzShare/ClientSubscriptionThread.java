@@ -20,6 +20,10 @@ public class ClientSubscriptionThread extends Thread {
     public String getSubId() {return id;}
     public boolean isRunning() {return running;}
 
+    public Socket getServer() {
+        return server;
+    }
+
     public ClientSubscriptionThread(Socket server, String id) {
         this.server = server;
         this.id = id;
@@ -44,7 +48,7 @@ public class ClientSubscriptionThread extends Thread {
                 Resource resource = Resource.fromJson(response);
 
                 // for server doing relay: send potential match to each subscription threads
-                for (SubscriptionThread thread : Subscription.subscriptionThreads.values()) {
+                for (SubscriptionThread thread : Subscription.getSubscriptionThreads()) {
                     thread.onResourceArrived(resource);
                 }
             }

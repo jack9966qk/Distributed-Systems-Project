@@ -314,13 +314,21 @@ public class Client {
 
             // stop subscription when user press Enter button
             if (keyboard.hasNextLine()) {
-                Static.sendJsonUTF(out, makeJsonFrom("UNSUBSCRIBE", id));
-                //TODO
-                System.out.println("Subscription terminated");
-                clientListener.terminate();
+                unsubscribe(socket, id);
             }
         }
         
+    }
+
+    public static void unsubscribe(Socket socket, String id) throws IOException {
+        DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+        Static.sendJsonUTF(out, makeJsonFrom("UNSUBSCRIBE", id));
+        //TODO
+        System.out.println("Subscription terminated");
+
+        // should client automatically terminate when server closes the socket?
+        // server should also reply to this unsubscribe request, which can indicate successful/unsuccessful
+//        clientListener.terminate();
     }
 
 

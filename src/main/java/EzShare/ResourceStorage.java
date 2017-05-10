@@ -47,7 +47,7 @@ public class ResourceStorage {
         resources.put(resource.getKey(), resource);
 
         // TODO check if new resource is different to existing?
-        for (SubscriptionThread listener: Subscription.subscriptionThreads.values()) {
+        for (SubscriptionThread listener: Subscription.getSubscriptionThreads()) {
             listener.onResourceArrived(resource);
         }
 

@@ -16,17 +16,6 @@ public class SubscriptionThread extends Thread {
     Resource template;
     Queue<Resource> toSend = new LinkedList<>();
 
-    public static void addThread(SubscriptionThread thread, String id) {
-        Subscription.subscriptionThreads.put(id, thread);
-        thread.start();
-    }
-
-    public static void removeThread(String id) {
-        SubscriptionThread thread = Subscription.subscriptionThreads.get(id);
-        thread.terminate();
-        Subscription.subscriptionThreads.remove(id);
-    }
-
     public SubscriptionThread(Socket client, Resource template) {
         this.client = client;
         this.template = template;
@@ -68,7 +57,9 @@ public class SubscriptionThread extends Thread {
                     resource = toSend.remove();
                 }
 
-                Static.sendJsonUTF(outputStream, resource.toJson());
+                if (resource.matchesTemplate(template)) {
+                    Static.sendJsonUTF(outputStream, resource.toJson());
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();
