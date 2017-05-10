@@ -43,7 +43,7 @@ public class Verify {
             str += "=================\n";
             str += expected + "\n";
             str += "EXPECTED<<<<<<<<<\n";
-            System.err.println(str);
+            System.err.print(str);
             throw new Exception("assert failed");
         }
     }
@@ -68,6 +68,10 @@ public class Verify {
 
         if (resultSizeObj.get("resultSize").getAsInt() != receivedResources.size()) {
             throw new Exception("size does not match");
+        }
+
+        if (expectedResourcesJson.size() != receivedResources.size()) {
+            throw new Exception("size not expected");
         }
 
         for (String receivedResource : receivedResources) {

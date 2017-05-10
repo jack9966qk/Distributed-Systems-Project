@@ -10,7 +10,7 @@ public class AdditionalTest {
     @Test
     void testFetch() throws InterruptedException {
         // fetch something that does not exist, expect success with resultSize 0
-        ServerVerifier.verifyServer("{\n" +
+        ProxyVerifier.verifyServer("{\n" +
                 "    \"command\": \"FETCH\",\n" +
                 "    \"resourceTemplate\": {\n" +
                 "        \"name\": \"\",\n" +
@@ -22,16 +22,15 @@ public class AdditionalTest {
                 "        \"ezserver\": null\n" +
                 "    }\n" +
                 "}",
-                "{ \"response\" : \"success\" }",
                 new HashSet<String>(),
-                false).test();
+                false);
     }
 
     @Test
     void testInvalidRequestsShare() throws InterruptedException {
         // cannot share resource
         // uri not present
-        ServerVerifier.verifyServer("{\n" +
+        ProxyVerifier.verifyServer("{\n" +
                 "    \"command\": \"SHARE\",\n" +
                 "    \"secret\": \"abcd\",\n" +
                 "    \"resource\": {\n" +
@@ -46,10 +45,10 @@ public class AdditionalTest {
                 "    }\n" +
                 "}",
                 "{ \"response\" : \"error\", \"errorMessage\" : \"invalid resource\" }",
-                false).test();
+                false);
 
         // uri not file scheme
-        ServerVerifier.verifyServer("{\n" +
+        ProxyVerifier.verifyServer("{\n" +
                 "    \"command\": \"SHARE\",\n" +
                 "    \"secret\": \"abcd\",\n" +
                 "    \"resource\": {\n" +
@@ -65,10 +64,10 @@ public class AdditionalTest {
                 "    }\n" +
                 "}",
                 "{ \"response\" : \"error\", \"errorMessage\" : \"invalid resource\" }",
-                false).test();
+                false);
 
         // file does not exist
-        ServerVerifier.verifyServer("{\n" +
+        ProxyVerifier.verifyServer("{\n" +
                 "    \"command\": \"SHARE\",\n" +
                 "    \"secret\": \"abcd\",\n" +
                 "    \"resource\": {\n" +
@@ -84,11 +83,11 @@ public class AdditionalTest {
                 "    }\n" +
                 "}",
                 "{ \"response\" : \"error\", \"errorMessage\" : \"cannot share resource\" }",
-                false).test();
+                false);
 
         // resource contained incorrect information that could not be recovered from
         // name field type
-        ServerVerifier.verifyServer("{\n" +
+        ProxyVerifier.verifyServer("{\n" +
                 "    \"command\": \"SHARE\",\n" +
                 "    \"secret\": \"abcd\",\n" +
                 "    \"resource\": {\n" +
@@ -104,10 +103,10 @@ public class AdditionalTest {
                 "    }\n" +
                 "}",
                 "{ \"response\" : \"error\", \"errorMessage\" : \"invalid resource\" }",
-                false).test();
+                false);
 
         // incorrect secret
-        ServerVerifier.verifyServer("{\n" +
+        ProxyVerifier.verifyServer("{\n" +
                 "    \"command\": \"SHARE\",\n" +
                 "    \"secret\": \"aaaaaaaaaaaaaa\",\n" +
                 "    \"resource\": {\n" +
@@ -123,18 +122,18 @@ public class AdditionalTest {
                 "    }\n" +
                 "}",
                 "{ \"response\" : \"error\", \"errorMessage\" : \"incorrect secret\" }",
-                false).test();
+                false);
 
         // resource field not given or not the correct type
         // no resource
-        ServerVerifier.verifyServer("{\"command\": \"REMOVE\"}",
+        ProxyVerifier.verifyServer("{\"command\": \"REMOVE\"}",
                 "{ \"response\" : \"error\", \"errorMessage\" : \"missing resource\" }",
-                false).test();
+                false);
 
         // incorrect type
-        ServerVerifier.verifyServer("{\"command\": \"REMOVE\", \"resource\": []}",
+        ProxyVerifier.verifyServer("{\"command\": \"REMOVE\", \"resource\": []}",
                 "{ \"response\" : \"error\", \"errorMessage\" : \"missing resource\" }",
-                false).test();
+                false);
     }
 
     @Test
@@ -146,55 +145,55 @@ public class AdditionalTest {
 
         // resource field not given or not the correct type
         // no resource
-        ServerVerifier.verifyServer("{\"command\": \"REMOVE\"}",
+        ProxyVerifier.verifyServer("{\"command\": \"REMOVE\"}",
                 "{ \"response\" : \"error\", \"errorMessage\" : \"missing resource\" }",
-                false).test();
+                false);
 
         // incorrect type
-        ServerVerifier.verifyServer("{\"command\": \"REMOVE\", \"resource\": []}",
+        ProxyVerifier.verifyServer("{\"command\": \"REMOVE\", \"resource\": []}",
                 "{ \"response\" : \"error\", \"errorMessage\" : \"missing resource\" }",
-                false).test();
+                false);
     }
 
     @Test
     void testInvalidRequestsQuery() throws InterruptedException {
         // resourceTemplate field not given or not the correct type
         // no resourceTemplate
-        ServerVerifier.verifyServer("{\"command\": \"QUERY\"}",
+        ProxyVerifier.verifyServer("{\"command\": \"QUERY\"}",
                 "{ \"response\" : \"error\", \"errorMessage\" : \"missing resourceTemplate\" }",
-                false).test();
+                false);
 
         // incorrect type
-        ServerVerifier.verifyServer("{\"command\": \"QUERY\", \"resourceTemplate\": []}",
+        ProxyVerifier.verifyServer("{\"command\": \"QUERY\", \"resourceTemplate\": []}",
                 "{ \"response\" : \"error\", \"errorMessage\" : \"missing resourceTemplate\" }",
-                false).test();
+                false);
     }
 
     @Test
     void testInvalidRequestsFetch() throws InterruptedException {
         // resourceTemplate field not given or not the correct type
         // no resourceTemplate
-        ServerVerifier.verifyServer("{\"command\": \"FETCH\"}",
+        ProxyVerifier.verifyServer("{\"command\": \"FETCH\"}",
                 "{ \"response\" : \"error\", \"errorMessage\" : \"missing resourceTemplate\" }",
-                false).test();
+                false);
 
         // incorrect type
-        ServerVerifier.verifyServer("{\"command\": \"FETCH\", \"resourceTemplate\": []}",
+        ProxyVerifier.verifyServer("{\"command\": \"FETCH\", \"resourceTemplate\": []}",
                 "{ \"response\" : \"error\", \"errorMessage\" : \"missing resourceTemplate\" }",
-                false).test();
+                false);
     }
 
     @Test
     void testInvalidRequestsExchange() throws InterruptedException {
         // missing serverList
-        ServerVerifier.verifyServer("{\"command\": \"EXCHANGE\"}",
+        ProxyVerifier.verifyServer("{\"command\": \"EXCHANGE\"}",
                 "{ \"response\" : \"error\", \"errorMessage\" : \"missing or invalid server list\" }",
-                false).test();
+                false);
 
         // incorrect type
-        ServerVerifier.verifyServer("{\"command\": \"EXCHANGE\", \"serverList\": {}}",
+        ProxyVerifier.verifyServer("{\"command\": \"EXCHANGE\", \"serverList\": {}}",
                 "{ \"response\" : \"error\", \"errorMessage\" : \"missing or invalid server list\" }",
-                false).test();
+                false);
     }
 
     @Test
