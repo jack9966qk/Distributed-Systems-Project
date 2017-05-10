@@ -10,7 +10,7 @@ public class AdditionalTest {
     @Test
     void testFetch() throws InterruptedException {
         // fetch something that does not exist, expect success with resultSize 0
-        ProxyVerifier.verifyServer("{\n" +
+        ServerVerifier.verifyServer("{\n" +
                 "    \"command\": \"FETCH\",\n" +
                 "    \"resourceTemplate\": {\n" +
                 "        \"name\": \"\",\n" +
@@ -31,7 +31,7 @@ public class AdditionalTest {
     void testInvalidRequestsShare() throws InterruptedException {
         // cannot share resource
         // uri not present
-        ProxyVerifier.verifyServer("{\n" +
+        ServerVerifier.verifyServer("{\n" +
                 "    \"command\": \"SHARE\",\n" +
                 "    \"secret\": \"abcd\",\n" +
                 "    \"resource\": {\n" +
@@ -49,7 +49,7 @@ public class AdditionalTest {
                 false).test();
 
         // uri not file scheme
-        ProxyVerifier.verifyServer("{\n" +
+        ServerVerifier.verifyServer("{\n" +
                 "    \"command\": \"SHARE\",\n" +
                 "    \"secret\": \"abcd\",\n" +
                 "    \"resource\": {\n" +
@@ -68,7 +68,7 @@ public class AdditionalTest {
                 false).test();
 
         // file does not exist
-        ProxyVerifier.verifyServer("{\n" +
+        ServerVerifier.verifyServer("{\n" +
                 "    \"command\": \"SHARE\",\n" +
                 "    \"secret\": \"abcd\",\n" +
                 "    \"resource\": {\n" +
@@ -88,7 +88,7 @@ public class AdditionalTest {
 
         // resource contained incorrect information that could not be recovered from
         // name field type
-        ProxyVerifier.verifyServer("{\n" +
+        ServerVerifier.verifyServer("{\n" +
                 "    \"command\": \"SHARE\",\n" +
                 "    \"secret\": \"abcd\",\n" +
                 "    \"resource\": {\n" +
@@ -107,7 +107,7 @@ public class AdditionalTest {
                 false).test();
 
         // incorrect secret
-        ProxyVerifier.verifyServer("{\n" +
+        ServerVerifier.verifyServer("{\n" +
                 "    \"command\": \"SHARE\",\n" +
                 "    \"secret\": \"aaaaaaaaaaaaaa\",\n" +
                 "    \"resource\": {\n" +
@@ -127,12 +127,12 @@ public class AdditionalTest {
 
         // resource field not given or not the correct type
         // no resource
-        ProxyVerifier.verifyServer("{\"command\": \"REMOVE\"}",
+        ServerVerifier.verifyServer("{\"command\": \"REMOVE\"}",
                 "{ \"response\" : \"error\", \"errorMessage\" : \"missing resource\" }",
                 false).test();
 
         // incorrect type
-        ProxyVerifier.verifyServer("{\"command\": \"REMOVE\", \"resource\": []}",
+        ServerVerifier.verifyServer("{\"command\": \"REMOVE\", \"resource\": []}",
                 "{ \"response\" : \"error\", \"errorMessage\" : \"missing resource\" }",
                 false).test();
     }
@@ -146,12 +146,12 @@ public class AdditionalTest {
 
         // resource field not given or not the correct type
         // no resource
-        ProxyVerifier.verifyServer("{\"command\": \"REMOVE\"}",
+        ServerVerifier.verifyServer("{\"command\": \"REMOVE\"}",
                 "{ \"response\" : \"error\", \"errorMessage\" : \"missing resource\" }",
                 false).test();
 
         // incorrect type
-        ProxyVerifier.verifyServer("{\"command\": \"REMOVE\", \"resource\": []}",
+        ServerVerifier.verifyServer("{\"command\": \"REMOVE\", \"resource\": []}",
                 "{ \"response\" : \"error\", \"errorMessage\" : \"missing resource\" }",
                 false).test();
     }
@@ -160,12 +160,12 @@ public class AdditionalTest {
     void testInvalidRequestsQuery() throws InterruptedException {
         // resourceTemplate field not given or not the correct type
         // no resourceTemplate
-        ProxyVerifier.verifyServer("{\"command\": \"QUERY\"}",
+        ServerVerifier.verifyServer("{\"command\": \"QUERY\"}",
                 "{ \"response\" : \"error\", \"errorMessage\" : \"missing resourceTemplate\" }",
                 false).test();
 
         // incorrect type
-        ProxyVerifier.verifyServer("{\"command\": \"QUERY\", \"resourceTemplate\": []}",
+        ServerVerifier.verifyServer("{\"command\": \"QUERY\", \"resourceTemplate\": []}",
                 "{ \"response\" : \"error\", \"errorMessage\" : \"missing resourceTemplate\" }",
                 false).test();
     }
@@ -174,12 +174,12 @@ public class AdditionalTest {
     void testInvalidRequestsFetch() throws InterruptedException {
         // resourceTemplate field not given or not the correct type
         // no resourceTemplate
-        ProxyVerifier.verifyServer("{\"command\": \"FETCH\"}",
+        ServerVerifier.verifyServer("{\"command\": \"FETCH\"}",
                 "{ \"response\" : \"error\", \"errorMessage\" : \"missing resourceTemplate\" }",
                 false).test();
 
         // incorrect type
-        ProxyVerifier.verifyServer("{\"command\": \"FETCH\", \"resourceTemplate\": []}",
+        ServerVerifier.verifyServer("{\"command\": \"FETCH\", \"resourceTemplate\": []}",
                 "{ \"response\" : \"error\", \"errorMessage\" : \"missing resourceTemplate\" }",
                 false).test();
     }
@@ -187,12 +187,12 @@ public class AdditionalTest {
     @Test
     void testInvalidRequestsExchange() throws InterruptedException {
         // missing serverList
-        ProxyVerifier.verifyServer("{\"command\": \"EXCHANGE\"}",
+        ServerVerifier.verifyServer("{\"command\": \"EXCHANGE\"}",
                 "{ \"response\" : \"error\", \"errorMessage\" : \"missing or invalid server list\" }",
                 false).test();
 
         // incorrect type
-        ProxyVerifier.verifyServer("{\"command\": \"EXCHANGE\", \"serverList\": {}}",
+        ServerVerifier.verifyServer("{\"command\": \"EXCHANGE\", \"serverList\": {}}",
                 "{ \"response\" : \"error\", \"errorMessage\" : \"missing or invalid server list\" }",
                 false).test();
     }

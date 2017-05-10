@@ -1,160 +1,158 @@
 package EzShare.unitTest;
 
 import EzShare.Server;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import org.junit.jupiter.api.Assertions;
+import EzShare.Static;
 
+import javax.net.ssl.SSLServerSocketFactory;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
 
 /**
- * Created by Jack on 5/5/2017.
+ * Created by Jack on 10/5/2017.
  */
 public class ProxyVerifier extends Thread {
-    static int waitTime = 1000 * 30;
+    static int timeout = 1000 * 30;
 
-    String requestJson;
-    String expectedResponseJson;
-    Set<String> expectedResourcesJson;
-    boolean testWithSunrise = false;
-
-    boolean successful = false;
-
-    private ProxyVerifier(String requestJson, String expectedResponseJson, boolean testWithSunrise) {
-        this.requestJson = requestJson;
-        this.expectedResponseJson = expectedResponseJson;
-        this.testWithSunrise = testWithSunrise;
+    interface Verifiable {
+        public void verifyAndForward(Socket from, Socket to) throws Exception;
     }
 
-    private ProxyVerifier(String requestJson, String expectedResponseJson, Set<String> expectedResourcesJson, boolean testWithSunrise) {
-        this.requestJson = requestJson;
-        this.expectedResponseJson = expectedResponseJson;
-        this.testWithSunrise = testWithSunrise;
-        this.expectedResourcesJson = expectedResourcesJson;
+    class ExpectedJson implements Verifiable {
+        String json;
+
+        public ExpectedJson(String json) {
+            this.json = json;
+        }
+
+        @Override
+        public void verifyAndForward(Socket from, Socket to) throws Exception {
+            String actual = Static.readJsonUTF(new DataInputStream(from.getInputStream()));
+            Verify.assertJsonEquivalent(actual, json);
+            Static.sendJsonUTF(new DataOutputStream(to.getOutputStream()), actual);
+        }
     }
 
-    public static ProxyVerifier verifyServer(String requestJson, String expectedResponseJson, boolean testWithSunrise) {
-        return new ProxyVerifier(requestJson, expectedResponseJson, testWithSunrise);
+    class ExpectedResources implements Verifiable {
+        Set<String> resources = new HashSet<>();
+
+        void add(String resourceJson) {
+            resources.add(resourceJson);
+        }
+
+        @Override
+        public void verifyAndForward(Socket from, Socket to) throws Exception {
+            DataOutputStream out = new DataOutputStream(to.getOutputStream());
+            List<String> strings = Verify.checkResources(from, resources);
+            for (String str : strings) {
+                Static.sendJsonUTF(out, str);
+            }
+        }
     }
 
-    public static ProxyVerifier verifyServer(String requestJson, String expectedResponseJson, Set<String> expectedResourcesJson, boolean testWithSunrise) {
-        return new ProxyVerifier(requestJson, expectedResponseJson, expectedResourcesJson, testWithSunrise);
+    Queue<Verifiable> expectedRequests = new LinkedList<>();
+    List<Verifiable> expectedResponses = new LinkedList<>();
+
+    Socket clientSocket;
+    Socket serverSocket;
+
+    int port;
+    int serverPort;
+    String serverHost;
+
+    boolean secure;
+    boolean successful;
+
+    void addExpectedRequest(Verifiable verifiable) {
+        expectedRequests.add(verifiable);
+    }
+
+    void addExpectedResponse(Verifiable verifiable) {
+        expectedResponses.add(verifiable);
+    }
+
+    void addExpectedRequestJson(String json) {
+        addExpectedRequest(new ExpectedJson(json));
+    }
+
+    void addExpectedResponseJson(String json) {
+        addExpectedResponse(new ExpectedJson(json));
+    }
+
+    void handleExpected(Queue<Verifiable> expected, Socket from, Socket to) throws Exception {
+        if (expected.isEmpty()) {
+            String str = new DataInputStream(from.getInputStream()).readUTF();
+            new DataOutputStream(to.getOutputStream()).writeUTF(str);
+        } else {
+            Verifiable next = expected.remove();
+            next.verifyAndForward(from, to);
+        }
+    }
+
+    synchronized void waitUntilReady() {
+        try {
+            wait(timeout);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
     public void run() {
-        new ServerThread("-port 9999 -secret abcd".split(" ")).start();
         try {
-            Server.waitUntilReady();
-            Socket socket = new Socket("localhost", 9999);
-            new DataOutputStream(socket.getOutputStream()).writeUTF(requestJson);
-            assertJsonEquivalent(new DataInputStream(socket.getInputStream()).readUTF(), expectedResponseJson);
-
-            // check resources
-            if (expectedResourcesJson != null) {
-                checkResources(socket);
+            ServerSocket selfServerSocket;
+            // setup proxy
+            if (secure) {
+                selfServerSocket = SSLServerSocketFactory.getDefault().createServerSocket(port);
+            } else {
+                selfServerSocket = new ServerSocket(port);
             }
 
-            // check with Sunrise
-            if (testWithSunrise) {
-                String sunriseResponse = getResponse("sunrise.cis.unimelb.edu.au", 3780, requestJson);
-                assertJsonEquivalent(expectedResponseJson, sunriseResponse);
+            selfServerSocket.setSoTimeout(timeout);
+
+            synchronized (this) {
+                // tell waiting threads that server is ready
+                notifyAll();
+            }
+
+            // establish connection with client
+            clientSocket = selfServerSocket.accept();
+            clientSocket.setSoTimeout(timeout);
+
+            // establish connection with server
+            serverSocket = new Socket(serverHost, serverPort);
+            serverSocket.setSoTimeout(timeout);
+
+            while (!(expectedRequests.isEmpty() && expectedResponses.isEmpty())) {
+                // assume every request has a corresponding response
+                // receive request, forward to server
+                handleExpected(expectedRequests, clientSocket, serverSocket);
+                // receive response, forward to client
+                handleExpected(expectedRequests, clientSocket, serverSocket);
             }
 
             successful = true;
         } catch (Exception e) {
-            successful = false;
             e.printStackTrace();
+            successful = false;
         } finally {
-            if (Server.isRunning()) {
-                Server.stop();
-            }
-            synchronized (this) {
-                notifyAll();
-            }
-        }
-    }
-
-    void checkResources(Socket socket) throws Exception {
-        List<String> receivedResources = new ArrayList<>();
-        String receivedResultSize = null;
-        DataInputStream inStream = new DataInputStream(socket.getInputStream());
-        while (true) {
-            String str = inStream.readUTF();
-            if (str.contains("resultSize")) {
-                receivedResultSize = str;
-                break;
-            } else {
-                receivedResources.add(str);
-            }
-        }
-
-        JsonObject resultSizeObj = new JsonParser().parse(receivedResultSize).getAsJsonObject();
-
-        if (resultSizeObj.get("resultSize").getAsInt() != receivedResources.size()) {
-            throw new Exception("size does not match");
-        }
-
-        for (String receivedResource : receivedResources) {
-            boolean ok = false;
-            for (String expectedResource : expectedResourcesJson) {
-                if (areEquivalentJson(receivedResource, expectedResource)) {
-                    ok = true;
-                    break;
-                }
-            }
-            if (!ok) {
-                throw new Exception("resources do not match");
+            try {
+                clientSocket.close();
+                serverSocket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+                successful = false;
             }
         }
     }
 
-    public synchronized void test() throws InterruptedException {
+    void setup() throws InterruptedException {
+        new ServerThread("-port 9999 -secret abcd".split(" ")).start();
+        Server.waitUntilReady();
         this.start();
-        wait(waitTime);
-        Assertions.assertTrue(this.successful);
-    }
-
-    private void removeAllNullFields(JsonObject jsonObject) {
-        for (Map.Entry<String, JsonElement> entry : jsonObject.entrySet()) {
-            String key = entry.getKey();
-            if (jsonObject.get(key).isJsonNull()) {
-                jsonObject.remove(key);
-            } else if (jsonObject.get(key).isJsonObject()) {
-                removeAllNullFields(jsonObject.getAsJsonObject(key));
-            }
-        }
-    }
-
-    private boolean areEquivalentJson(String json1, String json2) {
-        JsonParser parser = new JsonParser();
-        JsonObject obj1 = parser.parse(json1).getAsJsonObject();
-        JsonObject obj2 = parser.parse(json2).getAsJsonObject();
-        removeAllNullFields(obj1);
-        removeAllNullFields(obj2);
-        return obj1.equals(obj2);
-    }
-
-    private void assertJsonEquivalent(String actual, String expected) throws Exception {
-        if (!areEquivalentJson(actual, expected)) {
-            System.err.println("ACTUAL>>>>>>>>>>>");
-            System.err.println(actual);
-            System.err.println("=================");
-            System.err.println(expected);
-            System.err.println("EXPECTED<<<<<<<<<");
-            throw new Exception("assert failed");
-        }
-    }
-
-    String getResponse(String host, int port, String request) throws IOException {
-        Socket s = new Socket(host, port);
-        new DataOutputStream(s.getOutputStream()).writeUTF(request);
-        return new DataInputStream(s.getInputStream()).readUTF();
+        this.waitUntilReady();
     }
 }
-
