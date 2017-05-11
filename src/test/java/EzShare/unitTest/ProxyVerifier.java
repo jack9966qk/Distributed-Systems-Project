@@ -5,6 +5,7 @@ import EzShare.Static;
 import org.junit.jupiter.api.Assertions;
 
 import javax.net.ssl.SSLServerSocketFactory;
+import javax.net.ssl.SSLSocketFactory;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -149,7 +150,11 @@ public class ProxyVerifier extends Thread {
             clientSocket.setSoTimeout(timeout);
 
             // establish connection with server
-            serverSocket = new Socket(serverHost, serverPort);
+            if (secure) {
+                serverSocket = SSLSocketFactory.getDefault().createSocket(serverHost, serverPort);
+            } else {
+                serverSocket = new Socket(serverHost, serverPort);
+            }
             serverSocket.setSoTimeout(timeout);
 
             while (!(expectedRequests.isEmpty() && expectedResponses.isEmpty())) {
@@ -189,10 +194,6 @@ public class ProxyVerifier extends Thread {
         this.waitUntilReady();
     }
 
-    static void setUpActualServer() throws InterruptedException {
-        new ServerThread("-port 9999 -debug -secret abcd".split(" ")).start();
-        Server.waitUntilReady();
-    }
 
     void test() {
         this.waitUntilFinish();
@@ -212,7 +213,12 @@ public class ProxyVerifier extends Thread {
 
     static void verifyServer(String requestJson, String expectedResponseJson, boolean secure) throws InterruptedException {
         int port = 3780;
-        setUpActualServer();
+        if (secure) {
+            new ServerThread("-sport 9999 -debug -secret abcd".split(" ")).start();
+        } else {
+            new ServerThread("-port 9999 -debug -secret abcd".split(" ")).start();
+        }
+        Server.waitUntilReady();
         ProxyVerifier verifier = new ProxyVerifier(port, 9999, "localhost", secure);
         verifier.addExpectedResponseJson(expectedResponseJson);
         verifier.setup();
@@ -222,7 +228,12 @@ public class ProxyVerifier extends Thread {
 
     static void verifyServer(String requestJson, Set<String> expectedResources, boolean secure) throws InterruptedException {
         int port = 3780;
-        setUpActualServer();
+        if (secure) {
+            new ServerThread("-sport 9999 -debug -secret abcd".split(" ")).start();
+        } else {
+            new ServerThread("-port 9999 -debug -secret abcd".split(" ")).start();
+        }
+        Server.waitUntilReady();
         ProxyVerifier verifier = new ProxyVerifier(port, 9999, "localhost", secure);
         Verifiable expected = new ExpectedResourcesWithSuccess(expectedResources);
         verifier.addExpectedResponse(expected);
