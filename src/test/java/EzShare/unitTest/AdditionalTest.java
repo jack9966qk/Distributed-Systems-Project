@@ -22,9 +22,8 @@ public class AdditionalTest {
                 "        \"ezserver\": null\n" +
                 "    }\n" +
                 "}",
-                "{ \"response\" : \"success\" }",
                 new HashSet<String>(),
-                false).test();
+                false);
     }
 
     @Test
@@ -46,7 +45,7 @@ public class AdditionalTest {
                 "    }\n" +
                 "}",
                 "{ \"response\" : \"error\", \"errorMessage\" : \"invalid resource\" }",
-                false).test();
+                false);
 
         // uri not file scheme
         ProxyVerifier.verifyServer("{\n" +
@@ -65,7 +64,7 @@ public class AdditionalTest {
                 "    }\n" +
                 "}",
                 "{ \"response\" : \"error\", \"errorMessage\" : \"invalid resource\" }",
-                false).test();
+                false);
 
         // file does not exist
         ProxyVerifier.verifyServer("{\n" +
@@ -84,7 +83,7 @@ public class AdditionalTest {
                 "    }\n" +
                 "}",
                 "{ \"response\" : \"error\", \"errorMessage\" : \"cannot share resource\" }",
-                false).test();
+                false);
 
         // resource contained incorrect information that could not be recovered from
         // name field type
@@ -104,7 +103,7 @@ public class AdditionalTest {
                 "    }\n" +
                 "}",
                 "{ \"response\" : \"error\", \"errorMessage\" : \"invalid resource\" }",
-                false).test();
+                false);
 
         // incorrect secret
         ProxyVerifier.verifyServer("{\n" +
@@ -123,18 +122,18 @@ public class AdditionalTest {
                 "    }\n" +
                 "}",
                 "{ \"response\" : \"error\", \"errorMessage\" : \"incorrect secret\" }",
-                false).test();
+                false);
 
         // resource field not given or not the correct type
         // no resource
         ProxyVerifier.verifyServer("{\"command\": \"REMOVE\"}",
                 "{ \"response\" : \"error\", \"errorMessage\" : \"missing resource\" }",
-                false).test();
+                false);
 
         // incorrect type
         ProxyVerifier.verifyServer("{\"command\": \"REMOVE\", \"resource\": []}",
                 "{ \"response\" : \"error\", \"errorMessage\" : \"missing resource\" }",
-                false).test();
+                false);
     }
 
     @Test
@@ -148,12 +147,12 @@ public class AdditionalTest {
         // no resource
         ProxyVerifier.verifyServer("{\"command\": \"REMOVE\"}",
                 "{ \"response\" : \"error\", \"errorMessage\" : \"missing resource\" }",
-                false).test();
+                false);
 
         // incorrect type
         ProxyVerifier.verifyServer("{\"command\": \"REMOVE\", \"resource\": []}",
                 "{ \"response\" : \"error\", \"errorMessage\" : \"missing resource\" }",
-                false).test();
+                false);
     }
 
     @Test
@@ -162,12 +161,12 @@ public class AdditionalTest {
         // no resourceTemplate
         ProxyVerifier.verifyServer("{\"command\": \"QUERY\"}",
                 "{ \"response\" : \"error\", \"errorMessage\" : \"missing resourceTemplate\" }",
-                false).test();
+                false);
 
         // incorrect type
         ProxyVerifier.verifyServer("{\"command\": \"QUERY\", \"resourceTemplate\": []}",
                 "{ \"response\" : \"error\", \"errorMessage\" : \"missing resourceTemplate\" }",
-                false).test();
+                false);
     }
 
     @Test
@@ -176,12 +175,12 @@ public class AdditionalTest {
         // no resourceTemplate
         ProxyVerifier.verifyServer("{\"command\": \"FETCH\"}",
                 "{ \"response\" : \"error\", \"errorMessage\" : \"missing resourceTemplate\" }",
-                false).test();
+                false);
 
         // incorrect type
         ProxyVerifier.verifyServer("{\"command\": \"FETCH\", \"resourceTemplate\": []}",
                 "{ \"response\" : \"error\", \"errorMessage\" : \"missing resourceTemplate\" }",
-                false).test();
+                false);
     }
 
     @Test
@@ -189,12 +188,12 @@ public class AdditionalTest {
         // missing serverList
         ProxyVerifier.verifyServer("{\"command\": \"EXCHANGE\"}",
                 "{ \"response\" : \"error\", \"errorMessage\" : \"missing or invalid server list\" }",
-                false).test();
+                false);
 
         // incorrect type
         ProxyVerifier.verifyServer("{\"command\": \"EXCHANGE\", \"serverList\": {}}",
                 "{ \"response\" : \"error\", \"errorMessage\" : \"missing or invalid server list\" }",
-                false).test();
+                false);
     }
 
     @Test
