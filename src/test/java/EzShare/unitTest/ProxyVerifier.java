@@ -200,6 +200,16 @@ public class ProxyVerifier extends Thread {
         Server.stop();
     }
 
+    static void verifyServerBothSecureAndInsecure(String requestJson, String expectedResponseJson) throws InterruptedException {
+        verifyServer(requestJson, expectedResponseJson, false);
+        verifyServer(requestJson, expectedResponseJson, true);
+    }
+
+    static void verifyServerBothSecureAndInsecure(String requestJson, Set<String> expectedResources) throws InterruptedException {
+        verifyServer(requestJson, expectedResources, false);
+        verifyServer(requestJson, expectedResources, true);
+    }
+
     static void verifyServer(String requestJson, String expectedResponseJson, boolean secure) throws InterruptedException {
         int port = 3780;
         setUpActualServer();
