@@ -452,7 +452,7 @@ public class Client {
         options.addOption(Option.builder("share").build());
         options.addOption(Option.builder("tags").hasArg().type(String.class).build());
         options.addOption(Option.builder("uri").hasArg().type(String.class).build());
-        options.addOption(Option.builder("subscribe").hasArg().type(String.class).build());
+        options.addOption(Option.builder("subscribe").build());
 
         CommandLineParser parser = new DefaultParser();
         return parser.parse(options, args);
