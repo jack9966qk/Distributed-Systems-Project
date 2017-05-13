@@ -281,20 +281,9 @@ public class Client {
         return resources;
     }
 
-    /**
-     * Make subscribe request
-     *
-     * @param socket
-     * @param template
-     * @throws IOException
-     */
-    private static void subscribe(Socket socket, boolean relay, Resource template) throws IOException {
+    public static ClientSubscriptionThread makeClientSubscriptionThread(Socket socket, boolean relay, String id, Resource template) throws IOException {
         DataInputStream in = new DataInputStream(socket.getInputStream());
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-
-        //Auto generate id for this subscription
-        IdGenerator idGenerator = IdGenerator.getIdGeneartor();
-        String id = idGenerator.generateId();
 
         // send the subscription request
         Static.sendJsonUTF(out, makeJsonFrom("SUBSCRIBE", id, relay, template));
@@ -304,23 +293,40 @@ public class Client {
         boolean success = handleResponse(response);
 
         if (success) {
-            Logging.logInfo("Results:");
-            Scanner keyboard = new Scanner(System.in);
-            System.out.println("Press Enter to unsubscribe.");
-
             // Creating a new listening thread for Client to listen any subscription updates
             ClientSubscriptionThread clientListener = new ClientSubscriptionThread(socket, id);
-            clientListener.start();
-
-            // stop subscription when user press Enter button
-            if (keyboard.hasNextLine()) {
-                unsubscribe(socket, id);
-            }
+            return clientListener;
         }
-        
+        return null;
     }
 
-    public static void unsubscribe(Socket socket, String id) throws IOException {
+    /**
+     * Make subscribe request
+     *
+     * @param socket
+     * @param template
+     * @throws IOException
+     */
+    private static void subscribe(Socket socket, String host, int port, boolean relay, Resource template) throws IOException {
+        //Auto generate id for this subscription
+        IdGenerator idGenerator = IdGenerator.getIdGeneartor();
+        String id = idGenerator.generateId();
+
+        ClientSubscriptionThread clientListener = makeClientSubscriptionThread(socket, relay, id, template);
+        if (clientListener != null) {
+            clientListener.start();
+            Logging.logInfo("Results:");
+            Logging.logInfo("Press Enter to unsubscribe.");
+            // stop subscription when user press Enter button
+            Scanner scanner = new Scanner(System.in);
+            scanner.nextLine();
+            socket = connectToServer(host, port, Static.DEFAULT_TIMEOUT); // use new socket to send unsubscribe command
+            unsubscribe(clientListener, socket, id);
+        }
+    }
+
+    public static void unsubscribe(ClientSubscriptionThread clientListener, Socket socket, String id) throws IOException {
+        clientListener.terminate();
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
         Static.sendJsonUTF(out, makeJsonFrom("UNSUBSCRIBE", id));
         //TODO
@@ -559,15 +565,19 @@ public class Client {
                 Logging.logInfo(Arrays.toString(servers));
                 exchange(socket, servers);
             } else if (cmd.hasOption("subscribe")) {
-                subscribe(socket, true, resource);
+                subscribe(socket, host, port, true, resource);
             }
         } catch (SocketTimeoutException e) {
             Logging.logInfo("Timeout communicating with server, please check connections and try again.");
         } catch (IOException e) {
+            e.printStackTrace();
             Logging.logInfo("Unknown connection error, please check connections and try again.");
         } finally {
             try {
-                socket.close();
+                if (socket != null) {
+                    Logging.logInfo("Closing connection with server");
+                    socket.close();
+                }
             } catch (IOException e) {
                 Logging.logInfo("Network error closing socket to server");
             }

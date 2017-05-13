@@ -25,8 +25,7 @@ public class ServerList {
     public boolean add(EzServer ezServer) throws IOException {
         if (!servers.contains(ezServer)) {
             for (Resource template : Subscription.getSubscriptionTemplates()) {
-                Socket socket = new Socket(ezServer.getHostname(), ezServer.getPort());
-                Subscription.addRelaySubscriptionThread(template, socket);
+                Subscription.addRelaySubscriptionThread(template, ezServer.getHostname(), ezServer.getPort());
             }
         }
         return servers.add(ezServer);

@@ -1,6 +1,8 @@
 package EzShare;
 
+import java.io.DataOutputStream;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.util.HashMap;
@@ -76,17 +78,28 @@ public class Subscription {
         }
     }
 
-    public static void addRelaySubscriptionThread(Resource template, Socket socket) {
+    public static void addRelaySubscriptionThread(Resource template, String host, int port) throws IOException {
+        SocketAddress address = new InetSocketAddress(host, port);
+        Logging.logInfo("Need subscription relay to " + address);
         if (!relayThreads.containsKey(template)) {
-            ClientSubscriptionThread relayThread = new ClientSubscriptionThread(socket, "123");
-            relayThreads.put(template, relayThread);
+            String id = IdGenerator.getIdGeneartor().generateId();
+            Socket socket = new Socket(host, port);
+            ClientSubscriptionThread relayThread = Client.makeClientSubscriptionThread(socket, false, id, template);
+            if (relayThread != null) {
+                relayThread.start();
+                relayThreads.put(template, relayThread);
+            } else {
+                Logging.logInfo("failed to create relay thread");
+            }
+        } else {
+            Logging.logInfo("Such relay already exists, skip creating new relay thread");
         }
     }
 
     public static void removeRelaySubscriptionThread(Resource template) {
         ClientSubscriptionThread thread = relayThreads.get(template);
         try {
-            Client.unsubscribe(thread.getServer(), thread.getSubId());
+            Client.unsubscribe(thread, thread.getServer(), thread.getSubId());
         } catch (IOException e) {
             // TODO
             e.printStackTrace();
