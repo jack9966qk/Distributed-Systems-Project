@@ -305,7 +305,6 @@ public class Client {
 
         if (success) {
             Logging.logInfo("Results:");
-            Scanner keyboard = new Scanner(System.in);
             System.out.println("Press Enter to unsubscribe.");
 
             // Creating a new listening thread for Client to listen any subscription updates
@@ -313,9 +312,11 @@ public class Client {
             clientListener.start();
 
             // stop subscription when user press Enter button
-            if (keyboard.hasNextLine()) {
-                unsubscribe(socket, id);
-            }
+            BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
+            String s = null;
+            while ((s = stdin.readLine()) == null && s.length() != 0);
+            System.out.println("has next line");
+            unsubscribe(socket, id);
         }
         
     }
@@ -567,6 +568,7 @@ public class Client {
             Logging.logInfo("Unknown connection error, please check connections and try again.");
         } finally {
             try {
+                System.out.println("233333");
                 socket.close();
             } catch (IOException e) {
                 Logging.logInfo("Network error closing socket to server");

@@ -36,8 +36,8 @@ public class ClientSubscriptionThread extends Thread {
 
     @Override
     public void run() {
-
         try {
+            server.setSoTimeout(0);
             out = new DataOutputStream(server.getOutputStream());
             in = new DataInputStream(server.getInputStream());
             running = true;

@@ -46,6 +46,7 @@ public class SubscriptionThread extends Thread {
     @Override
     public void run() {
         try {
+            this.running = true;
             this.outputStream = new DataOutputStream(client.getOutputStream());
             while (running) {
                 Resource resource;

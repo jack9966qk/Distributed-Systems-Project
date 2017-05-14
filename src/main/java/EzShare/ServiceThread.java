@@ -545,6 +545,7 @@ public class ServiceThread extends Thread {
                 Subscription.addRelaySubscriptionThread(resourceTemplate, socket);
             }
         }
+        socket = null;
         respondSuccess(id);
     }
 
@@ -633,6 +634,7 @@ public class ServiceThread extends Thread {
         } catch (SocketTimeoutException e) {
             Logging.logInfo("Timeout communicating with client, disconnecting...");
         } catch (IOException e) {
+            e.printStackTrace();
             Logging.logInfo("Unknown network error with client, disconnecting...");
         } catch (ServerException e) {
 
@@ -651,7 +653,9 @@ public class ServiceThread extends Thread {
             Logging.logInfo("Unknown exception in ServiceThread, disconnecting...");
         } finally {
             try {
-                socket.close();
+                if (socket != null) {
+                    socket.close();
+                }
             } catch (IOException e) {
                 Logging.logInfo("Network error closing connection with client");
             }
