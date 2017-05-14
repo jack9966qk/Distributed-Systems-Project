@@ -36,15 +36,17 @@ public class ClientSubscriptionThread extends Thread {
 
     @Override
     public void run() {
+        Logging.logInfo("Subscribe thread started");
+
         try {
-            server.setSoTimeout(0);
+            server.setSoTimeout(0); // disable timeout waiting for resources
             out = new DataOutputStream(server.getOutputStream());
             in = new DataInputStream(server.getInputStream());
             running = true;
 
             while (running) {
                 String response = Static.readJsonUTF(in);
-                System.out.println(response);
+                Logging.logInfo(response);
                 Resource resource = Resource.fromJson(response);
 
                 // for server doing relay: send potential match to each subscription threads
@@ -54,8 +56,11 @@ public class ClientSubscriptionThread extends Thread {
             }
 
         } catch (IOException e) {
-            e.printStackTrace();
+            if (running) {
+                e.printStackTrace();
+            }
         } finally {
+            Logging.logInfo("Closing subscription connection with server " + server.getRemoteSocketAddress());
             try {
                 server.close();
             } catch (IOException e) {

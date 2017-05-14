@@ -48,6 +48,7 @@ public class SubscriptionThread extends Thread {
         try {
             this.running = true;
             this.outputStream = new DataOutputStream(client.getOutputStream());
+            this.running = true;
             while (running) {
                 Resource resource;
                 synchronized (this) {
@@ -69,6 +70,7 @@ public class SubscriptionThread extends Thread {
                 e.printStackTrace();
             }
         } finally {
+            Logging.logInfo("Closing subscription connection with client " + client.getRemoteSocketAddress());
             try {
                 client.close();
             } catch (IOException e) {

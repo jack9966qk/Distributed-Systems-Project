@@ -541,12 +541,12 @@ public class ServiceThread extends Thread {
         Subscription.addSubscriptionThread(socket, resourceTemplate, id);
         if (relay) {
             for (EzServer server : serverList.getServers()) {
-                Socket socket = new Socket(server.getHostname(), server.getPort());
-                Subscription.addRelaySubscriptionThread(resourceTemplate, socket);
+                Subscription.addRelaySubscriptionThread(resourceTemplate, server.getHostname(), server.getPort());
             }
         }
         socket = null;
         respondSuccess(id);
+        socket = null; // prevent socket closed in main()
     }
 
     private void unsubscribe(String id) throws ServerException, IOException {
