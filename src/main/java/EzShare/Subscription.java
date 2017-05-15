@@ -99,7 +99,7 @@ public class Subscription {
     public static void removeRelaySubscriptionThread(Resource template) {
         ClientSubscriptionThread thread = relayThreads.get(template);
         try {
-            Client.unsubscribe(thread, thread.getServer(), thread.getSubId());
+            Client.unsubscribe(thread, thread.getServer(), thread.getSubId(), Static.DEFAULT_TIMEOUT);
         } catch (IOException e) {
             // TODO
             e.printStackTrace();
