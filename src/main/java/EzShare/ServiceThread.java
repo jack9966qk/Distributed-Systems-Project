@@ -541,7 +541,7 @@ public class ServiceThread extends Thread {
         Subscription.addSubscriptionThread(socket, resourceTemplate, id);
         if (relay) {
             for (EzServer server : serverList.getServers()) {
-                Subscription.addRelaySubscriptionThread(resourceTemplate, server.getHostname(), server.getPort());
+                Subscription.addRelaySubscription(server, resourceTemplate);
             }
         }
         socket = null;

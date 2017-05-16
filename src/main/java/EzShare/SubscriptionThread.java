@@ -61,6 +61,7 @@ public class SubscriptionThread extends Thread {
 
                 if (resource.matchesTemplate(template)) {
                     Static.sendJsonUTF(outputStream, resource.toJson());
+                    Subscription.incrementCount(client);
                 }
             }
         } catch (IOException e) {

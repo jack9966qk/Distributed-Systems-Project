@@ -24,14 +24,14 @@ public class ClientSubscriptionThread extends Thread {
 
     public String getSubId() {return id;}
     public boolean isRunning() {return running;}
-    public Socket getServer() {
+    public Socket getSocket() {
         return server;
     }
-    public String getHost() {
-        return host;
+    public EzServer getEzServer() {
+        return new EzServer(host, port);
     }
-    public int getPort() {
-        return port;
+    public Resource getTemplate() {
+        return template;
     }
 
     public ClientSubscriptionThread(Socket server, String id, Resource template) {

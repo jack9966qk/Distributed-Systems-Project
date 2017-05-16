@@ -1,14 +1,11 @@
 package EzShare;
 
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Static class for managing subscriptions on server side
@@ -16,34 +13,40 @@ import java.util.Set;
  */
 public class Subscription {
     // count result size for each client
-    public static Map<SocketAddress, Integer> resultSizes = new HashMap<>();
+    public static Map<String, Integer> resultSizes = new HashMap<>();
 
     // threads for connection with all clients for subscription, id is only unique from the same client
-    public static Map<SocketAddress, Map<String, SubscriptionThread>> subscriptionThreads = new HashMap<>();
+    public static Map<String, Map<String, SubscriptionThread>> subscriptionThreads = new HashMap<>();
 
     // threads for all server side subscription requests (relay)
-    public static Map<Resource, ClientSubscriptionThread> relayThreads = new HashMap<>();
+    public static List<ClientSubscriptionThread> relayThreads = new ArrayList<>();
 
     public static void addSubscriptionThread(Socket client, Resource template, String id) {
-        SocketAddress address = client.getRemoteSocketAddress();
-        if (!subscriptionThreads.containsKey(address)) {
-            subscriptionThreads.put(address, new HashMap<>());
+        InetSocketAddress address = (InetSocketAddress) client.getRemoteSocketAddress();
+        if (!subscriptionThreads.containsKey(address.getHostName())) {
+            subscriptionThreads.put(address.getHostName(), new HashMap<>());
         }
         SubscriptionThread thread = new SubscriptionThread(client, template);
-        subscriptionThreads.get(address).put(id, thread);
-        if (!resultSizes.containsKey(address)) {
-            resultSizes.put(address, 0);
+        subscriptionThreads.get(address.getHostName()).put(id, thread);
+        if (!resultSizes.containsKey(address.getHostName())) {
+            resultSizes.put(address.getHostName(), 0);
         }
         thread.start();
     }
 
-    public static Integer removeSubscriptionThread(Socket client, String id) throws ServerException {
-        SocketAddress address = client.getRemoteSocketAddress();
-        if (!subscriptionThreads.containsKey(address)) {
+    public static void incrementCount(Socket client) {
+        InetSocketAddress address = (InetSocketAddress) client.getRemoteSocketAddress();
+        Integer size = resultSizes.get(address.getHostName());
+        resultSizes.put(address.getHostName(), size + 1);
+    }
+
+    public static Integer removeSubscriptionThread(Socket client, String id) throws ServerException, IOException {
+        InetSocketAddress address = (InetSocketAddress) client.getRemoteSocketAddress();
+        if (!subscriptionThreads.containsKey(address.getHostName())) {
             throw new ServerException("Subscription does not exist");
         }
-        Map<String, SubscriptionThread> threads = subscriptionThreads.get(address);
-        if (!threads.containsKey(id) ||threads.size() == 0) {
+        Map<String, SubscriptionThread> threads = subscriptionThreads.get(address.getHostName());
+        if (!threads.containsKey(id)) {
             throw new ServerException("Subscription does not exist");
         }
         SubscriptionThread thread = threads.get(id);
@@ -51,9 +54,12 @@ public class Subscription {
         thread.terminate();
         threads.remove(id);
 
+        System.out.println(threads);
+        System.out.println(threads.size());
+
         // remove relay if not required by other subscription threads
         boolean relayRequired = false;
-        for (Map.Entry<SocketAddress, Map<String, SubscriptionThread>> entry :
+        for (Map.Entry<String, Map<String, SubscriptionThread>> entry :
                 subscriptionThreads.entrySet()) {
             for (Map.Entry<String, SubscriptionThread> threadEntry :
                     entry.getValue().entrySet()) {
@@ -67,43 +73,41 @@ public class Subscription {
 
         if (!relayRequired) {
             // relay for this specific template can be stopped
-            removeRelaySubscriptionThread(template);
+            removeRelaySubscriptions(template);
         }
 
         if (threads.size() == 0) {
-            Integer resultSize = resultSizes.get(address);
-            return resultSize;
+            return resultSizes.get(address.getHostName());
         } else {
             return null;
         }
     }
 
-    public static void addRelaySubscriptionThread(Resource template, String host, int port) throws IOException {
-        SocketAddress address = new InetSocketAddress(host, port);
-        Logging.logInfo("Need subscription relay to " + address);
-        if (!relayThreads.containsKey(template)) {
+    public static void addRelaySubscription(EzServer ezServer, Resource template) throws IOException {
+        if (relayThreads.stream().filter(
+            t -> t.getEzServer().equals(ezServer) && t.getTemplate().equals(template)
+        ).count() == 0) {
+            // if not exist, create new relay thread
+            Socket socket = new Socket(ezServer.getHostname(), ezServer.getPort());
             String id = IdGenerator.getIdGeneartor().generateId();
-            Socket socket = new Socket(host, port);
-            ClientSubscriptionThread relayThread = Client.makeClientSubscriptionThread(socket, false, id, template);
-            if (relayThread != null) {
-                relayThread.start();
-                relayThreads.put(template, relayThread);
-            } else {
-                Logging.logInfo("failed to create relay thread");
+            ClientSubscriptionThread thread = Client.makeClientSubscriptionThread(socket, false, id, template);
+            if (thread != null) {
+                thread.start();
+                relayThreads.add(thread);
             }
-        } else {
-            Logging.logInfo("Such relay already exists, skip creating new relay thread");
         }
     }
 
-    public static void removeRelaySubscriptionThread(Resource template) {
-        ClientSubscriptionThread thread = relayThreads.get(template);
-        try {
-            Client.unsubscribe(thread, thread.getServer(), thread.getSubId(), Static.DEFAULT_TIMEOUT);
-        } catch (IOException e) {
-            // TODO
-            e.printStackTrace();
+    public static void removeRelaySubscriptions(Resource template) throws IOException {
+        List<ClientSubscriptionThread> toRemove = relayThreads.stream().filter(
+                t -> t.getTemplate().equals(template)
+        ).collect(Collectors.toList());
+        for (ClientSubscriptionThread thread : toRemove) {
+            Socket socket = Client.connectToServer(
+                    thread.getEzServer().getHostname(), thread.getEzServer().getPort(), Static.DEFAULT_TIMEOUT);
+            Client.unsubscribe(thread, socket, Static.DEFAULT_TIMEOUT);
         }
+        relayThreads.removeAll(toRemove);
     }
 
     public static Set<Resource> getSubscriptionTemplates() {
@@ -116,7 +120,7 @@ public class Subscription {
 
     public static Set<SubscriptionThread> getSubscriptionThreads() {
         Set<SubscriptionThread> threads = new HashSet<>();
-        for (Map.Entry<SocketAddress, Map<String, SubscriptionThread>> entry :
+        for (Map.Entry<String, Map<String, SubscriptionThread>> entry :
                 subscriptionThreads.entrySet()) {
             for (Map.Entry<String, SubscriptionThread> threadEntry :
                     entry.getValue().entrySet()) {

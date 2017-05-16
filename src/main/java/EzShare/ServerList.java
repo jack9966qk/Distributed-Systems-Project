@@ -1,7 +1,6 @@
 package EzShare;
 
 import java.io.IOException;
-import java.net.Socket;
 import java.util.*;
 
 /**
@@ -25,7 +24,7 @@ public class ServerList {
     public boolean add(EzServer ezServer) throws IOException {
         if (!servers.contains(ezServer)) {
             for (Resource template : Subscription.getSubscriptionTemplates()) {
-                Subscription.addRelaySubscriptionThread(template, ezServer.getHostname(), ezServer.getPort());
+                Subscription.addRelaySubscription(ezServer, template);
             }
         }
         return servers.add(ezServer);

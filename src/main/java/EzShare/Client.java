@@ -321,16 +321,18 @@ public class Client {
             Scanner scanner = new Scanner(System.in);
             scanner.nextLine();
             socket = connectToServer(host, port, Static.DEFAULT_TIMEOUT); // use new socket to send unsubscribe command
-            unsubscribe(clientListener, socket, id, Static.DEFAULT_TIMEOUT);
+            unsubscribe(clientListener, socket, Static.DEFAULT_TIMEOUT);
         }
     }
 
-    public static void unsubscribe(ClientSubscriptionThread clientListener, Socket socket, String id, int timeout) throws IOException {
+    public static void unsubscribe(ClientSubscriptionThread clientListener, Socket socket, int timeout) throws IOException {
 
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
         DataInputStream in = new DataInputStream(socket.getInputStream());
 
-        Static.sendJsonUTF(out, makeJsonFrom("UNSUBSCRIBE", id));
+        clientListener.terminate();
+
+        Static.sendJsonUTF(out, makeJsonFrom("UNSUBSCRIBE", clientListener.getSubId()));
         String response = in.readUTF();
         Logging.logInfo(response);
 
