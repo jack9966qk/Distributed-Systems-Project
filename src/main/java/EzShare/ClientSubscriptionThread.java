@@ -3,6 +3,8 @@ package EzShare;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 
 /**
@@ -12,6 +14,9 @@ public class ClientSubscriptionThread extends Thread {
 
     private Socket server;
     private String id;
+    private String host;
+    private int port;
+    private Resource template;
 
     private DataOutputStream out;
     private DataInputStream in;
@@ -19,14 +24,27 @@ public class ClientSubscriptionThread extends Thread {
 
     public String getSubId() {return id;}
     public boolean isRunning() {return running;}
-
     public Socket getServer() {
         return server;
     }
+    public String getHost() {
+        return host;
+    }
+    public int getPort() {
+        return port;
+    }
 
-    public ClientSubscriptionThread(Socket server, String id) {
+    public ClientSubscriptionThread(Socket server, String id, Resource template) {
+
         this.server = server;
         this.id = id;
+        this.template = template;
+
+        InetSocketAddress socketAddress = (InetSocketAddress) server.getRemoteSocketAddress();
+        this.port = socketAddress.getPort();
+
+        InetAddress inetAddress = socketAddress.getAddress();
+        this.host = inetAddress.getHostAddress();
     }
 
     public void terminate() {

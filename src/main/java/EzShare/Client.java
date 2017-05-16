@@ -294,7 +294,7 @@ public class Client {
 
         if (success) {
             // Creating a new listening thread for Client to listen any subscription updates
-            ClientSubscriptionThread clientListener = new ClientSubscriptionThread(socket, id);
+            ClientSubscriptionThread clientListener = new ClientSubscriptionThread(socket, id, template);
             return clientListener;
         }
         return null;
