@@ -17,7 +17,7 @@ public class EchoServer {
     public static void main(String[] arstring) {
         try {
 
-            Static.configSecurity();
+            Static.configSecurity("keystore/server.jks");
 
             SSLServerSocketFactory sslserversocketfactory =
                     (SSLServerSocketFactory)

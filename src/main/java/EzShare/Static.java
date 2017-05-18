@@ -22,9 +22,9 @@ public class Static {
     /**
      * Set security related properties so that SSL/TLS related functions can be used
      */
-    public static void configSecurity() {
-        System.setProperty("javax.net.ssl.keyStore", "selfSigned");
-        System.setProperty("javax.net.ssl.trustStore", "selfSigned");
+    public static void configSecurity(String keyStoreFilename) {
+        System.setProperty("javax.net.ssl.keyStore", keyStoreFilename);
+        System.setProperty("javax.net.ssl.trustStore", keyStoreFilename);
         System.setProperty("javax.net.ssl.keyStorePassword", "distributed");
     }
 

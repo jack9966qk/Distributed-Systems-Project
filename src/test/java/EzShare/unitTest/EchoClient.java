@@ -17,7 +17,7 @@ public class EchoClient {
     public static void main(String[] arstring) {
         try {
 
-            Static.configSecurity();
+            Static.configSecurity("keystore/client.jks");
 
             SSLSocketFactory sslsocketfactory =
                     (SSLSocketFactory) SSLSocketFactory.getDefault();

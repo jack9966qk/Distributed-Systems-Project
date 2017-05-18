@@ -92,7 +92,7 @@ public class Server {
      */
     public static void main(String[] args) {
         CommandLine cmd = null;
-        Static.configSecurity();
+        Static.configSecurity("keystore/server.jks");
         try {
             cmd = getOptions(args);
         } catch (ParseException e) {

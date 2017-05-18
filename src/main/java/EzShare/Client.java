@@ -427,7 +427,7 @@ public class Client {
      * @param args command line arguments
      */
     public static void main(String[] args) {
-        Static.configSecurity();
+        Static.configSecurity("keystore/client.jks");
 
         // command line arguments parsing
         CommandLine cmd = null;
