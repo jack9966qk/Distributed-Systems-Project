@@ -8,10 +8,6 @@ import java.util.*;
 
 import org.apache.commons.cli.*;
 
-import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLServerSocket;
-import javax.net.ssl.SSLServerSocketFactory;
-
 /**
  * EzShare server implementation, has a main method to be used through command line
  */
@@ -21,20 +17,33 @@ public class Server {
     public static Set<EzServer> insecureserverList = Collections.synchronizedSet(new HashSet<>());
     public static HashMap<SocketAddress, Date> lastConnectionTime = new HashMap<>();
     public static EzServer self;
+    public static ListenerThread insecureListener;
+    public static ListenerThread secureListener;
 
-    private static boolean running = false;
     private static Thread mainThread;
 
     public static boolean isRunning() {
-        return running;
+        if (insecureListener != null) {
+            if (insecureListener.running) {
+                return true;
+            }
+        }
+        if (secureListener != null) {
+            return secureListener.running;
+        }
+        return false;
     }
 
     /**
      * Terminate server activity (for testing)
      */
     public static void stop() {
-        running = false;
-        mainThread.interrupt();
+        if (insecureListener != null) {
+            insecureListener.terminate();
+        }
+        if (secureListener != null) {
+            secureListener.terminate();
+        }
     }
 
     /**
@@ -45,101 +54,6 @@ public class Server {
     public static void waitUntilReady() throws InterruptedException {
         while (!Server.isRunning()) { // busy waiting
             Thread.sleep(100);
-        }
-    }
-
-    /**
-     * Setup insecure server, open socket, start listening to connections
-     *
-     * @param connectionIntervalLimit the time interval between each new connection from clients
-     * @param exchangeInterval        the time interval between each auto-exchange
-     * @param secret                  the secret password from the Server
-     * @param host                    the host address for the server
-     * @param port                    the port number for the server
-     * @throws IOException
-     */
-    public static void startServer(int connectionIntervalLimit, int exchangeInterval, String secret, String host
-            , int port) throws IOException {
-        self = new EzServer(host, port);
-        ServerSocket listenSocket = null;
-        try {
-            // for sending exchange request to other servers
-            ExchangeThread exchangeThread = new ExchangeThread(exchangeInterval, insecureserverList);
-            exchangeThread.start();
-
-            listenSocket = new ServerSocket(port);
-            int i = 0;
-            Logging.logInfo("Server initialisation complete");
-            running = true;
-            while (running) {
-                //TODO relay and exchange
-                // wait for new client
-                Logging.logInfo("Server listening for a connection");
-                Socket clientSocket = listenSocket.accept();
-                SocketAddress clientAddress = clientSocket.getRemoteSocketAddress();
-                i++;
-                Logging.logInfo("Received connection " + i);
-                // start a new thread handling the client
-                // TODO limitation on total number of threads
-                ServiceThread c = new ServiceThread(lastConnectionTime, clientSocket, secret, resourceStorage,secureserverList,insecureserverList, self);
-                c.start();
-                Thread.sleep(connectionIntervalLimit);
-            }
-        } catch (InterruptedException e) {
-            if (running) {
-                e.printStackTrace();
-            } else {
-                listenSocket.close();
-                Logging.logInfo("Server shutting down...");
-            }
-        }
-    }
-
-
-
-
-    /**
-     * Setup secure server, open socket, start listening to connections
-     *
-     * @param connectionIntervalLimit the time interval between each new connection from clients
-     * @param exchangeInterval        the time interval between each auto-exchange
-     * @param secret                  the secret password from the Server
-     * @param host                    the host address for the server
-     * @param sport                    the port number for the server
-     * @throws IOException
-     */
-    public static void startSServer(int connectionIntervalLimit, int exchangeInterval, String secret, String host
-            , int sport) throws IOException {
-        self = new EzServer(host, sport);
-        SSLServerSocketFactory sslserversocketfactory =
-                (SSLServerSocketFactory)
-                SSLServerSocketFactory.getDefault();
-        SSLServerSocket sslserversocket =
-                (SSLServerSocket)
-                sslserversocketfactory.createServerSocket(sport);
-        try {
-            int i = 0;
-            Logging.logInfo("Server initialisation complete");
-            running = true;
-            while (running) {
-                // wait for new client
-                Logging.logInfo("Server listening for a connection");
-                SSLSocket sslsocket = (SSLSocket) sslserversocket.accept();
-                i++;
-                Logging.logInfo("Received connection " + i);
-                // start a new thread handling the client
-                // TODO limitation on total number of threads
-                ServiceThread c = new ServiceThread(lastConnectionTime, sslsocket, secret, resourceStorage, secureserverList, insecureserverList, self);
-                c.start();
-                Thread.sleep(connectionIntervalLimit);
-            }
-        }catch (InterruptedException e) {
-                if (running) {
-                    e.printStackTrace();
-                } else {
-                    sslserversocket.close();
-                    Logging.logInfo("Server shutting down...");
-                }
         }
     }
 
@@ -208,7 +122,6 @@ public class Server {
         Logging.logInfo("Server secret: " + secret);
 
         try {
-
             // determine host
             InetAddress address = InetAddress.getLocalHost();
             String host = cmd.getOptionValue("advertisedhostname", address.getHostName());
@@ -227,33 +140,39 @@ public class Server {
                 exchangeInterval = Static.DEFAULT_EXCHANGE_INTERVAL;
             }
 
-            // set default sport value
-            int sport = Static.DEFAULT_SPORT, port;
-            try {
-                // determine whether it is a port or sport where sport has higher precedence
-                if (!cmd.hasOption("sport")&&!cmd.hasOption("port")) {
-                    startSServer(connectionIntervalLimit, exchangeInterval, secret, host, sport);
-                }
-                if(cmd.hasOption("sport")) {
-                    sport = Integer.parseInt(cmd.getOptionValue("sport"));
-                    // Start secure server
-                    startSServer(connectionIntervalLimit, exchangeInterval, secret, host, sport);
-                }
-                if(cmd.hasOption("port")) {
-                    port = Integer.parseInt(cmd.getOptionValue("port"));
-                    // Start insecure server
-                    startServer(connectionIntervalLimit, exchangeInterval, secret, host, port);
-                }
-            }
-            catch (BindException e) {
-                Logging.logInfo("Port already taken, exiting...");
-            }
-            catch (Exception e) {
-                Logging.logInfo("Unknown Exception in Server main thread, exiting...");
+            // set ports
+            int port;
+            if (cmd.hasOption("port")) {
+                port = Integer.parseInt((cmd.getOptionValue("port")));
+            } else {
+                port = Static.DEFAULT_PORT;
             }
 
+            int sport;
+            if (cmd.hasOption("sport")) {
+                sport = Integer.parseInt((cmd.getOptionValue("sport")));
+            } else {
+                sport = Static.DEFAULT_SPORT;
+            }
 
-
+            secureListener = new ListenerThread(
+                    connectionIntervalLimit,
+                    exchangeInterval,
+                    secret,
+                    host,
+                    sport,
+                    true,
+                    secureserverList);
+            secureListener.start();
+            insecureListener = new ListenerThread(
+                    connectionIntervalLimit,
+                    exchangeInterval,
+                    secret,
+                    host,
+                    port,
+                    false,
+                    insecureserverList);
+            insecureListener.start();
         } catch (IOException e) {
             Logging.logInfo("Unknown IOException in Server main thread, exiting...");
         } catch (Exception e) {

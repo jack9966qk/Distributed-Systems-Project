@@ -17,6 +17,7 @@ public class Static {
     public static final int DEFAULT_TIMEOUT = 1000 * 10;
     public static final int FILE_READ_WRITE_CHUNK_SIZE = 16 * 1024;
     public static final int DEFAULT_SPORT = 3781;
+    public static final int DEFAULT_PORT = 3780;
 
     /**
      * Set security related properties so that SSL/TLS related functions can be used

@@ -15,16 +15,18 @@ public class ExchangeThread extends Thread {
     private int interval;
     private Set<EzServer> serverList;
     private Date lastExchangeTime;
+    private boolean secure;
 
     /**
      * Create a new exchange thread
-     *
-     * @param interval   time interval between exchange being performed
+     *  @param interval   time interval between exchange being performed
      * @param serverList a reference of list of servers to send exchange
+     * @param secure
      */
-    public ExchangeThread(int interval, Set<EzServer> serverList) {
+    public ExchangeThread(int interval, Set<EzServer> serverList, boolean secure) {
         this.interval = interval;
         this.serverList = serverList;
+        this.secure = secure;
         lastExchangeTime = new Date();
     }
 
@@ -67,7 +69,7 @@ public class ExchangeThread extends Thread {
             Logging.logInfo("sending to " + server);
             Socket socket = null;
             try {
-                socket = Client.connectToServer(server.hostname, server.port, Static.DEFAULT_TIMEOUT);
+                socket = Client.connectToServer(server.hostname, server.port, Static.DEFAULT_TIMEOUT, secure);
                 Client.exchange(socket, allServers.toArray(new EzServer[serverList.size()]));
                 socket.close();
             } catch (ConnectException e) {

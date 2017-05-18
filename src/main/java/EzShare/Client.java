@@ -162,7 +162,6 @@ public class Client {
      * @throws IOException any network error
      */
     public static void publish(Socket socket, Resource resource) throws IOException {
-
         DataInputStream in = new DataInputStream(socket.getInputStream());
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
         // send request
@@ -405,32 +404,21 @@ public class Client {
      * @return Socket of the server
      * @throws IOException any network error
      */
-    public static Socket connectToServer(String host, int port, int timeout) throws IOException {
+    public static Socket connectToServer(String host, int port, int timeout, boolean secure) throws IOException {
         Socket socket;
-        socket = new Socket(host, port);
+        if (secure) {
+            socket = SSLSocketFactory.getDefault().createSocket(host, port);
+        } else {
+            socket = new Socket(host, port);
+        }
         socket.setSoTimeout(timeout);
         Logging.logFine("Connection Established");
         return socket;
     }
 
-    /**
-     * Establish secure connection to a server
-     *
-     * @param host    host of server
-     * @param port    port of server
-     * @param timeout timeout in milliseconds for all operations with the server
-     * @return Secure socket of the server
-     * @throws IOException any network error
-     */
-    public static SSLSocket connectToSServer(String host, int port, int timeout) throws IOException {
-        SSLSocketFactory sslsocketfactory =
-                (SSLSocketFactory)SSLSocketFactory.getDefault();
-        SSLSocket sslSocket =
-                (SSLSocket)sslsocketfactory.createSocket(host,port) ;
-
-        sslSocket.setSoTimeout(timeout);
-        Logging.logFine("Connection Established");
-        return sslSocket;
+    // TODO for backward compatibility, remove later
+    public static Socket connectToServer(String host, int port, int timeout) throws IOException {
+        return connectToServer(host, port, timeout, false);
     }
 
     /**
@@ -440,6 +428,7 @@ public class Client {
      */
     public static void main(String[] args) {
         Static.configSecurity();
+
         // command line arguments parsing
         CommandLine cmd = null;
         try {
@@ -448,10 +437,10 @@ public class Client {
             Logging.logInfo("Command line parsing failed, please check if arguments are missing or incorrect.");
             return;
         }
+
         String host = cmd.getOptionValue("host");
         int port = Integer.parseInt(cmd.getOptionValue("port"));
         Resource resource = makeResourceFromCmd(cmd);
-
 
         if (!cmd.hasOption("publish") &&
                 !cmd.hasOption("remove") &&
@@ -468,28 +457,14 @@ public class Client {
             Logging.logInfo("setting debug on");
         }
 
-
-        // connect to insecure server
+        // connect to server
         Socket socket = null;
-        //SSLSocket sslSocket = null;
-        if (cmd.hasOption("secure")) {
-            try {
-                socket = connectToSServer(host, port, Static.DEFAULT_TIMEOUT);
-            } catch (IOException e) {
-                Logging.logInfo("Failed to connect to server, please check server availability and internet connection.");
-                return;
-            }
-
-        } else {
-            try {
-                socket = connectToServer(host, port, Static.DEFAULT_TIMEOUT);
-            } catch (IOException e) {
-                Logging.logInfo("Failed to connect to server, please check server availability and internet connection.");
-                return;
-            }
+        try {
+            socket = connectToServer(host, port, Static.DEFAULT_TIMEOUT, cmd.hasOption("secure"));
+        } catch (IOException e) {
+            Logging.logInfo("Failed to connect to server, please check server availability and internet connection.");
+            return;
         }
-        // connect to secure server
-        // SSLSocket sslSocket = null;
 
         // figure out command and handle each case
         try {
