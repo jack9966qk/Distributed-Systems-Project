@@ -95,6 +95,9 @@ public class Server {
         }
     }
 
+
+
+
     /**
      * Setup secure server, open socket, start listening to connections
      *
@@ -203,26 +206,6 @@ public class Server {
         }
 
         Logging.logInfo("Server secret: " + secret);
-        // set default sport value
-        int sport = Static.DEFAULT_SPORT, port = Static.DEFAULT_SPORT;
-        boolean secure = false;
-        try {
-            // determine whether it is a port or sport where sport has higher precedence
-            if (!cmd.hasOption("sport")&&!cmd.hasOption("port")) {
-                throw new IOException();
-            } else if(cmd.hasOption("sport")) {
-                sport = Integer.parseInt(cmd.getOptionValue("sport"));
-                secure = true;
-            } else if(cmd.hasOption("port")) {
-                port = Integer.parseInt(cmd.getOptionValue("port"));
-                secure = false;
-            }
-        } catch (IOException e) {
-            Logging.logInfo("Command line arguments missing or invalid, please try again");
-            return;
-        } catch (Exception e) {
-            Logging.logInfo("Unknown Exception in Server main thread, exiting...");
-        }
 
         try {
 
@@ -244,17 +227,33 @@ public class Server {
                 exchangeInterval = Static.DEFAULT_EXCHANGE_INTERVAL;
             }
 
-
-
-            // start the server
-            if (secure){
-                startSServer(connectionIntervalLimit, exchangeInterval, secret, host, sport);
-            }else {
-                startServer(connectionIntervalLimit, exchangeInterval, secret, host, port);
+            // set default sport value
+            int sport = Static.DEFAULT_SPORT, port;
+            try {
+                // determine whether it is a port or sport where sport has higher precedence
+                if (!cmd.hasOption("sport")&&!cmd.hasOption("port")) {
+                    startSServer(connectionIntervalLimit, exchangeInterval, secret, host, sport);
+                }
+                if(cmd.hasOption("sport")) {
+                    sport = Integer.parseInt(cmd.getOptionValue("sport"));
+                    // Start secure server
+                    startSServer(connectionIntervalLimit, exchangeInterval, secret, host, sport);
+                }
+                if(cmd.hasOption("port")) {
+                    port = Integer.parseInt(cmd.getOptionValue("port"));
+                    // Start insecure server
+                    startServer(connectionIntervalLimit, exchangeInterval, secret, host, port);
+                }
+            }
+            catch (BindException e) {
+                Logging.logInfo("Port already taken, exiting...");
+            }
+            catch (Exception e) {
+                Logging.logInfo("Unknown Exception in Server main thread, exiting...");
             }
 
-        } catch (BindException e) {
-            Logging.logInfo("Port already taken, exiting...");
+
+
         } catch (IOException e) {
             Logging.logInfo("Unknown IOException in Server main thread, exiting...");
         } catch (Exception e) {
