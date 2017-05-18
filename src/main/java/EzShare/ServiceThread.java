@@ -17,7 +17,7 @@ public class ServiceThread extends Thread {
     private DataOutputStream outputStream;
     private String secret;
     private ResourceStorage resourceStorage;
-    private Set<EzServer> serverList;
+    private ServerList serverList;
     private Socket socket;
     private Map<SocketAddress, Date> lastConnectionTime;
     private EzServer server;
@@ -35,9 +35,9 @@ public class ServiceThread extends Thread {
      * @throws IOException Network connection exception
      */
     public ServiceThread(Map<SocketAddress, Date> lastConnectionTime, Socket clientSocket,
-                         String secret, ResourceStorage resourceStorage, Set<EzServer> serverList,
-                         EzServer server, boolean secure)
-            throws IOException {
+                         String secret, ResourceStorage resourceStorage, ServerList serverList,
+                         EzServer server, boolean secure
+    ) throws IOException {
         this.socket = clientSocket;
         this.lastConnectionTime = lastConnectionTime;
         this.inputStream = new DataInputStream(clientSocket.getInputStream());
@@ -179,6 +179,56 @@ public class ServiceThread extends Thread {
         }
     }
 
+    private String parseId(JsonObject obj) throws ServerException {
+        try {
+            // check if the request has id field, otherwise throw a "missing id" exception
+            if (!obj.has("id")) {
+                throw new ServerException("missing id");
+            } else {
+                return obj.get("id").getAsString();
+            }
+
+        } catch (IllegalStateException e) {
+            // throw a "invalid id" exception when id field cannot be get as string
+            throw new ServerException("invalid id");
+        }
+    }
+
+    /**
+     * Parse the serverList field in the JSON requests send by clients
+     *
+     * @param obj the JSON form request needs to be parsed
+     * @return an array of EzServer
+     * @throws ServerException any error in server list field
+     */
+    private EzServer[] parseExchange(JsonObject obj) throws ServerException {
+        // check if contains serverList
+        if (!obj.has("serverList")) {
+            throw new ServerException("missing or invalid server list");
+        }
+
+        List<EzServer> servers = new ArrayList<>();
+        JsonArray elems;
+        // parse servers
+        try {
+            elems = obj.getAsJsonArray("serverList");
+        } catch (ClassCastException e) {
+            // not JSON array
+            throw new ServerException("missing or invalid server list");
+        }
+        // check if all servers are valid
+        for (JsonElement elem : elems) {
+            EzServer server = EzServer.fromJson(elem.getAsJsonObject());
+            if (server == null) {
+                // invalid server record
+                throw new ServerException("missing or invalid server list");
+            } else {
+                servers.add(server);
+            }
+        }
+        return servers.toArray(new EzServer[servers.size()]);
+    }
+
     /**
      * Check if the resource is valid
      *
@@ -232,6 +282,19 @@ public class ServiceThread extends Thread {
     private void respondSuccess() throws IOException {
         JsonObject json = new JsonObject();
         json.addProperty("response", "success");
+        Static.sendJsonUTF(outputStream, json.toString());
+    }
+
+    /**
+     * Send a success response with id as JSON format to the client
+     *
+     * @param id id to be included in the response
+     * @throws IOException Network connection exception
+     */
+    private void respondSuccess(String id) throws IOException {
+        JsonObject json = new JsonObject();
+        json.addProperty("response", "success");
+        json.addProperty("id", id);
         Static.sendJsonUTF(outputStream, json.toString());
     }
 
@@ -378,9 +441,9 @@ public class ServiceThread extends Thread {
 
         // make relay queries
         if (relay) {
-            for (EzServer server : serverList) {
+            for (EzServer server : serverList.getServers()) {
                 try {
-                    Socket socket = Client.connectToServer(server.hostname, server.port, Static.DEFAULT_TIMEOUT, secure);
+                    Socket socket = Client.connectToServer(server.getHostname(), server.getPort(), Static.DEFAULT_TIMEOUT, secure);
                     results.addAll(Client.query(socket, false, template));
                 } catch (Exception e) {
                     Logging.logInfo("Error making query to server " + server + ". Skip to next server");
@@ -478,40 +541,29 @@ public class ServiceThread extends Thread {
         }
     }
 
-    /**
-     * Parse the serverList field in the JSON requests send by clients
-     *
-     * @param obj the JSON form request needs to be parsed
-     * @return an array of EzServer
-     * @throws ServerException any error in server list field
-     */
-    private EzServer[] parseExchange(JsonObject obj) throws ServerException {
-        // check if contains serverList
-        if (!obj.has("serverList")) {
-            throw new ServerException("missing or invalid server list");
-        }
-
-        List<EzServer> servers = new ArrayList<>();
-        JsonArray elems;
-        // parse servers
-        try {
-            elems = obj.getAsJsonArray("serverList");
-        } catch (ClassCastException e) {
-            // not JSON array
-            throw new ServerException("missing or invalid server list");
-        }
-        // check if all servers are valid
-        for (JsonElement elem : elems) {
-            EzServer server = EzServer.fromJson(elem.getAsJsonObject());
-            if (server == null) {
-                // invalid server record
-                throw new ServerException("missing or invalid server list");
-            } else {
-                servers.add(server);
+    private void subscribe(Resource resourceTemplate, String id, boolean relay) throws IOException {
+        Subscription.addSubscriptionThread(socket, resourceTemplate, id);
+        if (relay) {
+            for (EzServer server : serverList.getServers()) {
+                Subscription.addRelaySubscription(server, resourceTemplate);
             }
         }
-        return servers.toArray(new EzServer[servers.size()]);
+        socket = null;
+        respondSuccess(id);
+        socket = null; // prevent socket closed in main()
     }
+
+    private void unsubscribe(String id) throws ServerException, IOException {
+        Integer resultSize = Subscription.removeSubscriptionThread(socket, id);
+        if (resultSize == null) {
+            // there are other subscriptions from same client
+            respondSuccess();
+        } else {
+            // all subscription from this client ended, report total result size
+            respondResultSize(resultSize);
+        }
+    }
+
 
     /**
      * Running the Service Thread to catch any request from the client
@@ -575,6 +627,10 @@ public class ServiceThread extends Thread {
                 fetch(parseTemplate(obj));
             } else if (command.equals("EXCHANGE")) {
                 exchange(parseExchange(obj));
+            } else if (command.equals("SUBSCRIBE")) {
+                subscribe(parseTemplate(obj), parseId(obj), parseRelay(obj));
+            } else if (command.equals("UNSUBSCRIBE")) {
+                unsubscribe(parseId(obj));
             } else {
                 throw new ServerException("invalid command");
             }
@@ -601,7 +657,9 @@ public class ServiceThread extends Thread {
             Logging.logInfo("Unknown exception in ServiceThread, disconnecting...");
         } finally {
             try {
-                socket.close();
+                if (socket != null) {
+                    socket.close();
+                }
             } catch (IOException e) {
                 Logging.logInfo("Network error closing connection with client");
             }

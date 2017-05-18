@@ -8,7 +8,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.apache.commons.cli.*;
 
-import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
 /**
@@ -143,6 +142,38 @@ public class Client {
     /**
      * Make json from arguments
      *
+     * @param command  the command
+     * @param id reference to the subscription request
+     * @param relay    true if need relay, false otherwise
+     * @param resource the resource
+     * @return json with arguments as fields
+     */
+    private static String makeJsonFrom(String command, String id, boolean relay, Resource resource) {
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.addProperty("command", command);
+        jsonObject.addProperty("relay", relay);
+        jsonObject.addProperty("id", id);
+        jsonObject.add("resourceTemplate", resource.toJsonElement());
+        return jsonObject.toString();
+    }
+
+    /**
+     * Make json from arguments
+     *
+     * @param command
+     * @param id
+     * @return
+     */
+    private static String makeJsonFrom(String command, String id) {
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.addProperty("command", command);
+        jsonObject.addProperty("id", id);
+        return jsonObject.toString();
+    }
+
+    /**
+     * Make json from arguments
+     *
      * @param command    the command
      * @param serverList an array of EzServer to send in exchange
      * @return json with arguments as fields
@@ -249,6 +280,77 @@ public class Client {
 
         return resources;
     }
+
+    public static ClientSubscriptionThread makeClientSubscriptionThread(Socket socket, boolean relay, String id, Resource template) throws IOException {
+        DataInputStream in = new DataInputStream(socket.getInputStream());
+        DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+
+        // send the subscription request
+        Static.sendJsonUTF(out, makeJsonFrom("SUBSCRIBE", id, relay, template));
+
+        // waiting for response
+        String response = Static.readJsonUTF(in);
+        boolean success = handleResponse(response);
+
+        if (success) {
+            // Creating a new listening thread for Client to listen any subscription updates
+            ClientSubscriptionThread clientListener = new ClientSubscriptionThread(socket, id, template);
+            return clientListener;
+        }
+        return null;
+    }
+
+    /**
+     * Make subscribe request
+     *
+     * @param socket
+     * @param template
+     * @throws IOException
+     */
+    private static void subscribe(Socket socket, String host, int port, boolean relay, Resource template, boolean secure) throws IOException {
+        //Auto generate id for this subscription
+        IdGenerator idGenerator = IdGenerator.getIdGeneartor();
+        String id = idGenerator.generateId();
+
+        ClientSubscriptionThread clientListener = makeClientSubscriptionThread(socket, relay, id, template);
+        if (clientListener != null) {
+            clientListener.start();
+            Logging.logInfo("Results:");
+            Logging.logInfo("Press Enter to unsubscribe.");
+            // stop subscription when user press Enter button
+            Scanner scanner = new Scanner(System.in);
+            scanner.nextLine();
+            socket = connectToServer(host, port, Static.DEFAULT_TIMEOUT, secure); // use new socket to send unsubscribe command
+            unsubscribe(clientListener, socket, Static.DEFAULT_TIMEOUT);
+        }
+    }
+
+    public static void unsubscribe(ClientSubscriptionThread clientListener, Socket socket, int timeout) throws IOException {
+
+        DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+        DataInputStream in = new DataInputStream(socket.getInputStream());
+
+        clientListener.terminate();
+
+        Static.sendJsonUTF(out, makeJsonFrom("UNSUBSCRIBE", clientListener.getSubId()));
+        String response = in.readUTF();
+        Logging.logInfo(response);
+
+        JsonObject responseJson = new JsonParser().parse(response).getAsJsonObject();
+
+        if (responseJson.has("command")) {
+            Logging.logInfo(in.readUTF());
+        }
+
+        System.out.println("Subscription terminated");
+        clientListener.terminate();
+        socket.setSoTimeout(timeout);
+
+        // should client automatically terminate when server closes the socket?
+        // server should also reply to this unsubscribe request, which can indicate successful/unsuccessful
+
+    }
+
 
     /**
      * Make fetch request
@@ -371,6 +473,7 @@ public class Client {
         options.addOption(Option.builder("tags").hasArg().type(String.class).build());
         options.addOption(Option.builder("uri").hasArg().type(String.class).build());
         options.addOption(Option.builder("secure").build());
+        options.addOption(Option.builder("subscribe").build());
 
         CommandLineParser parser = new DefaultParser();
         return parser.parse(options, args);
@@ -447,7 +550,8 @@ public class Client {
                 !cmd.hasOption("share") &&
                 !cmd.hasOption("query") &&
                 !cmd.hasOption("fetch") &&
-                !cmd.hasOption("remove")) {
+                !cmd.hasOption("remove") &&
+                !cmd.hasOption("subscribe")) {
             Logging.logInfo("No command found, please check your input and try again.");
         }
 
@@ -485,14 +589,20 @@ public class Client {
                         .map(EzServer::fromString).toArray(EzServer[]::new);
                 Logging.logInfo(Arrays.toString(servers));
                 exchange(socket, servers);
+            } else if (cmd.hasOption("subscribe")) {
+                subscribe(socket, host, port, true, resource, cmd.hasOption("secure"));
             }
         } catch (SocketTimeoutException e) {
             Logging.logInfo("Timeout communicating with server, please check connections and try again.");
         } catch (IOException e) {
+            e.printStackTrace();
             Logging.logInfo("Unknown connection error, please check connections and try again.");
         } finally {
             try {
-                socket.close();
+                if (socket != null) {
+                    Logging.logInfo("Closing connection with server");
+                    socket.close();
+                }
             } catch (IOException e) {
                 Logging.logInfo("Network error closing socket to server");
             }

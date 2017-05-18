@@ -8,7 +8,6 @@ import java.util.stream.Collectors;
  * Created by Jack on 23/3/2017.
  */
 public class ResourceStorage {
-
     Map<ResourceKey, Resource> resources = Collections.synchronizedMap(new HashMap<>());
 
     /**
@@ -46,6 +45,12 @@ public class ResourceStorage {
      */
     public synchronized void add(Resource resource) {
         resources.put(resource.getKey(), resource);
+
+        // TODO check if new resource is different to existing?
+        for (SubscriptionThread listener: Subscription.getSubscriptionThreads()) {
+            listener.onResourceArrived(resource);
+        }
+
         Logging.logFine("Added new resource");
         Logging.logFine(this);
     }

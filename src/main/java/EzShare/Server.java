@@ -13,8 +13,8 @@ import org.apache.commons.cli.*;
  */
 public class Server {
     public static ResourceStorage resourceStorage = new ResourceStorage();
-    public static Set<EzServer> secureserverList = Collections.synchronizedSet(new HashSet<>());
-    public static Set<EzServer> insecureserverList = Collections.synchronizedSet(new HashSet<>());
+    public static ServerList secureserverList = new ServerList();
+    public static ServerList insecureserverList = new ServerList();
     public static HashMap<SocketAddress, Date> lastConnectionTime = new HashMap<>();
     public static EzServer self;
     public static ListenerThread insecureListener;

@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.net.BindException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Set;
 
 /**
  * Created by Jack on 18/5/2017.
@@ -17,11 +16,11 @@ public class ListenerThread extends Thread {
     private final String host;
     private final int port;
     private final boolean secure;
-    private final Set<EzServer> serverList;
+    private final ServerList serverList;
     boolean running = false;
 
     public ListenerThread(int connectionIntervalLimit, int exchangeInterval, String secret,
-                          String host, int port, boolean secure, Set<EzServer> serverList) {
+                          String host, int port, boolean secure, ServerList serverList) {
         this.connectionIntervalLimit = connectionIntervalLimit;
         this.exchangeInterval = exchangeInterval;
         this.secret = secret;
