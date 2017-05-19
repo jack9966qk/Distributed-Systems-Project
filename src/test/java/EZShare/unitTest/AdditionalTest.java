@@ -1,5 +1,7 @@
 package EZShare.unitTest;
 
+import EZShare.Client;
+import EZShare.Server;
 import org.junit.jupiter.api.*;
 import java.util.*;
 
@@ -178,12 +180,6 @@ public class AdditionalTest {
         // incorrect type
         ProxyVerifier.verifyServerBothSecureAndInsecure("{\"command\": \"EXCHANGE\", \"serverList\": {}}",
                 "{ \"response\" : \"error\", \"errorMessage\" : \"missing or invalid server list\" }");
-    }
-
-
-    @Test
-    void testSubscribe() {
-        
     }
 
 }

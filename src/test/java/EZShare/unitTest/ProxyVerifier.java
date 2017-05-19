@@ -38,19 +38,35 @@ public class ProxyVerifier extends Thread {
         }
     }
 
-    static class ExpectedResourcesWithSuccess implements Verifiable {
+    static class ExpectedSuccessResponse extends ExpectedJson {
+        public ExpectedSuccessResponse() {
+            super("{ \"response\" : \"success\" }");
+        }
+    }
+
+    static class ExpectedAnyUTF implements Verifiable {
+        @Override
+        public void verifyAndForward(Socket from, Socket to) throws Exception {
+            DataOutputStream out = new DataOutputStream(to.getOutputStream());
+            DataInputStream in = new DataInputStream(from.getInputStream());
+            String str = in.readUTF();
+//            System.out.println(">>>>>> " + str);
+            out.writeUTF(str);
+        }
+    }
+
+    static class ExpectedResourcesWithSuccess extends ExpectedSuccessResponse {
         Set<String> resources = new HashSet<>();
 
         public ExpectedResourcesWithSuccess(Set<String> resources) {
+            super();
             this.resources = resources;
         }
 
         @Override
         public void verifyAndForward(Socket from, Socket to) throws Exception {
+            super.verifyAndForward(from, to);
             DataOutputStream out = new DataOutputStream(to.getOutputStream());
-            String actual = Static.readJsonUTF(new DataInputStream(from.getInputStream()));
-            Verify.assertJsonEquivalent(actual, "{ \"response\" : \"success\" }");
-            Static.sendJsonUTF(out, actual);
             List<String> strings = Verify.checkResources(from, resources);
             for (String str : strings) {
                 Static.sendJsonUTF(out, str);
@@ -58,14 +74,24 @@ public class ProxyVerifier extends Thread {
         }
     }
 
-    Queue<Verifiable> expectedRequests = new LinkedList<>();
-    Queue<Verifiable> expectedResponses = new LinkedList<>();
+    class ExpectedMessage {
+        boolean toServer;
+        Verifiable message;
+
+        public ExpectedMessage(boolean toServer, Verifiable message) {
+            this.toServer = toServer;
+            this.message = message;
+        }
+    }
+
+    Queue<ExpectedMessage> expectedMessages = new LinkedList<>();
 
     Socket clientSocket;
     Socket serverSocket;
 
     int port;
     int serverPort;
+    int serverSecurePort;
     String serverHost;
 
     boolean secure;
@@ -73,19 +99,20 @@ public class ProxyVerifier extends Thread {
 
     String status = "";
 
-    public ProxyVerifier(int port, int serverPort, String serverHost, boolean secure) {
+    public ProxyVerifier(int port, int serverPort, int serverSecurePort, String serverHost, boolean secure) {
         this.port = port;
         this.serverPort = serverPort;
+        this.serverSecurePort = serverSecurePort;
         this.serverHost = serverHost;
         this.secure = secure;
     }
 
     void addExpectedRequest(Verifiable verifiable) {
-        expectedRequests.add(verifiable);
+        expectedMessages.add(new ExpectedMessage(true, verifiable));
     }
 
     void addExpectedResponse(Verifiable verifiable) {
-        expectedResponses.add(verifiable);
+        expectedMessages.add(new ExpectedMessage(false, verifiable));
     }
 
     void addExpectedRequestJson(String json) {
@@ -96,15 +123,6 @@ public class ProxyVerifier extends Thread {
         addExpectedResponse(new ExpectedJson(json));
     }
 
-    void handleExpected(Queue<Verifiable> expected, Socket from, Socket to) throws Exception {
-        if (expected.isEmpty()) {
-            String str = new DataInputStream(from.getInputStream()).readUTF();
-            new DataOutputStream(to.getOutputStream()).writeUTF(str);
-        } else {
-            Verifiable next = expected.remove();
-            next.verifyAndForward(from, to);
-        }
-    }
 
     synchronized void waitUntilReady() {
         try {
@@ -137,32 +155,35 @@ public class ProxyVerifier extends Thread {
                 selfServerSocket = new ServerSocket(port);
             }
 
-            selfServerSocket.setSoTimeout(timeout);
-
             synchronized (this) {
                 // tell waiting threads that server is ready
                 status = "ready";
                 notifyAll();
             }
 
-            // establish connection with client
-            clientSocket = selfServerSocket.accept();
-            clientSocket.setSoTimeout(timeout);
-
             // establish connection with server
             if (secure) {
-                serverSocket = SSLSocketFactory.getDefault().createSocket(serverHost, serverPort);
+                serverSocket = SSLSocketFactory.getDefault().createSocket(serverHost, serverSecurePort);
             } else {
                 serverSocket = new Socket(serverHost, serverPort);
             }
             serverSocket.setSoTimeout(timeout);
+            System.out.println("verifier got connection to server");
 
-            while (!(expectedRequests.isEmpty() && expectedResponses.isEmpty())) {
-                // assume every request has a corresponding response
-                // receive request, forward to server
-                handleExpected(expectedRequests, clientSocket, serverSocket);
-                // receive response, forward to client
-                handleExpected(expectedResponses, serverSocket, clientSocket);
+            // establish connection with client
+            clientSocket = selfServerSocket.accept();
+            clientSocket.setSoTimeout(timeout);
+            System.out.println("verifier got connection from client");
+
+            while (!(expectedMessages.isEmpty())) {
+                ExpectedMessage msg = expectedMessages.remove();
+                if (msg.toServer) {
+                    // receive request, forward to server
+                    msg.message.verifyAndForward(clientSocket, serverSocket);
+                } else {
+                    // receive response, forward to client
+                    msg.message.verifyAndForward(serverSocket, clientSocket);
+                }
             }
 
             successful = true;
@@ -170,17 +191,17 @@ public class ProxyVerifier extends Thread {
             e.printStackTrace();
             successful = false;
         } finally {
-            synchronized (this) {
-                // tell waiting threads that verification ended
-                status = "ended";
-                notifyAll();
-            }
-
             try {
                 clientSocket.close();
                 serverSocket.close();
                 if (selfServerSocket != null) {
                     selfServerSocket.close();
+                }
+                System.out.println("verifier finish");
+                synchronized (this) {
+                    // tell waiting threads that verification ended
+                    status = "ended";
+                    notifyAll();
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -194,11 +215,9 @@ public class ProxyVerifier extends Thread {
         this.waitUntilReady();
     }
 
-
     void test() {
         this.waitUntilFinish();
         Assertions.assertTrue(this.successful);
-        Server.stop();
     }
 
     static void verifyServerBothSecureAndInsecure(String requestJson, String expectedResponseJson) throws InterruptedException {
@@ -212,33 +231,27 @@ public class ProxyVerifier extends Thread {
     }
 
     static void verifyServer(String requestJson, String expectedResponseJson, boolean secure) throws InterruptedException {
-        int port = 3780;
-        if (secure) {
-            new ServerThread("-sport 9999 -debug -secret abcd".split(" ")).start();
-        } else {
-            new ServerThread("-port 9999 -debug -secret abcd".split(" ")).start();
-        }
-        Server.waitUntilReady();
-        ProxyVerifier verifier = new ProxyVerifier(port, 9999, "localhost", secure);
+        Server server = new Server();
+        new Thread(() -> server.run("-debug -secret abcd".split(" "))).start();
+        server.waitUntilReady();
+        ProxyVerifier verifier = new ProxyVerifier(9999, 3780, 3781, "localhost", secure);
         verifier.addExpectedResponseJson(expectedResponseJson);
         verifier.setup();
-        new DummyClient(requestJson, "localhost", port, secure).start();
+        new DummyClient(requestJson, "localhost", 9999, secure).start();
         verifier.test();
+        server.stop();
     }
 
     static void verifyServer(String requestJson, Set<String> expectedResources, boolean secure) throws InterruptedException {
-        int port = 3780;
-        if (secure) {
-            new ServerThread("-sport 9999 -debug -secret abcd".split(" ")).start();
-        } else {
-            new ServerThread("-port 9999 -debug -secret abcd".split(" ")).start();
-        }
-        Server.waitUntilReady();
-        ProxyVerifier verifier = new ProxyVerifier(port, 9999, "localhost", secure);
+        Server server = new Server();
+        new Thread(() -> server.run("-debug -secret abcd".split(" "))).start();
+        server.waitUntilReady();
+        ProxyVerifier verifier = new ProxyVerifier(9999, 3780, 3781, "localhost", secure);
         Verifiable expected = new ExpectedResourcesWithSuccess(expectedResources);
         verifier.addExpectedResponse(expected);
         verifier.setup();
-        new DummyClient(requestJson, "localhost", port, secure).start();
+        new DummyClient(requestJson, "localhost", 9999, secure).start();
         verifier.test();
+        server.stop();
     }
 }

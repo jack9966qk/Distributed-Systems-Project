@@ -76,8 +76,9 @@ class ServerTest {
 
         String[] arg = {"java", "Server.java", "-advertisedhostname", "localhost", "-port", "2333", "-secret", "JackBigLeg", "-debug"};
 
-        Server.main(arg);
+        Server server = new Server();
+        server.run(arg);
 
-        Server.stop();
+        server.stop();
     }
 }

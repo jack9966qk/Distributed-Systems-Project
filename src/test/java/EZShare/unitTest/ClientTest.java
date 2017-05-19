@@ -161,7 +161,7 @@ class ClientTest {
 
     @Test
     void main() {
-        // put all protected function test here
+        // put all protected function testAndStopServer here
         
     }
 }

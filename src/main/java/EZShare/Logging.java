@@ -25,9 +25,7 @@ public class Logging {
 
         StackTraceElement[] trace = Thread.currentThread().getStackTrace();
         StackTraceElement elem = trace[trace.length - 1];
-        String pos = elem.toString()
-                .replaceAll("com\\.allstars\\.project1\\.", "")
-                .replaceAll("\\(.*\\)", "");
+        String pos = elem.toString().replaceAll("\\(.*\\)", "");
 
         return date + " - [" + pos + "] ";
     }

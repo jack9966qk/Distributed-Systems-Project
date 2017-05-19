@@ -1,10 +1,8 @@
 package EZShare;
 
-import java.io.IOException;
 import java.math.BigInteger;
 import java.net.*;
 import java.security.SecureRandom;
-import java.util.*;
 
 import org.apache.commons.cli.*;
 
@@ -12,15 +10,22 @@ import org.apache.commons.cli.*;
  * EZShare server implementation, has a main method to be used through command line
  */
 public class Server {
-    public static ResourceStorage resourceStorage = new ResourceStorage();
-    public static ServerList secureServerList = new ServerList();
-    public static ServerList insecureServerList = new ServerList();
-    public static HashMap<SocketAddress, Date> lastConnectionTime = new HashMap<>();
-    public static EzServer self;
-    public static ListenerThread insecureListener;
-    public static ListenerThread secureListener;
+    public ResourceStorage resourceStorage = new ResourceStorage();
+    public ServerList secureServerList = new ServerList();
+    public ServerList insecureServerList = new ServerList();
+    public ListenerThread insecureListener;
+    public ListenerThread secureListener;
+    private String name;
 
-    public static boolean isRunning() {
+    public Server() {
+        this("Server");
+    }
+
+    public Server(String name) {
+        this.name = name;
+    }
+
+    public boolean isRunning() {
         boolean insecureRunning = insecureListener != null && insecureListener.running;
         boolean secureRunning = secureListener != null && secureListener.running;
         return insecureRunning && secureRunning;
@@ -29,7 +34,7 @@ public class Server {
     /**
      * Terminate server activity (for testing)
      */
-    public static void stop() {
+    public void stop() {
         if (insecureListener != null) {
             insecureListener.terminate();
         }
@@ -43,9 +48,9 @@ public class Server {
      *
      * @throws InterruptedException Interrupted during sleep
      */
-    public static void waitUntilReady() throws InterruptedException {
-        while (!Server.isRunning()) { // busy waiting
-            Thread.sleep(100);
+    public void waitUntilReady() throws InterruptedException {
+        while (!isRunning()) { // busy waiting
+            Thread.sleep(1000);
         }
     }
 
@@ -77,12 +82,7 @@ public class Server {
         return parser.parse(options, args);
     }
 
-    /**
-     * Main function of Server, used through command line
-     *
-     * @param args command line arguments
-     */
-    public static void main(String[] args) {
+    public void run(String[] args) {
         CommandLine cmd = null;
         Static.configSecurity("keystore/server.jks");
         try {
@@ -111,62 +111,73 @@ public class Server {
 
         Logging.logInfo("Server secret: " + secret);
 
+        // determine host
+        InetAddress address = null;
         try {
-            // determine host
-            InetAddress address = InetAddress.getLocalHost();
-            String host = cmd.getOptionValue("advertisedhostname", address.getHostName());
-
-            // set intervals
-            int connectionIntervalLimit;
-            if (cmd.hasOption("connectionintervallimit")) {
-                connectionIntervalLimit = Integer.parseInt(cmd.getOptionValue("connectionintervallimit"));
-            } else {
-                connectionIntervalLimit = Static.DEFAULT_CONNECTION_INTERVAL;
-            }
-            int exchangeInterval;
-            if (cmd.hasOption("exchangeinterval")) {
-                exchangeInterval = Integer.parseInt(cmd.getOptionValue("exchangeinterval"));
-            } else {
-                exchangeInterval = Static.DEFAULT_EXCHANGE_INTERVAL;
-            }
-
-            // set ports
-            int port;
-            if (cmd.hasOption("port")) {
-                port = Integer.parseInt((cmd.getOptionValue("port")));
-            } else {
-                port = Static.DEFAULT_PORT;
-            }
-
-            int sport;
-            if (cmd.hasOption("sport")) {
-                sport = Integer.parseInt((cmd.getOptionValue("sport")));
-            } else {
-                sport = Static.DEFAULT_SPORT;
-            }
-
-            secureListener = new ListenerThread(
-                    connectionIntervalLimit,
-                    exchangeInterval,
-                    secret,
-                    host,
-                    sport,
-                    true,
-                    secureServerList);
-            secureListener.start();
-            insecureListener = new ListenerThread(
-                    connectionIntervalLimit,
-                    exchangeInterval,
-                    secret,
-                    host,
-                    port,
-                    false,
-                    insecureServerList);
-            insecureListener.start();
-        } catch (IOException e) {
-            Logging.logInfo("Unknown IOException in Server main thread, exiting...");
-        } catch (Exception e) {
-            Logging.logInfo("Unknown Exception in Server main thread, exiting...");
+            address = InetAddress.getLocalHost();
+        } catch (UnknownHostException e) {
+            System.out.println("Cannot resolve local host, exiting...");
+            return;
         }
+        String host = cmd.getOptionValue("advertisedhostname", address.getHostName());
+
+        // set intervals
+        int connectionIntervalLimit;
+        if (cmd.hasOption("connectionintervallimit")) {
+            connectionIntervalLimit = Integer.parseInt(cmd.getOptionValue("connectionintervallimit"));
+        } else {
+            connectionIntervalLimit = Static.DEFAULT_CONNECTION_INTERVAL;
+        }
+        int exchangeInterval;
+        if (cmd.hasOption("exchangeinterval")) {
+            exchangeInterval = Integer.parseInt(cmd.getOptionValue("exchangeinterval"));
+        } else {
+            exchangeInterval = Static.DEFAULT_EXCHANGE_INTERVAL;
+        }
+
+        // set ports
+        int port;
+        if (cmd.hasOption("port")) {
+            port = Integer.parseInt((cmd.getOptionValue("port")));
+        } else {
+            port = Static.DEFAULT_PORT;
+        }
+
+        int sport;
+        if (cmd.hasOption("sport")) {
+            sport = Integer.parseInt((cmd.getOptionValue("sport")));
+        } else {
+            sport = Static.DEFAULT_SPORT;
+        }
+
+        secureListener = new ListenerThread(
+                connectionIntervalLimit,
+                exchangeInterval,
+                secret,
+                host,
+                sport,
+                true,
+                secureServerList,
+                resourceStorage);
+        secureListener.start();
+        insecureListener = new ListenerThread(
+                connectionIntervalLimit,
+                exchangeInterval,
+                secret,
+                host,
+                port,
+                false,
+                insecureServerList,
+                resourceStorage);
+        insecureListener.start();
+    }
+
+    /**
+     * Main function of Server, used through command line
+     *
+     * @param args command line arguments
+     */
+    public static void main(String[] args) {
+        new Server().run(args);
     }
 }

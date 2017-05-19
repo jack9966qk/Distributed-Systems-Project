@@ -16,17 +16,20 @@ public class ExchangeThread extends Thread {
     private ServerList serverList;
     private Date lastExchangeTime;
     private boolean secure;
+    private EzServer self;
 
     /**
      * Create a new exchange thread
-     *  @param interval   time interval between exchange being performed
+     * @param interval   time interval between exchange being performed
      * @param serverList a reference of list of servers to send exchange
      * @param secure
+     * @param self
      */
-    public ExchangeThread(int interval, ServerList serverList, boolean secure) {
+    public ExchangeThread(int interval, ServerList serverList, boolean secure, EzServer self) {
         this.interval = interval;
         this.serverList = serverList;
         this.secure = secure;
+        this.self = self;
         lastExchangeTime = new Date();
     }
 
@@ -56,7 +59,7 @@ public class ExchangeThread extends Thread {
         Logging.logInfo("send exchange request to servers: " + serverList);
         Set<EzServer> allServers = new HashSet<>();
         allServers.addAll(serverList.getServers());
-        allServers.add(Server.self);
+        allServers.add(self);
         // manually synchronize serverList since it is not thread safe for iteration
         // make a copy to avoid deadlock when requesting self
         // (ExchangeThread wait for ServiceThread response, ServiceThread wait for serverList object lock)

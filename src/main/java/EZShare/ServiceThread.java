@@ -480,7 +480,7 @@ public class ServiceThread extends Thread {
         }
 
         // search for resource
-        Resource resource = Server.resourceStorage.findWith(template.getChannel(), template.getUri());
+        Resource resource = resourceStorage.findWith(template.getChannel(), template.getUri());
 
         if (resource == null) {
             // found 0 result
@@ -595,7 +595,6 @@ public class ServiceThread extends Thread {
 
             // read json from socket
             String reqJson = Static.readJsonUTF(inputStream);
-            Logging.logFine("RECEIVED: " + reqJson);
 
             // parse json to JsonObject
             JsonParser parser = new JsonParser();

@@ -438,7 +438,6 @@ public class Client {
 
         // send request
         Static.sendJsonUTF(out, message);
-        Logging.logInfo("SENT: " + message);
 
         // wait for response
         String response = Static.readJsonUTF(in);
@@ -551,8 +550,10 @@ public class Client {
                 !cmd.hasOption("query") &&
                 !cmd.hasOption("fetch") &&
                 !cmd.hasOption("remove") &&
+                !cmd.hasOption("exchange") &&
                 !cmd.hasOption("subscribe")) {
             Logging.logInfo("No command found, please check your input and try again.");
+            return;
         }
 
         // set debug
