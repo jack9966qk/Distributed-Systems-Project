@@ -22,6 +22,7 @@ public class ServiceThread extends Thread {
     private Map<SocketAddress, Date> lastConnectionTime;
     private EzServer server;
     private boolean secure;
+    private SubscriptionManager manager;
 
     /**
      * Constructor for ServiceThread
@@ -32,12 +33,13 @@ public class ServiceThread extends Thread {
      * @param resourceStorage    the resource storage for the Server
      * @param serverList         a list of Servers that this Server has acknowledges
      * @param server             an instance of the server itself
+     * @param manager
      * @throws IOException Network connection exception
      */
     public ServiceThread(Map<SocketAddress, Date> lastConnectionTime, Socket clientSocket,
                          String secret, ResourceStorage resourceStorage, ServerList serverList,
-                         EzServer server, boolean secure
-    ) throws IOException {
+                         EzServer server, boolean secure,
+                         SubscriptionManager manager) throws IOException {
         this.socket = clientSocket;
         this.lastConnectionTime = lastConnectionTime;
         this.inputStream = new DataInputStream(clientSocket.getInputStream());
@@ -47,6 +49,7 @@ public class ServiceThread extends Thread {
         this.serverList = serverList;
         this.server = server;
         this.secure = secure;
+        this.manager = manager;
     }
 
     /**
@@ -542,10 +545,10 @@ public class ServiceThread extends Thread {
     }
 
     private void subscribe(Resource resourceTemplate, String id, boolean relay) throws IOException {
-        Subscription.addSubscriptionThread(socket, resourceTemplate, id);
+        manager.addSubscriptionThread(socket, resourceTemplate, id, server);
         if (relay) {
             for (EzServer server : serverList.getServers()) {
-                Subscription.addRelaySubscription(server, resourceTemplate);
+                manager.addRelaySubscription(server, resourceTemplate);
             }
         }
         socket = null;
@@ -554,7 +557,7 @@ public class ServiceThread extends Thread {
     }
 
     private void unsubscribe(String id) throws ServerException, IOException {
-        Integer resultSize = Subscription.removeSubscriptionThread(socket, id);
+        Integer resultSize = manager.removeSubscriptionThread(socket, id);
         if (resultSize == null) {
             // there are other subscriptions from same client
             respondSuccess();

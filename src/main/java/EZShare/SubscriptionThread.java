@@ -15,10 +15,14 @@ public class SubscriptionThread extends Thread {
     DataOutputStream outputStream;
     Resource template;
     Queue<Resource> toSend = new LinkedList<>();
+    private SubscriptionManager subscriptionManager;
+    private EzServer self;
 
-    public SubscriptionThread(Socket client, Resource template) {
+    public SubscriptionThread(Socket client, Resource template, SubscriptionManager subscriptionManager, EzServer self) {
         this.client = client;
         this.template = template;
+        this.subscriptionManager = subscriptionManager;
+        this.self = self;
     }
 
     public Resource getTemplate() {
@@ -37,7 +41,14 @@ public class SubscriptionThread extends Thread {
     }
 
     public void onResourceArrived(Resource resource) {
+        System.out.println("RESOURCE ARRIVED");
         synchronized (this) {
+            if (resource.getOwner() == null || resource.getOwner().equals("")) {
+                resource = resource.ownerHidden();
+            }
+            if (resource.getEzserver() == null || resource.getEzserver().equals("")) {
+                resource = resource.ezServerAdded(self);
+            }
             toSend.add(resource);
             notifyAll();
         }
@@ -51,17 +62,19 @@ public class SubscriptionThread extends Thread {
             this.running = true;
             while (running) {
                 Resource resource;
+                System.out.println("WAIT FOR RESOURCE");
                 synchronized (this) {
                     while (toSend.isEmpty()) {
                         wait();
                     }
 
+                    System.out.println("RESOURCE REMOVED");
                     resource = toSend.remove();
                 }
 
                 if (resource.matchesTemplate(template)) {
                     Static.sendJsonUTF(outputStream, resource.toJson());
-                    Subscription.incrementCount(client);
+                    subscriptionManager.incrementCount(client);
                 }
             }
         } catch (IOException e) {

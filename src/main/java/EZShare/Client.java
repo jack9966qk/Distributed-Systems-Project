@@ -281,7 +281,7 @@ public class Client {
         return resources;
     }
 
-    public static ClientSubscriptionThread makeClientSubscriptionThread(Socket socket, boolean relay, String id, Resource template) throws IOException {
+    public static ClientSubscriptionThread makeClientSubscriptionThread(Socket socket, boolean relay, String id, Resource template, SubscriptionManager manager) throws IOException {
         DataInputStream in = new DataInputStream(socket.getInputStream());
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
 
@@ -294,7 +294,7 @@ public class Client {
 
         if (success) {
             // Creating a new listening thread for Client to listen any subscription updates
-            ClientSubscriptionThread clientListener = new ClientSubscriptionThread(socket, id, template);
+            ClientSubscriptionThread clientListener = new ClientSubscriptionThread(socket, id, template, manager);
             return clientListener;
         }
         return null;
@@ -312,7 +312,7 @@ public class Client {
         IdGenerator idGenerator = IdGenerator.getIdGeneartor();
         String id = idGenerator.generateId();
 
-        ClientSubscriptionThread clientListener = makeClientSubscriptionThread(socket, relay, id, template);
+        ClientSubscriptionThread clientListener = makeClientSubscriptionThread(socket, relay, id, template, null);
         if (clientListener != null) {
             clientListener.start();
             Logging.logInfo("Results:");
@@ -342,8 +342,7 @@ public class Client {
             Logging.logInfo(in.readUTF());
         }
 
-        System.out.println("Subscription terminated");
-        clientListener.terminate();
+        System.out.println("SubscriptionManager terminated");
         socket.setSoTimeout(timeout);
 
         // should client automatically terminate when server closes the socket?

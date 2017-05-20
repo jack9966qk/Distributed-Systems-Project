@@ -10,9 +10,10 @@ import org.apache.commons.cli.*;
  * EZShare server implementation, has a main method to be used through command line
  */
 public class Server {
-    public ResourceStorage resourceStorage = new ResourceStorage();
-    public ServerList secureServerList = new ServerList();
-    public ServerList insecureServerList = new ServerList();
+    SubscriptionManager subscriptionManager = new SubscriptionManager();
+    public ResourceStorage resourceStorage = new ResourceStorage(subscriptionManager);
+    public ServerList secureServerList = new ServerList(subscriptionManager);
+    public ServerList insecureServerList = new ServerList(subscriptionManager);
     public ListenerThread insecureListener;
     public ListenerThread secureListener;
     private String name;
@@ -158,7 +159,8 @@ public class Server {
                 sport,
                 true,
                 secureServerList,
-                resourceStorage);
+                resourceStorage,
+                subscriptionManager);
         secureListener.start();
         insecureListener = new ListenerThread(
                 connectionIntervalLimit,
@@ -168,7 +170,8 @@ public class Server {
                 port,
                 false,
                 insecureServerList,
-                resourceStorage);
+                resourceStorage,
+                subscriptionManager);
         insecureListener.start();
     }
 

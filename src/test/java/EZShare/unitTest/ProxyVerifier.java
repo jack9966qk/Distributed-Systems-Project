@@ -235,6 +235,7 @@ public class ProxyVerifier extends Thread {
         new Thread(() -> server.run("-debug -secret abcd".split(" "))).start();
         server.waitUntilReady();
         ProxyVerifier verifier = new ProxyVerifier(9999, 3780, 3781, "localhost", secure);
+        verifier.addExpectedRequest(new ExpectedAnyUTF());
         verifier.addExpectedResponseJson(expectedResponseJson);
         verifier.setup();
         new DummyClient(requestJson, "localhost", 9999, secure).start();
@@ -247,8 +248,8 @@ public class ProxyVerifier extends Thread {
         new Thread(() -> server.run("-debug -secret abcd".split(" "))).start();
         server.waitUntilReady();
         ProxyVerifier verifier = new ProxyVerifier(9999, 3780, 3781, "localhost", secure);
-        Verifiable expected = new ExpectedResourcesWithSuccess(expectedResources);
-        verifier.addExpectedResponse(expected);
+        verifier.addExpectedRequest(new ExpectedAnyUTF());
+        verifier.addExpectedResponse(new ExpectedResourcesWithSuccess(expectedResources));
         verifier.setup();
         new DummyClient(requestJson, "localhost", 9999, secure).start();
         verifier.test();

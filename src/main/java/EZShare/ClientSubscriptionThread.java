@@ -21,6 +21,7 @@ public class ClientSubscriptionThread extends Thread {
     private DataOutputStream out;
     private DataInputStream in;
     private boolean running;
+    private SubscriptionManager manager;
 
     public String getSubId() {return id;}
     public boolean isRunning() {return running;}
@@ -34,11 +35,12 @@ public class ClientSubscriptionThread extends Thread {
         return template;
     }
 
-    public ClientSubscriptionThread(Socket server, String id, Resource template) {
+    public ClientSubscriptionThread(Socket server, String id, Resource template, SubscriptionManager manager) {
 
         this.server = server;
         this.id = id;
         this.template = template;
+        this.manager = manager;
 
         InetSocketAddress socketAddress = (InetSocketAddress) server.getRemoteSocketAddress();
         this.port = socketAddress.getPort();
@@ -68,8 +70,10 @@ public class ClientSubscriptionThread extends Thread {
                 Resource resource = Resource.fromJson(response);
 
                 // for server doing relay: send potential match to each subscription threads
-                for (SubscriptionThread thread : Subscription.getSubscriptionThreads()) {
-                    thread.onResourceArrived(resource);
+                if (manager != null) {
+                    for (SubscriptionThread thread : manager.getSubscriptionThreads()) {
+                        thread.onResourceArrived(resource);
+                    }
                 }
             }
 

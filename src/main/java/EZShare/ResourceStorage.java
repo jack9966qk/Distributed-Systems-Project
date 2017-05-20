@@ -9,6 +9,13 @@ import java.util.stream.Collectors;
  */
 public class ResourceStorage {
     Map<ResourceKey, Resource> resources = Collections.synchronizedMap(new HashMap<>());
+    private SubscriptionManager subscriptionManager = null;
+
+    public ResourceStorage(SubscriptionManager subscriptionManager) {
+        this.subscriptionManager = subscriptionManager;
+    }
+
+    public ResourceStorage() {}
 
     /**
      * Search for resources using a resource template
@@ -47,8 +54,10 @@ public class ResourceStorage {
         resources.put(resource.getKey(), resource);
 
         // TODO check if new resource is different to existing?
-        for (SubscriptionThread listener: Subscription.getSubscriptionThreads()) {
-            listener.onResourceArrived(resource);
+        if (subscriptionManager != null) {
+            for (SubscriptionThread listener : subscriptionManager.getSubscriptionThreads()) {
+                listener.onResourceArrived(resource);
+            }
         }
 
         Logging.logFine("Added new resource");

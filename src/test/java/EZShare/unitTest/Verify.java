@@ -1,5 +1,6 @@
 package EZShare.unitTest;
 
+import EZShare.Static;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -54,7 +55,7 @@ public class Verify {
         String receivedResultSize = null;
         DataInputStream inStream = new DataInputStream(socket.getInputStream());
         while (true) {
-            String str = inStream.readUTF();
+            String str = Static.readJsonUTF(inStream);
             receivedStr.add(str);
             if (str.contains("resultSize")) {
                 receivedResultSize = str;
@@ -83,6 +84,7 @@ public class Verify {
                 }
             }
             if (!ok) {
+                System.err.println("Expected: " + expectedResourcesJson + "\n\nReceived: " + receivedResources);
                 throw new Exception("resources do not match");
             }
         }

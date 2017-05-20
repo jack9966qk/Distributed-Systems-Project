@@ -2,10 +2,7 @@ package EZShare;
 
 import javax.net.ssl.SSLServerSocketFactory;
 import java.io.IOException;
-import java.net.BindException;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.net.SocketAddress;
+import java.net.*;
 import java.util.Date;
 import java.util.HashMap;
 
@@ -24,9 +21,11 @@ public class ListenerThread extends Thread {
     EzServer self;
     public HashMap<SocketAddress, Date> lastConnectionTime = new HashMap<>();
     boolean running = false;
+    private ServerSocket listenSocket;
+    private SubscriptionManager manager;
 
     public ListenerThread(int connectionIntervalLimit, int exchangeInterval, String secret,
-                          String host, int port, boolean secure, ServerList serverList, ResourceStorage resourceStorage) {
+                          String host, int port, boolean secure, ServerList serverList, ResourceStorage resourceStorage, SubscriptionManager manager) {
         this.connectionIntervalLimit = connectionIntervalLimit;
         this.exchangeInterval = exchangeInterval;
         this.secret = secret;
@@ -35,21 +34,30 @@ public class ListenerThread extends Thread {
         this.secure = secure;
         this.serverList = serverList;
         this.resourceStorage = resourceStorage;
+        this.manager = manager;
     }
 
     /**
      * Terminate server activity (for testing)
      */
     public void terminate() {
+        Logging.logInfo("Shutting down port " + port);
         this.running = false;
         this.interrupt();
+        try {
+            ServerSocket socket = listenSocket;
+            listenSocket = null;
+            socket.close();
+        } catch (IOException e) {
+            Logging.logInfo("IOException closing socket");
+        }
     }
 
 
     @Override
     public void run() {
         self = new EzServer(host, port);
-        ServerSocket listenSocket = null;
+        listenSocket = null;
         try {
             // for sending exchange request to other servers
             ExchangeThread exchangeThread = new ExchangeThread(exchangeInterval, serverList, secure, self);
@@ -74,23 +82,25 @@ public class ListenerThread extends Thread {
                 // start a new thread handling the client
                 // TODO limitation on total number of threads
                 ServiceThread c = new ServiceThread(lastConnectionTime, clientSocket,
-                        secret, resourceStorage, serverList, self, secure);
+                        secret, resourceStorage, serverList, self, secure, manager);
                 c.start();
                 sleep(connectionIntervalLimit);
             }
-        } catch (InterruptedException e) {
+        } catch (BindException e) {
+            Logging.logInfo("Port already taken, exiting...");
+        } catch (InterruptedException | SocketException e) {
             if (running) {
                 e.printStackTrace();
             } else {
                 try {
-                    listenSocket.close();
+                    if (listenSocket != null) {
+                        listenSocket.close();
+                    }
                 } catch (IOException e1) {
                     e1.printStackTrace();
                 }
-                Logging.logInfo("Server shutting down...");
+                Logging.logInfo("Port " + port  + " closed.");
             }
-        } catch (BindException e) {
-            Logging.logInfo("Port already taken, exiting...");
         } catch (Exception e) {
             Logging.logInfo("Unknown Exception in Listener Thread, exiting...");
         }
