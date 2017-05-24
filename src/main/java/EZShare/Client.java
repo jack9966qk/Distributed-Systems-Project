@@ -160,8 +160,8 @@ public class Client {
     /**
      * Make json from arguments
      *
-     * @param command
-     * @param id
+     * @param command the command
+     * @param id reference to the subscription request
      * @return
      */
     private static String makeJsonFrom(String command, String id) {
@@ -281,6 +281,17 @@ public class Client {
         return resources;
     }
 
+    /**
+     * Create a new ClientSubscriptionThread
+     *
+     * @param socket the socket of server
+     * @param relay true if need relay, false otherwise
+     * @param id the subscription id
+     * @param template the resource template
+     * @param manager the subscription manager
+     * @return a new ClientSubscribeThread
+     * @throws IOException any network error
+     */
     public static ClientSubscriptionThread makeClientSubscriptionThread(Socket socket, boolean relay, String id, Resource template, SubscriptionManager manager) throws IOException {
         DataInputStream in = new DataInputStream(socket.getInputStream());
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
@@ -303,9 +314,9 @@ public class Client {
     /**
      * Make subscribe request
      *
-     * @param socket
-     * @param template
-     * @throws IOException
+     * @param socket the socket of the server
+     * @param template the resource template
+     * @throws IOException any network error
      */
     private static void subscribe(Socket socket, String host, int port, boolean relay, Resource template, boolean secure) throws IOException {
         //Auto generate id for this subscription
@@ -313,6 +324,7 @@ public class Client {
         String id = idGenerator.generateId();
 
         ClientSubscriptionThread clientListener = makeClientSubscriptionThread(socket, relay, id, template, null);
+
         if (clientListener != null) {
             clientListener.start();
             Logging.logInfo("Results:");
@@ -325,6 +337,14 @@ public class Client {
         }
     }
 
+    /**
+     * Make unsubscribe request
+     *
+     * @param clientListener the given ClientSubscriptionThread to be unsubscribe
+     * @param socket the socket of the server
+     * @param timeout timeout for unsubscribe request
+     * @throws IOException any network error
+     */
     public static void unsubscribe(ClientSubscriptionThread clientListener, Socket socket, int timeout) throws IOException {
 
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
