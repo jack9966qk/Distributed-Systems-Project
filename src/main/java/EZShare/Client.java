@@ -160,8 +160,8 @@ public class Client {
     /**
      * Make json from arguments
      *
-     * @param command
-     * @param id
+     * @param command the command
+     * @param id reference to the subscription request
      * @return
      */
     private static String makeJsonFrom(String command, String id) {
@@ -281,6 +281,17 @@ public class Client {
         return resources;
     }
 
+    /**
+     * Create a new ClientSubscriptionThread
+     *
+     * @param socket the socket of server
+     * @param relay true if need relay, false otherwise
+     * @param id the subscription id
+     * @param template the resource template
+     * @param manager the subscription manager
+     * @return a new ClientSubscribeThread
+     * @throws IOException any network error
+     */
     public static ClientSubscriptionThread makeClientSubscriptionThread(Socket socket, boolean relay, String id, Resource template, SubscriptionManager manager) throws IOException {
         DataInputStream in = new DataInputStream(socket.getInputStream());
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
@@ -303,51 +314,61 @@ public class Client {
     /**
      * Make subscribe request
      *
-     * @param socket
-     * @param template
-     * @throws IOException
+     * @param socket the socket of the server
+     * @param template the resource template
+     * @throws IOException any network error
      */
     private static void subscribe(Socket socket, String host, int port, boolean relay, Resource template, boolean secure) throws IOException {
-        //Auto generate id for this subscription
+        //Automatically generate an id for this subscription
         IdGenerator idGenerator = IdGenerator.getIdGeneartor();
         String id = idGenerator.generateId();
 
         ClientSubscriptionThread clientListener = makeClientSubscriptionThread(socket, relay, id, template, null);
+
         if (clientListener != null) {
             clientListener.start();
             Logging.logInfo("Results:");
             Logging.logInfo("Press Enter to unsubscribe.");
+
             // stop subscription when user press Enter button
             Scanner scanner = new Scanner(System.in);
             scanner.nextLine();
+
             socket = connectToServer(host, port, Static.DEFAULT_TIMEOUT, secure); // use new socket to send unsubscribe command
             unsubscribe(clientListener, socket, Static.DEFAULT_TIMEOUT);
         }
     }
 
+    /**
+     * Make unsubscribe request
+     *
+     * @param clientListener the given ClientSubscriptionThread to be unsubscribe
+     * @param socket the socket of the server
+     * @param timeout timeout for unsubscribe request
+     * @throws IOException any network error
+     */
     public static void unsubscribe(ClientSubscriptionThread clientListener, Socket socket, int timeout) throws IOException {
 
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
         DataInputStream in = new DataInputStream(socket.getInputStream());
 
+        // terminate the client subscription thread
         clientListener.terminate();
 
+        // send the unsubscribe command to server
         Static.sendJsonUTF(out, makeJsonFrom("UNSUBSCRIBE", clientListener.getSubId()));
         String response = in.readUTF();
         Logging.logInfo(response);
 
         JsonObject responseJson = new JsonParser().parse(response).getAsJsonObject();
 
+        // if not all subscriptions are stopped, read the id for the terminated subscription
         if (responseJson.has("command")) {
             Logging.logInfo(in.readUTF());
         }
 
         System.out.println("SubscriptionManager terminated");
         socket.setSoTimeout(timeout);
-
-        // should client automatically terminate when server closes the socket?
-        // server should also reply to this unsubscribe request, which can indicate successful/unsuccessful
-
     }
 
 
