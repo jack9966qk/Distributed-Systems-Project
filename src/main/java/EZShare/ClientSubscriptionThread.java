@@ -29,7 +29,7 @@ public class ClientSubscriptionThread extends Thread {
     public String getSubId() {return id;}
 
     /**
-     * Get if the thread is running.
+     * Get if the thread is running
      * @return a boolean indicates whether the thread is running or not
      */
     public boolean isRunning() {return running;}

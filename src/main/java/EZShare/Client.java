@@ -319,7 +319,7 @@ public class Client {
      * @throws IOException any network error
      */
     private static void subscribe(Socket socket, String host, int port, boolean relay, Resource template, boolean secure) throws IOException {
-        //Auto generate id for this subscription
+        //Automatically generate an id for this subscription
         IdGenerator idGenerator = IdGenerator.getIdGeneartor();
         String id = idGenerator.generateId();
 
@@ -329,9 +329,11 @@ public class Client {
             clientListener.start();
             Logging.logInfo("Results:");
             Logging.logInfo("Press Enter to unsubscribe.");
+
             // stop subscription when user press Enter button
             Scanner scanner = new Scanner(System.in);
             scanner.nextLine();
+
             socket = connectToServer(host, port, Static.DEFAULT_TIMEOUT, secure); // use new socket to send unsubscribe command
             unsubscribe(clientListener, socket, Static.DEFAULT_TIMEOUT);
         }
@@ -350,24 +352,23 @@ public class Client {
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
         DataInputStream in = new DataInputStream(socket.getInputStream());
 
+        // terminate the client subscription thread
         clientListener.terminate();
 
+        // send the unsubscribe command to server
         Static.sendJsonUTF(out, makeJsonFrom("UNSUBSCRIBE", clientListener.getSubId()));
         String response = in.readUTF();
         Logging.logInfo(response);
 
         JsonObject responseJson = new JsonParser().parse(response).getAsJsonObject();
 
+        // if not all subscriptions are stopped, read the id for the terminated subscription
         if (responseJson.has("command")) {
             Logging.logInfo(in.readUTF());
         }
 
         System.out.println("SubscriptionManager terminated");
         socket.setSoTimeout(timeout);
-
-        // should client automatically terminate when server closes the socket?
-        // server should also reply to this unsubscribe request, which can indicate successful/unsuccessful
-
     }
 
 

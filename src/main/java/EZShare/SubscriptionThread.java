@@ -11,15 +11,16 @@ import java.util.Queue;
  * Created by Jack on 6/5/2017.
  */
 public class SubscriptionThread extends Thread {
-    Socket client;
-    DataOutputStream outputStream;
-    Resource template;
-    Queue<Resource> toSend = new LinkedList<>();
+    private Socket client;
+    private DataOutputStream outputStream;
+    private Resource template;
+    private Queue<Resource> toSend = new LinkedList<>();
+    private boolean running;
     private SubscriptionManager subscriptionManager;
     private EzServer self;
 
     /**
-     * constructor for SubscriptionThread
+     * Constructor for SubscriptionThread
      * @param client the client waiting for subscription
      * @param template the given resource template
      * @param subscriptionManager the subscription manager
@@ -32,12 +33,18 @@ public class SubscriptionThread extends Thread {
         this.self = self;
     }
 
+    /**
+     * Get the resource template
+     * @return the resource template
+     */
     public Resource getTemplate() {
         return template;
     }
 
-    boolean running;
-
+    /**
+     * Get if the thread is running
+     * @return a boolean indicates whether the thread is running or not
+     */
     public boolean isRunning() {
         return running;
     }
@@ -69,6 +76,9 @@ public class SubscriptionThread extends Thread {
     }
 
     @Override
+    /**
+     * Run the SubscriptionThread
+     */
     public void run() {
         try {
             this.running = true;
