@@ -72,11 +72,9 @@ public class ListenerThread extends Thread {
             Logging.logInfo( (secure ? "Secure " : "") + "Port " + port + " now available");
             running = true;
             while (running) {
-                //TODO relay and exchange
                 // wait for new client
                 Logging.logInfo("Port " + port + " listening for new connection");
                 Socket clientSocket = listenSocket.accept();
-//                SocketAddress clientAddress = clientSocket.getRemoteSocketAddress();
                 i++;
                 Logging.logInfo("Port " + port + " received connection " + i);
                 // start a new thread handling the client

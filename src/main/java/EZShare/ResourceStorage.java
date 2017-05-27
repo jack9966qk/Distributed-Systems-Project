@@ -51,14 +51,16 @@ public class ResourceStorage {
      * @param resource resource to add
      */
     public synchronized void add(Resource resource) {
-        resources.put(resource.getKey(), resource);
-
-        // TODO check if new resource is different to existing?
-        if (subscriptionManager != null) {
-            for (SubscriptionThread listener : subscriptionManager.getSubscriptionThreads()) {
-                listener.onResourceArrived(resource);
+        // check if new resource is different to existing
+        if (resource.equals(resources.get(resource.getKey()))) {
+            if (subscriptionManager != null) {
+                for (SubscriptionThread listener : subscriptionManager.getSubscriptionThreads()) {
+                    listener.onResourceArrived(resource);
+                }
             }
         }
+
+        resources.put(resource.getKey(), resource);
 
         Logging.logFine("Added new resource");
         Logging.logFine(this);

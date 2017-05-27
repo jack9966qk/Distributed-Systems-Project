@@ -21,10 +21,6 @@ public class ServerList {
 
     Set<EzServer> servers = Collections.synchronizedSet(new HashSet<>());
 
-    public boolean addAll(Collection<? extends EzServer> c) {
-        return servers.addAll(c);
-    }
-
     public int size() {
         return servers.size();
     }
