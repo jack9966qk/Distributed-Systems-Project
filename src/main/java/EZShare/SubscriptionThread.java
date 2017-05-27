@@ -18,6 +18,13 @@ public class SubscriptionThread extends Thread {
     private SubscriptionManager subscriptionManager;
     private EzServer self;
 
+    /**
+     * constructor for SubscriptionThread
+     * @param client the client waiting for subscription
+     * @param template the given resource template
+     * @param subscriptionManager the subscription manager
+     * @param self the server giving subscription info
+     */
     public SubscriptionThread(Socket client, Resource template, SubscriptionManager subscriptionManager, EzServer self) {
         this.client = client;
         this.template = template;
@@ -35,11 +42,18 @@ public class SubscriptionThread extends Thread {
         return running;
     }
 
+    /**
+     * terminate the thread
+     */
     public void terminate() {
         this.running = false;
         this.interrupt();
     }
 
+    /**
+     * notify the client that new resource is ready
+     * @param resource the resource for the client
+     */
     public void onResourceArrived(Resource resource) {
         System.out.println("RESOURCE ARRIVED");
         synchronized (this) {
