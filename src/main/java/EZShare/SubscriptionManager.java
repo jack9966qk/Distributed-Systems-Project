@@ -21,7 +21,7 @@ public class SubscriptionManager {
     public Set<ClientSubscriptionThread> relayThreads = new HashSet<>();
 
     /**
-     *
+     * adding a thread for subscription
      * @param client client waiting for subscription
      * @param template the given resource template
      * @param id id of the subscription manager
@@ -41,7 +41,7 @@ public class SubscriptionManager {
     }
 
     /**
-     *
+     * the counter of listening client
      * @param client client waiting for subscription
      */
     public void incrementCount(Socket client) {
@@ -51,7 +51,7 @@ public class SubscriptionManager {
     }
 
     /**
-     *
+     * remove a subscribed thread
      * @param client client waiting for un-subscription
      * @param id id of the subscription manager
      * @return return null if thread is not empty otherwise return host
@@ -99,7 +99,7 @@ public class SubscriptionManager {
     }
 
     /**
-     *
+     * add the subscription to other servers known by this Server
      * @param ezServer the other servers
      * @param template the given resource template
      * @throws IOException Network connection exception
@@ -120,7 +120,7 @@ public class SubscriptionManager {
     }
 
     /**
-     *
+     * remove the subscription to other servers known by this Server
      * @param template the given template
      * @throws IOException Network connection exception
      */
@@ -137,7 +137,7 @@ public class SubscriptionManager {
     }
 
     /**
-     *
+     * 
      * @return subscription templates
      */
     public Set<Resource> getSubscriptionTemplates() {
