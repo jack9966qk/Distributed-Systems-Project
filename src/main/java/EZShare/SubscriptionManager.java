@@ -137,8 +137,8 @@ public class SubscriptionManager {
     }
 
     /**
-     * 
-     * @return subscription templates
+     * Get the subscription resource templates
+     * @return the subscription resource templates
      */
     public Set<Resource> getSubscriptionTemplates() {
         Set<Resource> templates = new HashSet<>();
@@ -149,8 +149,8 @@ public class SubscriptionManager {
     }
 
     /**
-     *
-     * @return subscription thread
+     * Get the subscription threads
+     * @return the subscription threads
      */
     public Set<SubscriptionThread> getSubscriptionThreads() {
         Set<SubscriptionThread> threads = new HashSet<>();
