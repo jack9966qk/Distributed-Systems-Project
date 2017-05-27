@@ -4,7 +4,6 @@ import java.util.ArrayList;
 
 /**
  * Singleton class to store and generate id for subscription.
- * <p>
  * Created by Zheping on 2017/5/9.
  */
 public class IdGenerator {
@@ -17,7 +16,7 @@ public class IdGenerator {
      * Constructor to create a new id storage, and set the current number to 0.
      */
     private IdGenerator() {
-        this.idStorage = new ArrayList<>();
+        idStorage = new ArrayList<>();
         currentNumber = 0;
     }
 

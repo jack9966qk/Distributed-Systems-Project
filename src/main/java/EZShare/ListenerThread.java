@@ -19,8 +19,7 @@ public class ListenerThread extends Thread {
     private final boolean secure;
     private final ServerList serverList;
     private ResourceStorage resourceStorage;
-    EzServer self;
-    public HashMap<SocketAddress, Date> lastConnectionTime = new HashMap<>();
+    private HashMap<SocketAddress, Date> lastConnectionTime = new HashMap<>();
     boolean running = false;
     private ServerSocket listenSocket;
     private SubscriptionManager manager;
@@ -69,7 +68,7 @@ public class ListenerThread extends Thread {
 
     @Override
     public void run() {
-        self = new EzServer(host, port);
+        EzServer self = new EzServer(host, port);
         listenSocket = null;
         try {
             // for sending exchange request to other servers

@@ -10,7 +10,7 @@ import java.util.Queue;
  * Server side handler thread for subscriptions, waits for new resources and sends matches to clients
  * Created by Jack on 6/5/2017.
  */
-public class SubscriptionThread extends Thread {
+public class SubscriptionHandler extends Thread {
     private Socket client;
     private DataOutputStream outputStream;
     private Resource template;
@@ -20,14 +20,14 @@ public class SubscriptionThread extends Thread {
     private EzServer self;
 
     /**
-     * Constructor for SubscriptionThread
+     * Constructor for SubscriptionHandler
      *
      * @param client              the client waiting for subscription
      * @param template            the given resource template
      * @param subscriptionManager the subscription manager
      * @param self                the server giving subscription info
      */
-    public SubscriptionThread(Socket client, Resource template, SubscriptionManager subscriptionManager, EzServer self) {
+    public SubscriptionHandler(Socket client, Resource template, SubscriptionManager subscriptionManager, EzServer self) {
         this.client = client;
         this.template = template;
         this.subscriptionManager = subscriptionManager;
@@ -66,7 +66,6 @@ public class SubscriptionThread extends Thread {
      * @param resource the resource for the client
      */
     public void onResourceArrived(Resource resource) {
-        System.out.println("RESOURCE ARRIVED");
         synchronized (this) {
             if (resource.getOwner() == null || resource.getOwner().equals("")) {
                 resource = resource.ownerHidden();
@@ -81,7 +80,7 @@ public class SubscriptionThread extends Thread {
 
     @Override
     /**
-     * Run the SubscriptionThread
+     * Run the SubscriptionHandler
      */
     public void run() {
         try {
@@ -90,13 +89,13 @@ public class SubscriptionThread extends Thread {
             this.running = true;
             while (running) {
                 Resource resource;
-                System.out.println("WAIT FOR RESOURCE");
+
+                // wait until there is resource to send
                 synchronized (this) {
                     while (toSend.isEmpty()) {
                         wait();
                     }
 
-                    System.out.println("RESOURCE REMOVED");
                     resource = toSend.remove();
                 }
 
@@ -112,7 +111,8 @@ public class SubscriptionThread extends Thread {
                 e.printStackTrace();
             }
         } finally {
-            Logging.logInfo("Closing subscription connection with client " + client.getRemoteSocketAddress());
+            Logging.logInfo("Closing subscription connection with client "
+                    + client.getRemoteSocketAddress());
             try {
                 client.close();
             } catch (IOException e) {

@@ -1,7 +1,6 @@
 package EZShare;
 
 import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -10,15 +9,13 @@ import java.net.Socket;
 /**
  * EZServer client subscription thread implementation.
  */
-public class ClientSubscriptionThread extends Thread {
+public class SubscriptionReceiver extends Thread {
 
     private Socket server;
     private String id;
     private String host;
     private int port;
     private Resource template;
-    private DataOutputStream out;
-    private DataInputStream in;
     private boolean running;
     private SubscriptionManager manager;
 
@@ -68,14 +65,14 @@ public class ClientSubscriptionThread extends Thread {
     }
 
     /**
-     * Constructor for ClientSubscriptionThread
+     * Constructor for SubscriptionReceiver
      *
      * @param server   socket for server
      * @param id       subscription id
      * @param template resource template
      * @param manager  subscription manager
      */
-    public ClientSubscriptionThread(Socket server, String id, Resource template, SubscriptionManager manager) {
+    public SubscriptionReceiver(Socket server, String id, Resource template, SubscriptionManager manager) {
 
         this.server = server;
         this.id = id;
@@ -92,7 +89,7 @@ public class ClientSubscriptionThread extends Thread {
     }
 
     /**
-     * Terminate current ClientSubscriptionThread
+     * Terminate current SubscriptionReceiver
      */
     public void terminate() {
         running = false;
@@ -101,15 +98,14 @@ public class ClientSubscriptionThread extends Thread {
 
     @Override
     /**
-     * Run the ClientSubscriptionThread
+     * Run the SubscriptionReceiver
      */
     public void run() {
         Logging.logInfo("Subscribe thread started");
 
         try {
             server.setSoTimeout(0); // disable timeout waiting for resources
-            out = new DataOutputStream(server.getOutputStream());
-            in = new DataInputStream(server.getInputStream());
+            DataInputStream in = new DataInputStream(server.getInputStream());
             running = true;
 
             while (running) {
@@ -119,7 +115,7 @@ public class ClientSubscriptionThread extends Thread {
 
                 // for server doing relay: send potential match to each subscription threads
                 if (manager != null) {
-                    for (SubscriptionThread thread : manager.getSubscriptionThreads()) {
+                    for (SubscriptionHandler thread : manager.getSubscriptionThreads()) {
                         thread.onResourceArrived(resource);
                     }
                 }

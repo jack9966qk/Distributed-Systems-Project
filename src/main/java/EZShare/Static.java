@@ -2,9 +2,12 @@ package EZShare;
 
 import com.google.gson.Gson;
 
+import javax.net.ssl.*;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.net.Socket;
+import java.security.KeyStore;
 
 /**
  * Class for globally available static variables, functions and constants
@@ -19,6 +22,18 @@ public class Static {
     public static final int DEFAULT_SPORT = 3781;
     public static final int DEFAULT_PORT = 3780;
 
+    static SSLContext clientSSLContext;
+
+    public static SSLContext getClientSSLContext() {
+        return clientSSLContext;
+    }
+
+    static SSLContext serverSSLContext;
+
+    public static SSLContext getServerSSLContext() {
+        return serverSSLContext;
+    }
+
     /**
      * Set security related properties so that SSL/TLS related functions can be used
      */
@@ -26,6 +41,45 @@ public class Static {
         System.setProperty("javax.net.ssl.keyStore", keyStoreFilename);
         System.setProperty("javax.net.ssl.trustStore", keyStoreFilename);
         System.setProperty("javax.net.ssl.keyStorePassword", "distributed");
+    }
+
+    public static void setClientSslContext() throws Exception {
+        clientSSLContext = makeSslContext("client.jks");
+    }
+
+    public static void setServerSslContext() throws Exception {
+        serverSSLContext = makeSslContext("server.jks");
+    }
+
+//    public static Socket makeSecureClientSocket(String host, int port) {
+//        return clientSSLContext.getSocketFactory().
+//    }
+
+
+    public static SSLContext makeSslContext(String keyStoreFilename) throws Exception {
+        KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+        char[] password = "distributed".toCharArray();
+        keyStore.load(Static.class.getResourceAsStream(keyStoreFilename), password);
+
+        // Set up keyStore
+        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(
+                KeyManagerFactory.getDefaultAlgorithm());
+        keyManagerFactory.init(keyStore, password);
+        KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
+        trustStore.load(Static.class.getResourceAsStream(keyStoreFilename), password);
+
+        // Set up trustStore
+        TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(
+                TrustManagerFactory.getDefaultAlgorithm());
+        trustManagerFactory.init(trustStore);
+
+        // Set up SSLContext
+        SSLContext context;
+        context = SSLContext.getInstance("SSL");
+        context.init(keyManagerFactory.getKeyManagers(),
+                trustManagerFactory.getTrustManagers(),
+                null);
+        return context;
     }
 
     /**

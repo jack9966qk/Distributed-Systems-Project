@@ -1,5 +1,6 @@
 package EZShare;
 
+import javax.net.ssl.SSLSocket;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -15,10 +16,10 @@ public class SubscriptionManager {
     public Map<String, Integer> resultSizes = new HashMap<>();
 
     // threads for connection with all clients for subscription, id is only unique from the same client
-    public Map<String, Map<String, SubscriptionThread>> subscriptionThreads = new HashMap<>();
+    public Map<String, Map<String, SubscriptionHandler>> subscriptionThreads = new HashMap<>();
 
     // threads for all server side subscription requests (relay)
-    public Set<ClientSubscriptionThread> relayThreads = new HashSet<>();
+    public Set<SubscriptionReceiver> relayThreads = new HashSet<>();
 
     /**
      * adding a thread for subscription
@@ -33,7 +34,7 @@ public class SubscriptionManager {
         if (!subscriptionThreads.containsKey(address.getHostName())) {
             subscriptionThreads.put(address.getHostName(), new HashMap<>());
         }
-        SubscriptionThread thread = new SubscriptionThread(client, template, this, self);
+        SubscriptionHandler thread = new SubscriptionHandler(client, template, this, self);
         subscriptionThreads.get(address.getHostName()).put(id, thread);
         if (!resultSizes.containsKey(address.getHostName())) {
             resultSizes.put(address.getHostName(), 0);
@@ -66,20 +67,20 @@ public class SubscriptionManager {
         if (!subscriptionThreads.containsKey(address.getHostName())) {
             throw new ServerException("SubscriptionManager does not exist");
         }
-        Map<String, SubscriptionThread> threads = subscriptionThreads.get(address.getHostName());
+        Map<String, SubscriptionHandler> threads = subscriptionThreads.get(address.getHostName());
         if (!threads.containsKey(id)) {
             throw new ServerException("SubscriptionManager does not exist");
         }
-        SubscriptionThread thread = threads.get(id);
+        SubscriptionHandler thread = threads.get(id);
         Resource template = thread.getTemplate();
         thread.terminate();
         threads.remove(id);
 
         // remove relay if not required by other subscription threads
         boolean relayRequired = false;
-        for (Map.Entry<String, Map<String, SubscriptionThread>> entry :
+        for (Map.Entry<String, Map<String, SubscriptionHandler>> entry :
                 subscriptionThreads.entrySet()) {
-            for (Map.Entry<String, SubscriptionThread> threadEntry :
+            for (Map.Entry<String, SubscriptionHandler> threadEntry :
                     entry.getValue().entrySet()) {
                 if (threadEntry.getValue().getTemplate() == template) {
                     // another subscription needs this resource template
@@ -115,7 +116,7 @@ public class SubscriptionManager {
             // if not exist, create new relay thread
             Socket socket = new Socket(ezServer.getHostname(), ezServer.getPort());
             String id = IdGenerator.getIdGenerator().generateId();
-            ClientSubscriptionThread thread = Client.makeClientSubscriptionThread(socket, false, id, template, this);
+            SubscriptionReceiver thread = Client.makeClientSubscriptionThread(socket, false, id, template, this);
             if (thread != null) {
                 thread.start();
                 relayThreads.add(thread);
@@ -130,12 +131,14 @@ public class SubscriptionManager {
      * @throws IOException Network connection exception
      */
     public void removeRelaySubscriptions(Resource template) throws IOException {
-        List<ClientSubscriptionThread> toRemove = relayThreads.stream().filter(
+        List<SubscriptionReceiver> toRemove = relayThreads.stream().filter(
                 t -> t.getTemplate().equals(template)
         ).collect(Collectors.toList());
-        for (ClientSubscriptionThread thread : toRemove) {
+        for (SubscriptionReceiver thread : toRemove) {
+            boolean secure = thread.getServer() instanceof SSLSocket;
             Socket socket = Client.connectToServer(
-                    thread.getEzServer().getHostname(), thread.getEzServer().getPort(), Static.DEFAULT_TIMEOUT);
+                    thread.getEzServer().getHostname(), thread.getEzServer().getPort(),
+                    Static.DEFAULT_TIMEOUT, secure);
             Client.unsubscribe(thread, socket, Static.DEFAULT_TIMEOUT);
         }
         relayThreads.removeAll(toRemove);
@@ -148,7 +151,7 @@ public class SubscriptionManager {
      */
     public Set<Resource> getSubscriptionTemplates() {
         Set<Resource> templates = new HashSet<>();
-        for (SubscriptionThread thread : getSubscriptionThreads()) {
+        for (SubscriptionHandler thread : getSubscriptionThreads()) {
             templates.add(thread.getTemplate());
         }
         return templates;
@@ -159,11 +162,11 @@ public class SubscriptionManager {
      *
      * @return the subscription threads
      */
-    public Set<SubscriptionThread> getSubscriptionThreads() {
-        Set<SubscriptionThread> threads = new HashSet<>();
-        for (Map.Entry<String, Map<String, SubscriptionThread>> entry :
+    public Set<SubscriptionHandler> getSubscriptionThreads() {
+        Set<SubscriptionHandler> threads = new HashSet<>();
+        for (Map.Entry<String, Map<String, SubscriptionHandler>> entry :
                 subscriptionThreads.entrySet()) {
-            for (Map.Entry<String, SubscriptionThread> threadEntry :
+            for (Map.Entry<String, SubscriptionHandler> threadEntry :
                     entry.getValue().entrySet()) {
                 threads.add(threadEntry.getValue());
             }

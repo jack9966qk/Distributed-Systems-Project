@@ -15,9 +15,6 @@ public class ResourceStorage {
         this.subscriptionManager = subscriptionManager;
     }
 
-    public ResourceStorage() {
-    }
-
     /**
      * Search for resources using a resource template
      *
@@ -55,7 +52,7 @@ public class ResourceStorage {
         // check if new resource is different to existing
         if (!resource.equals(resources.get(resource.getKey()))) {
             if (subscriptionManager != null) {
-                for (SubscriptionThread listener : subscriptionManager.getSubscriptionThreads()) {
+                for (SubscriptionHandler listener : subscriptionManager.getSubscriptionThreads()) {
                     listener.onResourceArrived(resource);
                 }
             }

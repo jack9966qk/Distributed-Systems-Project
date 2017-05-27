@@ -15,33 +15,31 @@ public class ServerList {
     }
 
     /**
+     * Create a new server list
      *
-     * @param subscriptionManager
+     * @param subscriptionManager SubscriptionManager that will use the list
      */
     public ServerList(SubscriptionManager subscriptionManager) {
         this.subscriptionManager = subscriptionManager;
     }
 
-    /**
-     *
-     */
-    public ServerList() {}
-
     Set<EzServer> servers = Collections.synchronizedSet(new HashSet<>());
 
     /**
+     * Get size of server list
      *
-     * @return
+     * @return number of servers in list
      */
     public int size() {
         return servers.size();
     }
 
     /**
+     * Add a server to the list
      *
-     * @param ezServer
-     * @return
-     * @throws IOException
+     * @param ezServer server to be added
+     * @return true if operation is successful, false otherwise
+     * @throws IOException any network error
      */
     public boolean add(EzServer ezServer) throws IOException {
         if (!servers.contains(ezServer) && subscriptionManager != null) {
@@ -53,9 +51,10 @@ public class ServerList {
     }
 
     /**
+     * Remove a server from list
      *
-     * @param o
-     * @return
+     * @param o server to be removed
+     * @return true if operation is successful, false otherwise
      */
     public boolean remove(Object o) {
         return servers.remove(o);

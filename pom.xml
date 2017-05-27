@@ -71,6 +71,16 @@
       </plugin>
 
     </plugins>
+
+    <resources>
+      <resource>
+        <directory>keystore</directory>
+        <includes>
+          <include>client.jks</include>
+          <include>server.jks</include>
+        </includes>
+      </resource>
+    </resources>
   </build>
 
   <dependencies>

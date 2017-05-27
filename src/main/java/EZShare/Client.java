@@ -282,7 +282,7 @@ public class Client {
     }
 
     /**
-     * Create a new ClientSubscriptionThread
+     * Create a new SubscriptionReceiver
      *
      * @param socket   the socket of server
      * @param relay    true if need relay, false otherwise
@@ -292,8 +292,8 @@ public class Client {
      * @return a new ClientSubscribeThread
      * @throws IOException any network error
      */
-    public static ClientSubscriptionThread makeClientSubscriptionThread(Socket socket, boolean relay, String id,
-                                                                        Resource template, SubscriptionManager manager)
+    public static SubscriptionReceiver makeClientSubscriptionThread(Socket socket, boolean relay, String id,
+                                                                    Resource template, SubscriptionManager manager)
             throws IOException {
         DataInputStream in = new DataInputStream(socket.getInputStream());
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
@@ -307,7 +307,7 @@ public class Client {
 
         if (success) {
             // Creating a new listening thread for Client to listen any subscription updates
-            ClientSubscriptionThread clientListener = new ClientSubscriptionThread(socket, id, template, manager);
+            SubscriptionReceiver clientListener = new SubscriptionReceiver(socket, id, template, manager);
             return clientListener;
         }
         return null;
@@ -326,7 +326,7 @@ public class Client {
         IdGenerator idGenerator = IdGenerator.getIdGenerator();
         String id = idGenerator.generateId();
 
-        ClientSubscriptionThread clientListener = makeClientSubscriptionThread(socket, relay, id, template, null);
+        SubscriptionReceiver clientListener = makeClientSubscriptionThread(socket, relay, id, template, null);
 
         if (clientListener != null) {
             clientListener.start();
@@ -346,12 +346,12 @@ public class Client {
     /**
      * Make unsubscribe request
      *
-     * @param clientListener the given ClientSubscriptionThread to be unsubscribe
+     * @param clientListener the given SubscriptionReceiver to be unsubscribe
      * @param socket         the socket of the server
      * @param timeout        timeout for unsubscribe request
      * @throws IOException any network error
      */
-    public static void unsubscribe(ClientSubscriptionThread clientListener, Socket socket, int timeout) throws IOException {
+    public static void unsubscribe(SubscriptionReceiver clientListener, Socket socket, int timeout) throws IOException {
 
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
         DataInputStream in = new DataInputStream(socket.getInputStream());
@@ -542,18 +542,19 @@ public class Client {
         return socket;
     }
 
-    // TODO for backward compatibility, remove later
-    public static Socket connectToServer(String host, int port, int timeout) throws IOException {
-        return connectToServer(host, port, timeout, false);
-    }
-
     /**
      * The main function for client
      *
      * @param args command line arguments
      */
     public static void main(String[] args) {
-        Static.configSecurity("keystore/client.jks");
+//        Static.configSecurity("keystore/client.jks");
+
+        try {
+            Static.setClientSslContext();
+        } catch (Exception e) {
+            System.out.println("Failed to load keyStore and trustStore, exiting...");
+        }
 
         // command line arguments parsing
         CommandLine cmd = null;

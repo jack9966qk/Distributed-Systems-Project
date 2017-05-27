@@ -84,8 +84,15 @@ public class Server {
     }
 
     public void run(String[] args) {
-        CommandLine cmd = null;
+
+        try {
+            Static.setServerSslContext();
+        } catch (Exception e) {
+            System.out.println("Failed to load keyStore and trustStore, exiting...");
+        }
         Static.configSecurity("keystore/server.jks");
+
+        CommandLine cmd = null;
         try {
             cmd = getOptions(args);
         } catch (ParseException e) {
