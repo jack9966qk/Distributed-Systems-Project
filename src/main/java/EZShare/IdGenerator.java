@@ -4,20 +4,20 @@ import java.util.ArrayList;
 
 /**
  * Singleton class to store and generate id for subscription.
- *
+ * <p>
  * Created by Zheping on 2017/5/9.
  */
 public class IdGenerator {
 
     private static ArrayList<String> idStorage;
     private static IdGenerator idGenerator;
-    private static Integer currentNumber;
+    private Integer currentNumber;
 
     /**
      * Constructor to create a new id storage, and set the current number to 0.
      */
     private IdGenerator() {
-        this.idStorage = new ArrayList<String>();
+        this.idStorage = new ArrayList<>();
         currentNumber = 0;
     }
 
@@ -26,7 +26,7 @@ public class IdGenerator {
      *
      * @return an instance of IdGenerator
      */
-    public static IdGenerator getIdGeneartor() {
+    public static IdGenerator getIdGenerator() {
 
         // if the instance does not exist, create a new instance
         if (idGenerator == null) {
@@ -41,7 +41,7 @@ public class IdGenerator {
      *
      * @return an id in String type
      */
-    public static String generateId() {
+    public String generateId() {
 
         String id = currentNumber.toString();
 

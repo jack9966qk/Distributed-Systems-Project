@@ -143,7 +143,7 @@ public class Client {
      * Make json from arguments
      *
      * @param command  the command
-     * @param id reference to the subscription request
+     * @param id       reference to the subscription request
      * @param relay    true if need relay, false otherwise
      * @param resource the resource
      * @return json with arguments as fields
@@ -161,7 +161,7 @@ public class Client {
      * Make json from arguments
      *
      * @param command the command
-     * @param id reference to the subscription request
+     * @param id      reference to the subscription request
      * @return
      */
     private static String makeJsonFrom(String command, String id) {
@@ -284,15 +284,17 @@ public class Client {
     /**
      * Create a new ClientSubscriptionThread
      *
-     * @param socket the socket of server
-     * @param relay true if need relay, false otherwise
-     * @param id the subscription id
+     * @param socket   the socket of server
+     * @param relay    true if need relay, false otherwise
+     * @param id       the subscription id
      * @param template the resource template
-     * @param manager the subscription manager
+     * @param manager  the subscription manager
      * @return a new ClientSubscribeThread
      * @throws IOException any network error
      */
-    public static ClientSubscriptionThread makeClientSubscriptionThread(Socket socket, boolean relay, String id, Resource template, SubscriptionManager manager) throws IOException {
+    public static ClientSubscriptionThread makeClientSubscriptionThread(Socket socket, boolean relay, String id,
+                                                                        Resource template, SubscriptionManager manager)
+            throws IOException {
         DataInputStream in = new DataInputStream(socket.getInputStream());
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
 
@@ -314,13 +316,14 @@ public class Client {
     /**
      * Make subscribe request
      *
-     * @param socket the socket of the server
+     * @param socket   the socket of the server
      * @param template the resource template
      * @throws IOException any network error
      */
-    private static void subscribe(Socket socket, String host, int port, boolean relay, Resource template, boolean secure) throws IOException {
+    private static void subscribe(Socket socket, String host, int port, boolean relay,
+                                  Resource template, boolean secure) throws IOException {
         //Automatically generate an id for this subscription
-        IdGenerator idGenerator = IdGenerator.getIdGeneartor();
+        IdGenerator idGenerator = IdGenerator.getIdGenerator();
         String id = idGenerator.generateId();
 
         ClientSubscriptionThread clientListener = makeClientSubscriptionThread(socket, relay, id, template, null);
@@ -334,7 +337,8 @@ public class Client {
             Scanner scanner = new Scanner(System.in);
             scanner.nextLine();
 
-            socket = connectToServer(host, port, Static.DEFAULT_TIMEOUT, secure); // use new socket to send unsubscribe command
+            // use new socket to send unsubscribe command
+            socket = connectToServer(host, port, Static.DEFAULT_TIMEOUT, secure);
             unsubscribe(clientListener, socket, Static.DEFAULT_TIMEOUT);
         }
     }
@@ -343,8 +347,8 @@ public class Client {
      * Make unsubscribe request
      *
      * @param clientListener the given ClientSubscriptionThread to be unsubscribe
-     * @param socket the socket of the server
-     * @param timeout timeout for unsubscribe request
+     * @param socket         the socket of the server
+     * @param timeout        timeout for unsubscribe request
      * @throws IOException any network error
      */
     public static void unsubscribe(ClientSubscriptionThread clientListener, Socket socket, int timeout) throws IOException {
@@ -587,7 +591,8 @@ public class Client {
         try {
             socket = connectToServer(host, port, Static.DEFAULT_TIMEOUT, cmd.hasOption("secure"));
         } catch (IOException e) {
-            Logging.logInfo("Failed to connect to server, please check server availability and internet connection.");
+            Logging.logInfo("Failed to connect to server," +
+                    "please check server availability and internet connection.");
             return;
         }
 

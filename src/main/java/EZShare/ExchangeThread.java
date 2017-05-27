@@ -20,6 +20,7 @@ public class ExchangeThread extends Thread {
 
     /**
      * Create a new exchange thread
+     *
      * @param interval   time interval between exchange being performed
      * @param serverList a reference of list of servers to send exchange
      * @param secure

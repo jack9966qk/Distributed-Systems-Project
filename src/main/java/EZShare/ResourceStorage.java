@@ -15,7 +15,8 @@ public class ResourceStorage {
         this.subscriptionManager = subscriptionManager;
     }
 
-    public ResourceStorage() {}
+    public ResourceStorage() {
+    }
 
     /**
      * Search for resources using a resource template

@@ -24,18 +24,25 @@ public class ClientSubscriptionThread extends Thread {
 
     /**
      * Get the subscription id
+     *
      * @return the subscription id
      */
-    public String getSubId() {return id;}
+    public String getSubId() {
+        return id;
+    }
 
     /**
      * Get if the thread is running
+     *
      * @return a boolean indicates whether the thread is running or not
      */
-    public boolean isRunning() {return running;}
+    public boolean isRunning() {
+        return running;
+    }
 
     /**
      * Get the socket for server
+     *
      * @return the server socket
      */
     public Socket getServer() {
@@ -44,6 +51,7 @@ public class ClientSubscriptionThread extends Thread {
 
     /**
      * Get the EzServer
+     *
      * @return a new EzServer with host and port stored in this thread
      */
     public EzServer getEzServer() {
@@ -52,6 +60,7 @@ public class ClientSubscriptionThread extends Thread {
 
     /**
      * Get the resource template for subscription
+     *
      * @return the resource template for subscription
      */
     public Resource getTemplate() {
@@ -60,10 +69,11 @@ public class ClientSubscriptionThread extends Thread {
 
     /**
      * Constructor for ClientSubscriptionThread
-     * @param server socket for server
-     * @param id subscription id
+     *
+     * @param server   socket for server
+     * @param id       subscription id
      * @param template resource template
-     * @param manager subscription manager
+     * @param manager  subscription manager
      */
     public ClientSubscriptionThread(Socket server, String id, Resource template, SubscriptionManager manager) {
 

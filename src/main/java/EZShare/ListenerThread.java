@@ -7,6 +7,7 @@ import java.util.Date;
 import java.util.HashMap;
 
 /**
+ * Server component listening to connections at a certain port
  * Created by Jack on 18/5/2017.
  */
 public class ListenerThread extends Thread {
@@ -25,19 +26,19 @@ public class ListenerThread extends Thread {
     private SubscriptionManager manager;
 
     /**
-     *
      * @param connectionIntervalLimit the maximum connection time
-     * @param exchangeInterval the interval of exchange
-     * @param secret the secret specified by the Server
-     * @param host listening host
-     * @param port listening port
-     * @param secure secure flag to determine whether the socket shall be secure
-     * @param serverList a list of Servers that this Server has acknowledge
-     * @param resourceStorage the resource storage for the Server
-     * @param manager subscription manager
+     * @param exchangeInterval        the interval of exchange
+     * @param secret                  the secret specified by the Server
+     * @param host                    listening host
+     * @param port                    listening port
+     * @param secure                  secure flag to determine whether the socket shall be secure
+     * @param serverList              a list of Servers that this Server has acknowledge
+     * @param resourceStorage         the resource storage for the Server
+     * @param manager                 subscription manager
      */
     public ListenerThread(int connectionIntervalLimit, int exchangeInterval, String secret,
-                          String host, int port, boolean secure, ServerList serverList, ResourceStorage resourceStorage, SubscriptionManager manager) {
+                          String host, int port, boolean secure, ServerList serverList,
+                          ResourceStorage resourceStorage, SubscriptionManager manager) {
         this.connectionIntervalLimit = connectionIntervalLimit;
         this.exchangeInterval = exchangeInterval;
         this.secret = secret;
@@ -81,7 +82,7 @@ public class ListenerThread extends Thread {
                 listenSocket = new ServerSocket(port);
             }
             int i = 0;
-            Logging.logInfo( (secure ? "Secure " : "") + "Port " + port + " now available");
+            Logging.logInfo((secure ? "Secure " : "") + "Port " + port + " now available");
             running = true;
             while (running) {
                 // wait for new client
@@ -109,7 +110,7 @@ public class ListenerThread extends Thread {
                 } catch (IOException e1) {
                     e1.printStackTrace();
                 }
-                Logging.logInfo("Port " + port  + " closed.");
+                Logging.logInfo("Port " + port + " closed.");
             }
         } catch (Exception e) {
             Logging.logInfo("Unknown Exception in Listener Thread, exiting...");

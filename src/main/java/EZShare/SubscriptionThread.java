@@ -21,10 +21,11 @@ public class SubscriptionThread extends Thread {
 
     /**
      * Constructor for SubscriptionThread
-     * @param client the client waiting for subscription
-     * @param template the given resource template
+     *
+     * @param client              the client waiting for subscription
+     * @param template            the given resource template
      * @param subscriptionManager the subscription manager
-     * @param self the server giving subscription info
+     * @param self                the server giving subscription info
      */
     public SubscriptionThread(Socket client, Resource template, SubscriptionManager subscriptionManager, EzServer self) {
         this.client = client;
@@ -35,6 +36,7 @@ public class SubscriptionThread extends Thread {
 
     /**
      * Get the resource template
+     *
      * @return the resource template
      */
     public Resource getTemplate() {
@@ -43,6 +45,7 @@ public class SubscriptionThread extends Thread {
 
     /**
      * Get if the thread is running
+     *
      * @return a boolean indicates whether the thread is running or not
      */
     public boolean isRunning() {
@@ -59,6 +62,7 @@ public class SubscriptionThread extends Thread {
 
     /**
      * notify the client that new resource is ready
+     *
      * @param resource the resource for the client
      */
     public void onResourceArrived(Resource resource) {
