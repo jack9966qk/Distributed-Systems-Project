@@ -10,6 +10,133 @@ import java.util.stream.Collectors;
  * Resource in EZShare, can point to a remote uri or a local file.
  */
 public class Resource {
+    private String name = "";
+    private String description = "";
+    private String[] tags = new String[0];
+    private String uri = "";
+    private String channel = "";
+    private String owner = "";
+    private String ezserver = null;
+    private Long resourceSize = null;
+
+    /**
+     * Constructor for Resource with all fields
+     *
+     * @param name         the name of the resource
+     * @param description  the description of the resource
+     * @param tags         the tags of the resource
+     * @param uri          the uri of the resource
+     * @param channel      the channel of the resource
+     * @param owner        the owner of the resource
+     * @param ezserver     the ezserver of the resource
+     * @param resourceSize the resource size of the resource
+     */
+    public Resource(String name, String description, String[] tags, String uri, String channel, String owner, String ezserver, Long resourceSize) {
+        this.name = name;
+        this.description = description;
+        this.tags = tags;
+        this.uri = uri;
+        this.channel = channel;
+        this.owner = owner;
+        this.ezserver = ezserver;
+        this.resourceSize = resourceSize;
+    }
+    /**
+     * Constructor for Resource without resource size
+     *
+     * @param name        the name of the resource
+     * @param description the description of the resource
+     * @param tags        the tags of the resource
+     * @param uri         the uri of the resource
+     * @param channel     the channel of the resource
+     * @param owner       the owner of the resource
+     * @param ezserver    the ezserver of the resource
+     */
+    public Resource(String name, String description, String[] tags, String uri, String channel, String owner, String ezserver) {
+        this.name = name;
+        this.description = description;
+        this.tags = tags != null ? tags : new String[0];
+        this.uri = uri;
+        this.channel = channel;
+        this.owner = owner;
+        this.ezserver = ezserver;
+    }
+
+    /**
+     * Change all char in the given String to lowercase letter
+     *
+     * @param strings the given String
+     * @return new String with all lowercase letters
+     */
+    static List<String> stringsToLower(String[] strings) {
+        return Arrays.stream(strings).map(String::toLowerCase).collect(Collectors.toList());
+    }
+
+    /**
+     * Creating a Resource from the given JSON
+     *
+     * @param json the given JSON string
+     * @return Resource converted from the given JSON
+     */
+    public static Resource fromJson(String json) {
+        return Static.GSON.fromJson(json, Resource.class);
+    }
+
+    /**
+     * Creating a Resource from the given JSON element
+     *
+     * @param elem the given JSON element
+     * @return Resource converted from the given JSON element
+     */
+    public static Resource fromJsonElem(JsonElement elem) {
+        return Static.GSON.fromJson(elem, Resource.class);
+    }
+
+    /**
+     * Parse the resource in the given JSON and normalize it
+     *
+     * @param json the given JSON
+     * @return the parsed and normalized resource
+     */
+    public static Resource parseAndNormalise(String json) {
+        Resource r = fromJson(json);
+        return r.normalised();
+    }
+
+    /**
+     * Parse the resource in the given JSON element and normalize it
+     *
+     * @param elem the given JSON element
+     * @return the parsed and normalized resource
+     */
+    public static Resource parseAndNormalise(JsonElement elem) {
+        Resource r = fromJsonElem(elem);
+        if (r == null) {
+            return null;
+        } else {
+            Resource normalised = r.normalised();
+            if (normalised.getUri() != null &&
+                    normalised.getChannel() != null &&
+                    normalised.getDescription() != null &&
+                    normalised.getName() != null &&
+                    normalised.getOwner() != null) {
+                return normalised;
+            } else {
+                return null;
+            }
+        }
+    }
+
+    /**
+     * Remove null characters, leading and trailing whitespaces of string
+     *
+     * @param s string
+     * @return normalised string
+     */
+    static String normaliseStr(String s) {
+        return s.replace("\0", "").trim();
+    }
+
     /**
      * Get the name
      *
@@ -82,59 +209,6 @@ public class Resource {
         return resourceSize;
     }
 
-    private String name = "";
-    private String description = "";
-    private String[] tags = new String[0];
-    private String uri = "";
-    private String channel = "";
-    private String owner = "";
-    private String ezserver = null;
-    private Long resourceSize = null;
-
-    /**
-     * Constructor for Resource with all fields
-     *
-     * @param name         the name of the resource
-     * @param description  the description of the resource
-     * @param tags         the tags of the resource
-     * @param uri          the uri of the resource
-     * @param channel      the channel of the resource
-     * @param owner        the owner of the resource
-     * @param ezserver     the ezserver of the resource
-     * @param resourceSize the resource size of the resource
-     */
-    public Resource(String name, String description, String[] tags, String uri, String channel, String owner, String ezserver, Long resourceSize) {
-        this.name = name;
-        this.description = description;
-        this.tags = tags;
-        this.uri = uri;
-        this.channel = channel;
-        this.owner = owner;
-        this.ezserver = ezserver;
-        this.resourceSize = resourceSize;
-    }
-
-    /**
-     * Constructor for Resource without resource size
-     *
-     * @param name        the name of the resource
-     * @param description the description of the resource
-     * @param tags        the tags of the resource
-     * @param uri         the uri of the resource
-     * @param channel     the channel of the resource
-     * @param owner       the owner of the resource
-     * @param ezserver    the ezserver of the resource
-     */
-    public Resource(String name, String description, String[] tags, String uri, String channel, String owner, String ezserver) {
-        this.name = name;
-        this.description = description;
-        this.tags = tags != null ? tags : new String[0];
-        this.uri = uri;
-        this.channel = channel;
-        this.owner = owner;
-        this.ezserver = ezserver;
-    }
-
     /**
      * Creating a new Resource instance with ezServer added, other fields remain the same
      *
@@ -189,16 +263,6 @@ public class Resource {
                 this.ezserver,
                 this.resourceSize
         );
-    }
-
-    /**
-     * Change all char in the given String to lowercase letter
-     *
-     * @param strings the given String
-     * @return new String with all lowercase letters
-     */
-    static List<String> stringsToLower(String[] strings) {
-        return Arrays.stream(strings).map(String::toLowerCase).collect(Collectors.toList());
     }
 
     /**
@@ -261,71 +325,6 @@ public class Resource {
      */
     public JsonElement toJsonElement() {
         return Static.GSON.toJsonTree(this);
-    }
-
-    /**
-     * Creating a Resource from the given JSON
-     *
-     * @param json the given JSON string
-     * @return Resource converted from the given JSON
-     */
-    public static Resource fromJson(String json) {
-        return Static.GSON.fromJson(json, Resource.class);
-    }
-
-    /**
-     * Creating a Resource from the given JSON element
-     *
-     * @param elem the given JSON element
-     * @return Resource converted from the given JSON element
-     */
-    public static Resource fromJsonElem(JsonElement elem) {
-        return Static.GSON.fromJson(elem, Resource.class);
-    }
-
-    /**
-     * Parse the resource in the given JSON and normalize it
-     *
-     * @param json the given JSON
-     * @return the parsed and normalized resource
-     */
-    public static Resource parseAndNormalise(String json) {
-        Resource r = fromJson(json);
-        return r.normalised();
-    }
-
-    /**
-     * Parse the resource in the given JSON element and normalize it
-     *
-     * @param elem the given JSON element
-     * @return the parsed and normalized resource
-     */
-    public static Resource parseAndNormalise(JsonElement elem) {
-        Resource r = fromJsonElem(elem);
-        if (r == null) {
-            return null;
-        } else {
-            Resource normalised = r.normalised();
-            if (normalised.getUri() != null &&
-                    normalised.getChannel() != null &&
-                    normalised.getDescription() != null &&
-                    normalised.getName() != null &&
-                    normalised.getOwner() != null) {
-                return normalised;
-            } else {
-                return null;
-            }
-        }
-    }
-
-    /**
-     * Remove null characters, leading and trailing whitespaces of string
-     *
-     * @param s string
-     * @return normalised string
-     */
-    static String normaliseStr(String s) {
-        return s.replace("\0", "").trim();
     }
 
     /**

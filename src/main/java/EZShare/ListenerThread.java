@@ -18,9 +18,9 @@ public class ListenerThread extends Thread {
     private final int port;
     private final boolean secure;
     private final ServerList serverList;
+    boolean running = false;
     private ResourceStorage resourceStorage;
     private HashMap<SocketAddress, Date> lastConnectionTime = new HashMap<>();
-    boolean running = false;
     private ServerSocket listenSocket;
     private SubscriptionManager manager;
 

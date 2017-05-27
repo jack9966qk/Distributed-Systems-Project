@@ -1,21 +1,22 @@
 package EZShare;
 
-import java.math.BigInteger;
-import java.net.*;
-import java.security.SecureRandom;
-
 import org.apache.commons.cli.*;
+
+import java.math.BigInteger;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.security.SecureRandom;
 
 /**
  * EZShare server implementation, has a main method to be used through command line
  */
 public class Server {
+    public ListenerThread insecureListener;
+    public ListenerThread secureListener;
     SubscriptionManager subscriptionManager = new SubscriptionManager();
     public ResourceStorage resourceStorage = new ResourceStorage(subscriptionManager);
     public ServerList secureServerList = new ServerList(subscriptionManager);
     public ServerList insecureServerList = new ServerList(subscriptionManager);
-    public ListenerThread insecureListener;
-    public ListenerThread secureListener;
     private String name;
 
     public Server() {
@@ -24,6 +25,43 @@ public class Server {
 
     public Server(String name) {
         this.name = name;
+    }
+
+    /**
+     * Get command line options
+     *
+     * @param args command line arguments
+     * @return
+     * @throws ParseException
+     */
+    public static CommandLine getOptions(String[] args) throws ParseException {
+        Options options = new Options();
+
+        options.addOption(Option.builder("advertisedhostname").desc("advertised hostname")
+                .hasArg().type(String.class).build());
+        options.addOption(Option.builder("connectionintervallimit").desc("connection interval limit in seconds")
+                .hasArg().type(Integer.class).build());
+        options.addOption(Option.builder("exchangeinterval").desc("exchange interval in seconds")
+                .hasArg().type(Integer.class).build());
+        options.addOption(Option.builder("sport").desc("secure server port, an integer")
+                .hasArg().type(Integer.class).build());
+        options.addOption(Option.builder("port").desc("server port, an integer")
+                .hasArg().type(Integer.class).build());
+        options.addOption(Option.builder("secret").desc("secret")
+                .hasArg().type(String.class).build());
+        options.addOption(Option.builder("debug").desc("print debug information").build());
+
+        CommandLineParser parser = new DefaultParser();
+        return parser.parse(options, args);
+    }
+
+    /**
+     * Main function of Server, used through command line
+     *
+     * @param args command line arguments
+     */
+    public static void main(String[] args) {
+        new Server().run(args);
     }
 
     public boolean isRunning() {
@@ -55,42 +93,8 @@ public class Server {
         }
     }
 
-    /**
-     * Get command line options
-     *
-     * @param args command line arguments
-     * @return
-     * @throws ParseException
-     */
-    public static CommandLine getOptions(String[] args) throws ParseException {
-        Options options = new Options();
-
-        options.addOption(Option.builder("advertisedhostname").desc("advertised hostname")
-                .hasArg().type(String.class).build());
-        options.addOption(Option.builder("connectionintervallimit").desc("connection interval limit in seconds")
-                .hasArg().type(Integer.class).build());
-        options.addOption(Option.builder("exchangeinterval").desc("exchange interval in seconds")
-                .hasArg().type(Integer.class).build());
-        options.addOption(Option.builder("sport").desc("secure server port, an integer")
-                .hasArg().type(Integer.class).build());
-        options.addOption(Option.builder("port").desc("server port, an integer")
-                .hasArg().type(Integer.class).build());
-        options.addOption(Option.builder("secret").desc("secret")
-                .hasArg().type(String.class).build());
-        options.addOption(Option.builder("debug").desc("print debug information").build());
-
-        CommandLineParser parser = new DefaultParser();
-        return parser.parse(options, args);
-    }
-
     public void run(String[] args) {
-
-        try {
-            Static.setServerSslContext();
-        } catch (Exception e) {
-            System.out.println("Failed to load keyStore and trustStore, exiting...");
-        }
-        Static.configSecurity("keystore/server.jks");
+        Static.configSecurity("server.jks");
 
         CommandLine cmd = null;
         try {
@@ -180,14 +184,5 @@ public class Server {
                 resourceStorage,
                 subscriptionManager);
         insecureListener.start();
-    }
-
-    /**
-     * Main function of Server, used through command line
-     *
-     * @param args command line arguments
-     */
-    public static void main(String[] args) {
-        new Server().run(args);
     }
 }

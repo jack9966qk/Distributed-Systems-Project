@@ -8,15 +8,6 @@ import java.util.Map;
  * Created by Jack on 24/3/2017.
  */
 public class ServerException extends Exception {
-    /**
-     * Get the error message of exception
-     *
-     * @return error message of exception
-     */
-    public String getErrorMessage() {
-        return errorMessage;
-    }
-
     private String errorMessage;
 
     /**
@@ -26,6 +17,15 @@ public class ServerException extends Exception {
      */
     public ServerException(String errorMessage) {
         this.errorMessage = errorMessage;
+    }
+
+    /**
+     * Get the error message of exception
+     *
+     * @return error message of exception
+     */
+    public String getErrorMessage() {
+        return errorMessage;
     }
 
     /**

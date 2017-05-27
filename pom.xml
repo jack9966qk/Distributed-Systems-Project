@@ -79,6 +79,7 @@
           <include>client.jks</include>
           <include>server.jks</include>
         </includes>
+        <targetPath>EZShare</targetPath>
       </resource>
     </resources>
   </build>

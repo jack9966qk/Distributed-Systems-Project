@@ -20,6 +20,30 @@ public class SubscriptionReceiver extends Thread {
     private SubscriptionManager manager;
 
     /**
+     * Constructor for SubscriptionReceiver
+     *
+     * @param server   socket for server
+     * @param id       subscription id
+     * @param template resource template
+     * @param manager  subscription manager
+     */
+    public SubscriptionReceiver(Socket server, String id, Resource template, SubscriptionManager manager) {
+
+        this.server = server;
+        this.id = id;
+        this.template = template;
+        this.manager = manager;
+
+        // get the port from the socket of server
+        InetSocketAddress socketAddress = (InetSocketAddress) server.getRemoteSocketAddress();
+        this.port = socketAddress.getPort();
+
+        // get the host from the socket of server
+        InetAddress inetAddress = socketAddress.getAddress();
+        this.host = inetAddress.getHostAddress();
+    }
+
+    /**
      * Get the subscription id
      *
      * @return the subscription id
@@ -62,30 +86,6 @@ public class SubscriptionReceiver extends Thread {
      */
     public Resource getTemplate() {
         return template;
-    }
-
-    /**
-     * Constructor for SubscriptionReceiver
-     *
-     * @param server   socket for server
-     * @param id       subscription id
-     * @param template resource template
-     * @param manager  subscription manager
-     */
-    public SubscriptionReceiver(Socket server, String id, Resource template, SubscriptionManager manager) {
-
-        this.server = server;
-        this.id = id;
-        this.template = template;
-        this.manager = manager;
-
-        // get the port from the socket of server
-        InetSocketAddress socketAddress = (InetSocketAddress) server.getRemoteSocketAddress();
-        this.port = socketAddress.getPort();
-
-        // get the host from the socket of server
-        InetAddress inetAddress = socketAddress.getAddress();
-        this.host = inetAddress.getHostAddress();
     }
 
     /**

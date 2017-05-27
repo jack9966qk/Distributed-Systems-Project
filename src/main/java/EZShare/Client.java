@@ -1,14 +1,19 @@
 package EZShare;
 
-import java.io.*;
-import java.net.*;
-import java.util.*;
-
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.apache.commons.cli.*;
 
 import javax.net.ssl.SSLSocketFactory;
+import java.io.*;
+import java.net.Socket;
+import java.net.SocketTimeoutException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Scanner;
+import java.util.Set;
 
 /**
  * EZShare client implementation, has a main method to be used through command line
@@ -548,13 +553,7 @@ public class Client {
      * @param args command line arguments
      */
     public static void main(String[] args) {
-//        Static.configSecurity("keystore/client.jks");
-
-        try {
-            Static.setClientSslContext();
-        } catch (Exception e) {
-            System.out.println("Failed to load keyStore and trustStore, exiting...");
-        }
+        Static.configSecurity("client.jks");
 
         // command line arguments parsing
         CommandLine cmd = null;

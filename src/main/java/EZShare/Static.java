@@ -2,11 +2,10 @@ package EZShare;
 
 import com.google.gson.Gson;
 
-import javax.net.ssl.*;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.net.Socket;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
+import java.io.*;
 import java.security.KeyStore;
 
 /**
@@ -22,16 +21,15 @@ public class Static {
     public static final int DEFAULT_SPORT = 3781;
     public static final int DEFAULT_PORT = 3780;
 
-    static SSLContext clientSSLContext;
-
-    public static SSLContext getClientSSLContext() {
-        return clientSSLContext;
-    }
-
-    static SSLContext serverSSLContext;
-
-    public static SSLContext getServerSSLContext() {
-        return serverSSLContext;
+    // extract jks files to be loaded to keyStore/trustStore
+    static {
+        try {
+            setupKeyStoreFile("client.jks");
+            setupKeyStoreFile("server.jks");
+        } catch (IOException e) {
+            System.out.println("Error setting up keystore files, exiting...");
+            System.exit(0);
+        }
     }
 
     /**
@@ -43,43 +41,22 @@ public class Static {
         System.setProperty("javax.net.ssl.keyStorePassword", "distributed");
     }
 
-    public static void setClientSslContext() throws Exception {
-        clientSSLContext = makeSslContext("client.jks");
-    }
+    /**
+     * Set up keyStore files from JAR
+     *
+     * @param keyStoreFilename keyStore filename inside the JAR
+     * @throws IOException Error extracting the JKS file
+     */
+    public static void setupKeyStoreFile(String keyStoreFilename) throws IOException {
+        InputStream input = Static.class.getResourceAsStream(keyStoreFilename);
+        File file = new File(keyStoreFilename);
+        OutputStream output = new FileOutputStream(file);
 
-    public static void setServerSslContext() throws Exception {
-        serverSSLContext = makeSslContext("server.jks");
-    }
-
-//    public static Socket makeSecureClientSocket(String host, int port) {
-//        return clientSSLContext.getSocketFactory().
-//    }
-
-
-    public static SSLContext makeSslContext(String keyStoreFilename) throws Exception {
-        KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
-        char[] password = "distributed".toCharArray();
-        keyStore.load(Static.class.getResourceAsStream(keyStoreFilename), password);
-
-        // Set up keyStore
-        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(
-                KeyManagerFactory.getDefaultAlgorithm());
-        keyManagerFactory.init(keyStore, password);
-        KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
-        trustStore.load(Static.class.getResourceAsStream(keyStoreFilename), password);
-
-        // Set up trustStore
-        TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(
-                TrustManagerFactory.getDefaultAlgorithm());
-        trustManagerFactory.init(trustStore);
-
-        // Set up SSLContext
-        SSLContext context;
-        context = SSLContext.getInstance("SSL");
-        context.init(keyManagerFactory.getKeyManagers(),
-                trustManagerFactory.getTrustManagers(),
-                null);
-        return context;
+        byte[] bytes = new byte[FILE_READ_WRITE_CHUNK_SIZE];
+        int read;
+        while ((read = input.read(bytes)) != -1) {
+            output.write(bytes, 0, read);
+        }
     }
 
     /**

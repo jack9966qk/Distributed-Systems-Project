@@ -17,6 +17,7 @@ public class ExchangeThread extends Thread {
     private Date lastExchangeTime;
     private boolean secure;
     private EzServer self;
+    private boolean running = false;
 
     /**
      * Create a new exchange thread
@@ -50,8 +51,6 @@ public class ExchangeThread extends Thread {
         this.running = false;
         this.interrupt();
     }
-
-    private boolean running = false;
 
     /**
      * Perform an exchange request to all servers in serverList

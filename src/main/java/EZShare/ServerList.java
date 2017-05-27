@@ -1,18 +1,17 @@
 package EZShare;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * List storing EZShare servers
  * Created by Jack on 6/5/2017.
  */
 public class ServerList {
+    Set<EzServer> servers = Collections.synchronizedSet(new HashSet<>());
     private SubscriptionManager subscriptionManager = null;
-
-    public Set<EzServer> getServers() {
-        return servers;
-    }
 
     /**
      * Create a new server list
@@ -23,7 +22,9 @@ public class ServerList {
         this.subscriptionManager = subscriptionManager;
     }
 
-    Set<EzServer> servers = Collections.synchronizedSet(new HashSet<>());
+    public Set<EzServer> getServers() {
+        return servers;
+    }
 
     /**
      * Get size of server list

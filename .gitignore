@@ -117,3 +117,5 @@ target/
 target/classes/com/allstars/project1/Server.class
 
 *.jar
+client.jks
+server.jks
