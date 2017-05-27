@@ -53,7 +53,7 @@ public class ResourceStorage {
      */
     public synchronized void add(Resource resource) {
         // check if new resource is different to existing
-        if (resource.equals(resources.get(resource.getKey()))) {
+        if (!resource.equals(resources.get(resource.getKey()))) {
             if (subscriptionManager != null) {
                 for (SubscriptionThread listener : subscriptionManager.getSubscriptionThreads()) {
                     listener.onResourceArrived(resource);
