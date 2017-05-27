@@ -606,7 +606,10 @@ public class Client {
                 String secret = cmd.getOptionValue("secret");
                 share(socket, secret, resource);
             } else if (cmd.hasOption("query")) {
-                query(socket, true, resource);
+                Set<Resource> resources = query(socket, true, resource);
+                for (Resource r: resources) {
+                    Logging.logInfo(r.toJson());
+                }
             } else if (cmd.hasOption("fetch")) {
                 fetch(socket, resource);
             } else if (cmd.hasOption("exchange")) {
