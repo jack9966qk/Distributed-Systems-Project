@@ -1,12 +1,7 @@
 package EZShare;
 
 import com.google.gson.Gson;
-
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManagerFactory;
 import java.io.*;
-import java.security.KeyStore;
 
 /**
  * Class for globally available static variables, functions and constants
