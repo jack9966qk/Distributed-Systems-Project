@@ -49,10 +49,10 @@ class ServiceThreadTest {
             try {
                 Socket clientSocket = serverSocket.accept();
                 String secret = "JackBigLeg";
-                // TODO fix this
-//                ServiceThread serviceThread = new ServiceThread(lastConnectionTime, clientSocket, secret, resourceStorage, secureServerList, insecureServerList, self);
+                ServiceThread serviceThread = new ServiceThread(lastConnectionTime, clientSocket, secret,
+                        resourceStorage, serverList, self, true, new SubscriptionManager());
 
-//                serviceThread.start();
+                serviceThread.start();
                 Thread.sleep(5000);
 
             } catch (IOException e) {
