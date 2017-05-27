@@ -20,6 +20,13 @@ public class SubscriptionManager {
     // threads for all server side subscription requests (relay)
     public Set<ClientSubscriptionThread> relayThreads = new HashSet<>();
 
+    /**
+     * adding a thread for subscription
+     * @param client client waiting for subscription
+     * @param template the given resource template
+     * @param id id of the subscription manager
+     * @param self the server giving subscription info
+     */
     public void addSubscriptionThread(Socket client, Resource template, String id, EzServer self) {
         InetSocketAddress address = (InetSocketAddress) client.getRemoteSocketAddress();
         if (!subscriptionThreads.containsKey(address.getHostName())) {
@@ -33,12 +40,24 @@ public class SubscriptionManager {
         thread.start();
     }
 
+    /**
+     * the counter of listening client
+     * @param client client waiting for subscription
+     */
     public void incrementCount(Socket client) {
         InetSocketAddress address = (InetSocketAddress) client.getRemoteSocketAddress();
         Integer size = resultSizes.get(address.getHostName());
         resultSizes.put(address.getHostName(), size + 1);
     }
 
+    /**
+     * remove a subscribed thread
+     * @param client client waiting for un-subscription
+     * @param id id of the subscription manager
+     * @return return null if thread is not empty otherwise return host
+     * @throws ServerException no subscription manager
+     * @throws IOException Network connection exception
+     */
     public Integer removeSubscriptionThread(Socket client, String id) throws ServerException, IOException {
         InetSocketAddress address = (InetSocketAddress) client.getRemoteSocketAddress();
         if (!subscriptionThreads.containsKey(address.getHostName())) {
@@ -79,6 +98,12 @@ public class SubscriptionManager {
         }
     }
 
+    /**
+     * add the subscription to other servers known by this Server
+     * @param ezServer the other servers
+     * @param template the given resource template
+     * @throws IOException Network connection exception
+     */
     public void addRelaySubscription(EzServer ezServer, Resource template) throws IOException {
         if (relayThreads.stream().filter(
             t -> t.getEzServer().equals(ezServer) && t.getTemplate().equals(template)
@@ -94,6 +119,11 @@ public class SubscriptionManager {
         }
     }
 
+    /**
+     * remove the subscription to other servers known by this Server
+     * @param template the given template
+     * @throws IOException Network connection exception
+     */
     public void removeRelaySubscriptions(Resource template) throws IOException {
         List<ClientSubscriptionThread> toRemove = relayThreads.stream().filter(
                 t -> t.getTemplate().equals(template)
@@ -106,6 +136,10 @@ public class SubscriptionManager {
         relayThreads.removeAll(toRemove);
     }
 
+    /**
+     * 
+     * @return subscription templates
+     */
     public Set<Resource> getSubscriptionTemplates() {
         Set<Resource> templates = new HashSet<>();
         for (SubscriptionThread thread : getSubscriptionThreads()) {
@@ -114,6 +148,10 @@ public class SubscriptionManager {
         return templates;
     }
 
+    /**
+     *
+     * @return subscription thread
+     */
     public Set<SubscriptionThread> getSubscriptionThreads() {
         Set<SubscriptionThread> threads = new HashSet<>();
         for (Map.Entry<String, Map<String, SubscriptionThread>> entry :

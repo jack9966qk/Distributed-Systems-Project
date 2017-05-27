@@ -24,6 +24,18 @@ public class ListenerThread extends Thread {
     private ServerSocket listenSocket;
     private SubscriptionManager manager;
 
+    /**
+     *
+     * @param connectionIntervalLimit the maximum connection time
+     * @param exchangeInterval the interval of exchange
+     * @param secret the secret specified by the Server
+     * @param host listening host
+     * @param port listening port
+     * @param secure secure flag to determine whether the socket shall be secure
+     * @param serverList a list of Servers that this Server has acknowledge
+     * @param resourceStorage the resource storage for the Server
+     * @param manager subscription manager
+     */
     public ListenerThread(int connectionIntervalLimit, int exchangeInterval, String secret,
                           String host, int port, boolean secure, ServerList serverList, ResourceStorage resourceStorage, SubscriptionManager manager) {
         this.connectionIntervalLimit = connectionIntervalLimit;
